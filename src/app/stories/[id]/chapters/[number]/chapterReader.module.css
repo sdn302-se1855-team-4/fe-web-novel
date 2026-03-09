@@ -1,0 +1,212 @@
+.page {
+  min-height: 100vh;
+  transition:
+    background-color var(--transition-normal),
+    color var(--transition-normal);
+}
+
+/* Reader Themes */
+.page[data-reader-theme="light"] {
+  --reader-bg: hsl(40, 30%, 97%);
+  --reader-text: hsl(20, 15%, 15%);
+  --reader-bar-bg: hsl(0, 0%, 100%);
+}
+
+.page[data-reader-theme="dark"] {
+  --reader-bg: hsl(220, 20%, 10%);
+  --reader-text: hsl(40, 15%, 85%);
+  --reader-bar-bg: hsl(220, 18%, 14%);
+}
+
+.page[data-reader-theme="sepia"] {
+  --reader-bg: hsl(40, 40%, 90%);
+  --reader-text: hsl(30, 30%, 20%);
+  --reader-bar-bg: hsl(40, 35%, 85%);
+}
+
+.page {
+  background: var(--reader-bg);
+  color: var(--reader-text);
+}
+
+/* Top Bar */
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--reader-bar-bg);
+  border-bottom: 1px solid var(--color-border);
+  backdrop-filter: blur(8px);
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--reader-text);
+  text-decoration: none;
+  font-size: 0.875rem;
+  max-width: 300px;
+}
+
+.storyTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.fontSizeLabel {
+  font-size: 0.75rem;
+  color: var(--reader-text);
+  min-width: 36px;
+  text-align: center;
+}
+
+/* Content */
+.content {
+  max-width: var(--reader-max-width);
+  margin: 0 auto;
+  padding: var(--spacing-2xl) var(--spacing-md) var(--spacing-3xl);
+  line-height: var(--reader-line-height);
+}
+
+.chapterHeading {
+  font-family: var(--font-heading);
+  font-size: 1.5em;
+  font-weight: 700;
+  margin-bottom: var(--spacing-2xl);
+  text-align: center;
+  color: var(--reader-text);
+}
+
+.chapterText {
+  font-family: var(--font-reader, "Georgia", serif);
+  line-height: var(--reader-line-height);
+  word-break: break-word;
+}
+
+.chapterText p {
+  margin-bottom: 1em;
+  text-indent: 2em;
+}
+
+/* Premium Badge */
+.premiumBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.625rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  font-weight: 700;
+  text-transform: uppercase;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+/* Paywall */
+.paywall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-3xl) var(--spacing-xl);
+  text-align: center;
+  background: var(--reader-bar-bg);
+  border-radius: var(--radius-xl);
+  border: 2px dashed var(--color-border);
+  margin: var(--spacing-2xl) 0;
+  color: var(--reader-text);
+}
+
+.paywall h2 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.paywall p {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.paywallLink {
+  font-size: 0.8125rem;
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.paywallLink:hover {
+  text-decoration: underline;
+}
+
+/* Manga/Comic Reader styles */
+.mangaReader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 1000px; /* Wider for manga */
+  margin: 0 auto;
+  padding: 0;
+}
+
+.mangaReader img,
+.mangaReader :global(img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.mangaReader p {
+  margin: 0;
+  padding: 0;
+  line-height: 0;
+}
+
+/* Navigation */
+.chapterNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--reader-max-width);
+  margin: 0 auto;
+  padding: var(--spacing-lg) var(--spacing-md) var(--spacing-3xl);
+  gap: var(--spacing-md);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .topBar {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .backLink {
+    max-width: 100%;
+  }
+
+  .content {
+    padding: var(--spacing-lg) var(--spacing-sm) var(--spacing-2xl);
+  }
+
+  .chapterNav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

@@ -1,0 +1,21 @@
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.9s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/stories/[id]/chapters/[number]/page.tsx:144:40
+Type error: Cannot find name 'Moon'.
+
+[0m [90m 142 |[39m             aria[33m-[39mlabel[33m=[39m[32m"Đổi chế độ đọc"[39m
+ [90m 143 |[39m           [33m>[39m
+[31m[1m>[22m[39m[90m 144 |[39m             {readerTheme [33m===[39m [32m"dark"[39m [33m?[39m [33m<[39m[33mMoon[39m size[33m=[39m{[35m18[39m} [35m/> : <Sun size={18} /[39m[33m>[39m}
+ [90m     |[39m                                        [31m[1m^[22m[39m
+ [90m 145 |[39m           [33m<[39m[33m/[39m[33mbutton[39m[33m>[39m
+ [90m 146 |[39m           [33m<[39m[33mLink[39m
+ [90m 147 |[39m             href[33m=[39m{[32m`/stories/${storyId}`[39m}[0m
+Next.js build worker exited with code: 1 and signal: null
