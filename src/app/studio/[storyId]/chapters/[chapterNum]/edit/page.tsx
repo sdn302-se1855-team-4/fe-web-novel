@@ -1,70 +1,117 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, BookOpen } from "lucide-react";
+import { Save, ChevronLeft } from "lucide-react";
+import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
+import { useToast } from "@/components/Toast";
 
-export default function CreateChapterPage() {
+interface ChapterDetail {
+  id: string;
+  chapterNumber: number;
+  title: string;
+  content: string;
+  isPremium?: boolean;
+  price?: number;
+}
+
+export default function EditChapterPage() {
   const params = useParams();
   const router = useRouter();
   const storyId = params.storyId as string;
+  const chapterNum = Number(params.chapterNum);
 
   const [title, setTitle] = useState("");
-  const [chapterNumber, setChapterNumber] = useState(1);
   const [content, setContent] = useState("");
   const [isPremium, setIsPremium] = useState(false);
   const [price, setPrice] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const { showToast } = useToast();
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
     if (!isLoggedIn()) {
       router.push("/login");
       return;
     }
-    setError("");
-    setLoading(true);
-    try {
-      const slug = title
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\w\s-]/g, "")
-        .replace(/[\s_-]+/g, "-")
-        .replace(/^-+|-+$/g, "");
 
-      await apiFetch(`/stories/${storyId}/chapters`, {
-        method: "POST",
+    apiFetch<ChapterDetail>(
+      `/stories/${storyId}/chapters/${chapterNum}?skipView=true`,
+    )
+      .then((ch) => {
+        setTitle(ch.title);
+        setContent(ch.content);
+        setIsPremium(!!ch.isPremium);
+        setPrice(ch.price || 0);
+      })
+      .catch(() => {
+        showToast("Không tìm thấy chương 😢", "error");
+        router.push(`/studio/${storyId}`);
+      })
+      .finally(() => setLoading(false));
+  }, [storyId, chapterNum, router, showToast]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await apiFetch(`/stories/${storyId}/chapters/${chapterNum}`, {
+        method: "PUT",
         body: JSON.stringify({
           title,
-          slug,
-          chapterNumber,
           content,
           isPremium,
           price: isPremium ? price : 0,
         }),
       });
+      showToast("Lưu chương thành công!", "success");
       router.push(`/studio/${storyId}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Tạo chương thất bại");
+      showToast(
+        err instanceof Error ? err.message : "Sửa chương thất bại",
+        "error",
+      );
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="page-wrapper">
+        <div className="container" style={{ maxWidth: 800 }}>
+          <div
+            className="skeleton"
+            style={{ height: 40, width: "50%", marginBottom: 24 }}
+          />
+          <div className="skeleton" style={{ height: 400, width: "100%" }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-wrapper">
       <div className="container" style={{ maxWidth: 800 }}>
-        <h1 className="section-title">
-          <Plus size={24} /> Thêm chương mới
-        </h1>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "1rem",
+            marginBottom: "1.5rem",
+          }}
+        >
+          <Link href={`/studio/${storyId}`} className="btn-icon">
+            <ChevronLeft size={24} />
+          </Link>
+          <h1 className="section-title" style={{ margin: 0 }}>
+            Sửa Chương {chapterNum}
+          </h1>
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-lg">
-          {error && <div className="error-text">{error}</div>}
-
           <div className="form-group">
             <label htmlFor="title" className="label">
               Tiêu đề chương *
@@ -76,41 +123,6 @@ export default function CreateChapterPage() {
               onChange={(e) => setTitle(e.target.value)}
               required
               placeholder="Nhập tiêu đề chương"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="chapterNumber" className="label">
-              Số chương *
-            </label>
-            <input
-              id="chapterNumber"
-              type="number"
-              min="1"
-              className="input"
-              value={chapterNumber}
-              onChange={(e) => setChapterNumber(parseInt(e.target.value) || 1)}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="content" className="label">
-              Nội dung chương *
-            </label>
-            <textarea
-              id="content"
-              className="input textarea"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-              placeholder="Viết nội dung chương tại đây..."
-              rows={20}
-              style={{
-                fontFamily: "var(--font-reader)",
-                lineHeight: "var(--reader-line-height)",
-                minHeight: 400,
-              }}
             />
           </div>
 
@@ -169,12 +181,32 @@ export default function CreateChapterPage() {
             )}
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? (
-              "Đang tạo..."
+          <div className="form-group">
+            <label htmlFor="content" className="label">
+              Nội dung chương *
+            </label>
+            <textarea
+              id="content"
+              className="input textarea"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              required
+              placeholder="Viết nội dung chương tại đây..."
+              rows={20}
+              style={{
+                fontFamily: "var(--font-reader)",
+                lineHeight: "var(--reader-line-height)",
+                minHeight: 400,
+              }}
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? (
+              "Đang lưu..."
             ) : (
               <>
-                <BookOpen size={18} /> Đăng chương
+                <Save size={18} /> Lưu thay đổi
               </>
             )}
           </button>

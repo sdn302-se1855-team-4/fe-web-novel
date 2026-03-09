@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Save, Plus, BookOpen, Trash2, Edit, RefreshCw } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
+import { useToast } from "@/components/Toast";
+import ConfirmModal from "@/components/ConfirmModal";
 import styles from "../studio.module.css";
 
 interface Story {
@@ -41,6 +43,14 @@ export default function EditStoryPage() {
   const [status, setStatus] = useState("ONGOING");
   const [isPublished, setIsPublished] = useState(false);
   const [error, setError] = useState("");
+  const { showToast } = useToast();
+  const [deleteModal, setDeleteModal] = useState<{
+    open: boolean;
+    chNum: number | null;
+  }>({
+    open: false,
+    chNum: null,
+  });
 
   const handleRandomCover = () => {
     const randomId = Math.floor(Math.random() * 1000);
@@ -53,7 +63,7 @@ export default function EditStoryPage() {
       return;
     }
     Promise.all([
-      apiFetch<Story>(`/stories/${storyId}`),
+      apiFetch<Story>(`/stories/${storyId}?skipView=true`),
       apiFetch<Chapter[]>(`/stories/${storyId}/chapters`),
     ])
       .then(([s, ch]) => {
@@ -83,23 +93,32 @@ export default function EditStoryPage() {
           coverImage: coverImage || undefined,
         }),
       });
-      alert("Cập nhật thành công!");
+      showToast("Cập nhật thành công!", "success");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Cập nhật thất bại");
+      showToast("Cập nhật thất bại", "error");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteChapter = async (chNum: number) => {
-    if (!confirm(`Xóa chương ${chNum}?`)) return;
+  const confirmDeleteChapter = (chNum: number) => {
+    setDeleteModal({ open: true, chNum });
+  };
+
+  const executeDeleteChapter = async () => {
+    const { chNum } = deleteModal;
+    if (chNum === null) return;
+
+    setDeleteModal({ open: false, chNum: null });
     try {
       await apiFetch(`/stories/${storyId}/chapters/${chNum}`, {
         method: "DELETE",
       });
       setChapters((prev) => prev.filter((ch) => ch.chapterNumber !== chNum));
+      showToast(`Đã xóa chương ${chNum}`, "success");
     } catch {
-      alert("Xóa chương thất bại");
+      showToast("Xóa chương thất bại", "error");
     }
   };
 
@@ -291,9 +310,15 @@ export default function EditStoryPage() {
                   </div>
                 </div>
                 <div className={styles.storyActions}>
+                  <Link
+                    href={`/studio/${storyId}/chapters/${ch.chapterNumber}/edit`}
+                    className="btn btn-outline btn-sm"
+                  >
+                    <Edit size={14} /> Sửa
+                  </Link>
                   <button
                     className="btn-icon"
-                    onClick={() => handleDeleteChapter(ch.chapterNumber)}
+                    onClick={() => confirmDeleteChapter(ch.chapterNumber)}
                     aria-label="Xóa chương"
                   >
                     <Trash2 size={16} />
@@ -311,6 +336,17 @@ export default function EditStoryPage() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        title="Xóa chương"
+        message={`Bạn có chắc muốn xóa chương ${deleteModal.chNum}? Hành động này không thể hoàn tác.`}
+        confirmText="Xác nhận xóa"
+        cancelText="Hủy"
+        variant="danger"
+        onConfirm={executeDeleteChapter}
+        onCancel={() => setDeleteModal({ open: false, chNum: null })}
+      />
     </div>
   );
 }

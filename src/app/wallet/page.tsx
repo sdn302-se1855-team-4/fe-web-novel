@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn, getUserRole } from "@/lib/auth";
+import { useToast } from "@/components/Toast";
 import styles from "./wallet.module.css";
 
 interface WalletData {
@@ -61,6 +62,7 @@ export default function WalletPage() {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
   const [withdrawing, setWithdrawing] = useState(false);
+  const { showToast } = useToast();
 
   const withdrawXu = parseInt(withdrawAmount, 10) || 0;
   const withdrawVndGross = withdrawXu * 1000;
@@ -110,7 +112,7 @@ export default function WalletPage() {
       // Redirect to PayOS checkout
       window.location.href = res.checkoutUrl;
     } catch (err) {
-      alert((err as Error).message || "Lỗi tạo link thanh toán");
+      showToast((err as Error).message || "Lỗi tạo link thanh toán", "error");
       setDepositing(false);
     }
   };
@@ -118,11 +120,11 @@ export default function WalletPage() {
   const handleWithdraw = async (e: FormEvent) => {
     e.preventDefault();
     if (withdrawXu < 200) {
-      alert("Tối thiểu 200 xu để rút");
+      showToast("Tối thiểu 200 xu để rút", "warning");
       return;
     }
     if (!bankName || !accountNumber || !accountName) {
-      alert("Vui lòng nhập đầy đủ thông tin ngân hàng");
+      showToast("Vui lòng nhập đầy đủ thông tin ngân hàng", "warning");
       return;
     }
     setWithdrawing(true);
@@ -141,8 +143,9 @@ export default function WalletPage() {
         }),
       });
       setWallet((prev) => (prev ? { ...prev, balance: res.balance } : prev));
-      alert(
-        `${res.message}\nThực nhận: ${res.details.vndNet.toLocaleString("vi")}₫ (phí: ${res.details.fee.toLocaleString("vi")}₫)`,
+      showToast(
+        `${res.message} - Thực nhận: ${res.details.vndNet.toLocaleString("vi")}₫ (phí: ${res.details.fee.toLocaleString("vi")}₫)`,
+        "success",
       );
       setWithdrawAmount("");
       setBankName("");
@@ -150,9 +153,10 @@ export default function WalletPage() {
       setAccountName("");
       fetchData();
     } catch (err) {
-      alert(
+      showToast(
         (err as Error).message ||
           "Rút tiền thất bại. Vui lòng kiểm tra lại số dư.",
+        "error",
       );
     }
     setWithdrawing(false);

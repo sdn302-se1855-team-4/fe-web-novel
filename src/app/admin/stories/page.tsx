@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle, XCircle, Eye, BookOpen } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { useToast } from "@/components/Toast";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface AdminStory {
   id: string;
@@ -23,6 +25,14 @@ export default function AdminStoriesPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "published">("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const { showToast } = useToast();
+  const [rejectModal, setRejectModal] = useState<{
+    open: boolean;
+    storyId: string;
+  }>({
+    open: false,
+    storyId: "",
+  });
 
   const fetchStories = () => {
     setLoading(true);
@@ -43,23 +53,32 @@ export default function AdminStoriesPage() {
       setStories((prev) =>
         prev.map((s) => (s.id === storyId ? { ...s, isPublished: true } : s)),
       );
+      showToast("Đã duyệt truyện", "success");
     } catch {
-      alert("Duyệt truyện thất bại");
+      showToast("Duyệt truyện thất bại", "error");
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleReject = async (storyId: string) => {
-    if (!confirm("Bạn có chắc muốn từ chối truyện này?")) return;
+  const confirmReject = (storyId: string) => {
+    setRejectModal({ open: true, storyId });
+  };
+
+  const executeReject = async () => {
+    const { storyId } = rejectModal;
+    if (!storyId) return;
+
+    setRejectModal({ open: false, storyId: "" });
     setActionLoading(storyId);
     try {
       await apiFetch(`/admin/stories/${storyId}/reject`, { method: "PUT" });
       setStories((prev) =>
         prev.map((s) => (s.id === storyId ? { ...s, isPublished: false } : s)),
       );
+      showToast("Đã từ chối truyện", "success");
     } catch {
-      alert("Từ chối truyện thất bại");
+      showToast("Từ chối truyện thất bại", "error");
     } finally {
       setActionLoading(null);
     }
@@ -228,7 +247,7 @@ export default function AdminStoriesPage() {
                           <button
                             className="btn-icon"
                             title="Gỡ xuất bản"
-                            onClick={() => handleReject(story.id)}
+                            onClick={() => confirmReject(story.id)}
                             disabled={actionLoading === story.id}
                             style={{ color: "#ef4444" }}
                           >
@@ -265,6 +284,17 @@ export default function AdminStoriesPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={rejectModal.open}
+        title="Từ chối truyện"
+        message="Bạn có chắc muốn từ chối truyện này? Truyện sẽ bị gỡ khỏi danh sách hiển thị công khai."
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        variant="danger"
+        onConfirm={executeReject}
+        onCancel={() => setRejectModal({ open: false, storyId: "" })}
+      />
     </div>
   );
 }

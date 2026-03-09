@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
+import { useToast } from "@/components/Toast";
 import styles from "./chapterReader.module.css";
 
 interface Chapter {
@@ -43,6 +44,7 @@ export default function ChapterReaderPage() {
   );
   const [totalChapters, setTotalChapters] = useState(0);
   const [purchasing, setPurchasing] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchChapter = async () => {
@@ -224,7 +226,7 @@ export default function ChapterReaderPage() {
                 } catch (err: unknown) {
                   const msg =
                     err instanceof Error ? err.message : "Lỗi mua chương";
-                  alert(msg);
+                  showToast(msg, "error");
                 }
                 setPurchasing(false);
               }}

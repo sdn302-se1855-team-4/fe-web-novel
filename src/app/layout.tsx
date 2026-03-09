@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Source_Sans_3, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ToastProvider } from "@/components/Toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -35,9 +36,11 @@ export default function RootLayout({
     <html lang="vi" suppressHydrationWarning>
       <body className={`${sourceSans.variable} ${playfairDisplay.variable}`}>
         <ThemeProvider>
-          <Navbar />
-          <main>{children}</main>
-          <Footer />
+          <ToastProvider>
+            <Navbar />
+            <main>{children}</main>
+            <Footer />
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

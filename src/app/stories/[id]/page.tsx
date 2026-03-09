@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
+import { useToast } from "@/components/Toast";
 import styles from "./storyDetail.module.css";
 
 interface Story {
@@ -97,6 +98,7 @@ export default function StoryDetailPage() {
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewContent, setNewReviewContent] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     Promise.all([
@@ -189,12 +191,13 @@ export default function StoryDetailPage() {
           message: donateMessage,
         }),
       });
-      alert("Ủng hộ thành công! Cảm ơn bạn.");
+      showToast("Ủng hộ thành công! Cảm ơn bạn.", "success");
       setShowDonate(false);
       setDonateMessage("");
     } catch (err) {
-      alert(
+      showToast(
         (err as Error).message || "Ủng hộ thất bại. Vui lòng kiểm tra số dư.",
+        "error",
       );
     } finally {
       setDonateLoading(false);
@@ -220,7 +223,10 @@ export default function StoryDetailPage() {
       setNewReviewContent("");
       setNewReviewRating(5);
     } catch (err) {
-      alert((err as Error).message || "Bạn đã đánh giá bộ truyện này rồi.");
+      showToast(
+        (err as Error).message || "Bạn đã đánh giá bộ truyện này rồi.",
+        "error",
+      );
     } finally {
       setReviewLoading(false);
     }

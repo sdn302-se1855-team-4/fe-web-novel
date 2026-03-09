@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Pen, Plus, BookOpen, Eye, Edit, Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
+import { useToast } from "@/components/Toast";
+import ConfirmModal from "@/components/ConfirmModal";
 import styles from "./studio.module.css";
 
 interface Story {
@@ -24,6 +26,16 @@ export default function StudioPage() {
   const router = useRouter();
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
+  const [deleteModal, setDeleteModal] = useState<{
+    open: boolean;
+    storyId: string;
+    title: string;
+  }>({
+    open: false,
+    storyId: "",
+    title: "",
+  });
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -41,13 +53,21 @@ export default function StudioPage() {
       .finally(() => setLoading(false));
   }, [router]);
 
-  const handleDelete = async (storyId: string, title: string) => {
-    if (!confirm(`Bạn có chắc muốn xóa truyện "${title}"?`)) return;
+  const confirmDelete = (storyId: string, title: string) => {
+    setDeleteModal({ open: true, storyId, title });
+  };
+
+  const executeDelete = async () => {
+    const { storyId } = deleteModal;
+    if (!storyId) return;
+
+    setDeleteModal({ open: false, storyId: "", title: "" });
     try {
       await apiFetch(`/stories/${storyId}`, { method: "DELETE" });
       setStories((prev) => prev.filter((s) => s.id !== storyId));
+      showToast("Đã xóa truyện", "success");
     } catch {
-      alert("Xóa truyện thất bại");
+      showToast("Xóa truyện thất bại", "error");
     }
   };
 
@@ -135,6 +155,12 @@ export default function StudioPage() {
                 </div>
                 <div className={styles.storyActions}>
                   <Link
+                    href={`/studio/${story.id}/chapters/create`}
+                    className="btn btn-outline btn-sm"
+                  >
+                    <Plus size={14} /> Thêm chương
+                  </Link>
+                  <Link
                     href={`/studio/${story.id}`}
                     className="btn btn-outline btn-sm"
                   >
@@ -142,7 +168,7 @@ export default function StudioPage() {
                   </Link>
                   <button
                     className="btn-icon"
-                    onClick={() => handleDelete(story.id, story.title)}
+                    onClick={() => confirmDelete(story.id, story.title)}
                     aria-label="Xóa truyện"
                   >
                     <Trash2 size={16} />
@@ -162,6 +188,17 @@ export default function StudioPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        title="Xóa truyện"
+        message={`Bạn có chắc muốn xóa truyện "${deleteModal.title}"? Mọi dữ liệu và chương truyện sẽ bị xóa vĩnh viễn.`}
+        confirmText="Xác nhận xóa"
+        cancelText="Hủy"
+        variant="danger"
+        onConfirm={executeDelete}
+        onCancel={() => setDeleteModal({ open: false, storyId: "", title: "" })}
+      />
     </div>
   );
 }
