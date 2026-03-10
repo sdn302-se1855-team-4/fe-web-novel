@@ -11,7 +11,7 @@ interface Story {
   type?: string;
   status?: string;
   viewCount?: number;
-  averageRating?: number;
+  rating?: number;
   author?: {
     id: string;
     name?: string;
@@ -77,12 +77,25 @@ export default function StoryCard({ story }: { story: Story }) {
       </div>
       <div className={styles.info}>
         <h3 className={styles.title}>{story.title}</h3>
-        {story.author && <p className={styles.author}>{authorName}</p>}
+        {story.author && (
+          <p
+            className={styles.author}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.location.href = `/users/${story.author!.id}`;
+            }}
+            style={{ cursor: "pointer" }}
+            title={`Xem hồ sơ ${authorName}`}
+          >
+            {authorName}
+          </p>
+        )}
         <div className={styles.meta}>
-          {story.averageRating !== undefined && story.averageRating > 0 && (
+          {story.rating !== undefined && story.rating > 0 && (
             <span className={styles.rating}>
               <Star size={14} fill="currentColor" />
-              {story.averageRating.toFixed(1)}
+              {story.rating.toFixed(1)}
             </span>
           )}
           {story._count?.chapters !== undefined && (

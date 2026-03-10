@@ -29,7 +29,7 @@ interface Story {
   type?: string;
   status?: string;
   viewCount?: number;
-  averageRating?: number;
+  rating?: number;
   author?: {
     id: string;
     name?: string;
@@ -322,10 +322,10 @@ export default function StoryDetailPage() {
               {story.type && (
                 <span className="badge badge-primary">{story.type}</span>
               )}
-              {story.averageRating !== undefined && story.averageRating > 0 && (
+              {story.rating !== undefined && story.rating > 0 && (
                 <span className={styles.ratingBadge}>
                   <Star size={14} fill="currentColor" />{" "}
-                  {story.averageRating.toFixed(1)}
+                  {story.rating.toFixed(1)}
                 </span>
               )}
               <span className={styles.metaItem}>

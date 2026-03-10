@@ -14,7 +14,7 @@ interface StoryItem {
   coverImage?: string;
   type?: string;
   status?: string;
-  averageRating?: number;
+  rating?: number;
   author?: {
     id: string;
     name: string;

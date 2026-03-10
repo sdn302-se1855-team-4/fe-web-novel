@@ -26,7 +26,7 @@ interface Story {
   type?: string;
   status?: string;
   viewCount?: number;
-  averageRating?: number;
+  rating?: number;
   author?: {
     id: string;
     name?: string;
@@ -139,7 +139,7 @@ export default function HomePage() {
   const getRankedStories = () => {
     const copy = [...topViewedStories];
     if (rankTab === "rating") {
-      copy.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+      copy.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     }
     return copy.slice(0, 10);
   };
@@ -398,7 +398,7 @@ export default function HomePage() {
                 {rankTab === "views"
                   ? `${Intl.NumberFormat("vi", { notation: "compact" }).format(story.viewCount || 0)} lượt xem`
                   : rankTab === "rating"
-                    ? `${(story.averageRating || 0).toFixed(1)} ★`
+                    ? `${(story.rating || 0).toFixed(1)} ★`
                     : `${Intl.NumberFormat("vi", { notation: "compact" }).format(story.viewCount || 0)} lượt xem`}
               </span>
             </Link>

@@ -14,7 +14,7 @@ interface Story {
   type?: string;
   status?: string;
   viewCount?: number;
-  averageRating?: number;
+  rating?: number;
   author?: { id: string; name: string };
   genres?: { id: string; name: string }[];
   _count?: { chapters: number };

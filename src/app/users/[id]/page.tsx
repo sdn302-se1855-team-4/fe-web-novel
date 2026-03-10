@@ -32,7 +32,7 @@ interface ProfileData {
     type?: string;
     status?: string;
     viewCount?: number;
-    averageRating?: number;
+    rating?: number;
     author?: {
       id: string;
       name?: string;
@@ -51,6 +51,7 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.resolve().then(() => setLoggedIn(isLoggedIn()));
@@ -63,6 +64,11 @@ export default function PublicProfilePage() {
     if (isLoggedIn()) {
       apiFetch<{ isFollowing: boolean }>(`/follow/check/${userId}`)
         .then((res) => setFollowing(res.isFollowing))
+        .catch(() => {});
+
+      // Get current user ID to hide follow button on own profile
+      apiFetch<{ id: string }>("/auth/profile")
+        .then((res) => setCurrentUserId(res.id))
         .catch(() => {});
     }
   }, [userId]);
@@ -175,7 +181,7 @@ export default function PublicProfilePage() {
               {new Date(profile.createdAt).toLocaleDateString("vi")}
             </span>
           </div>
-          {loggedIn && (
+          {loggedIn && currentUserId !== userId && (
             <button
               className={`btn ${following ? "btn-outline" : "btn-primary"} ${styles.followBtn}`}
               onClick={toggleFollow}
