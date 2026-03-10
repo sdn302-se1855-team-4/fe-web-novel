@@ -304,7 +304,16 @@ export default function StoryDetailPage() {
 
             <div className={styles.authorRow}>
               <User size={16} />
-              <span>{authorName}</span>
+              {story.author?.id ? (
+                <Link
+                  href={`/users/${story.author.id}`}
+                  className={styles.authorLink}
+                >
+                  {authorName}
+                </Link>
+              ) : (
+                <span>{authorName}</span>
+              )}
             </div>
 
             <div className={styles.metaRow}>

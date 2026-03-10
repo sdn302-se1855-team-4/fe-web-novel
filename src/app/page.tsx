@@ -178,12 +178,24 @@ export default function HomePage() {
                     : "Khám phá câu chuyện hấp dẫn tại BestNovelVN"}
                 </p>
                 <div className={styles.carouselMeta}>
-                  <span>
-                    {currentFeatured?.author?.displayName ||
-                      currentFeatured?.author?.username ||
-                      currentFeatured?.author?.name ||
-                      ""}
-                  </span>
+                  {currentFeatured?.author?.id ? (
+                    <Link
+                      href={`/users/${currentFeatured.author.id}`}
+                      className={styles.carouselAuthor}
+                    >
+                      {currentFeatured?.author?.displayName ||
+                        currentFeatured?.author?.username ||
+                        currentFeatured?.author?.name ||
+                        "Tác giả"}
+                    </Link>
+                  ) : (
+                    <span>
+                      {currentFeatured?.author?.displayName ||
+                        currentFeatured?.author?.username ||
+                        currentFeatured?.author?.name ||
+                        "Tác giả"}
+                    </span>
+                  )}
                   {currentFeatured?._count?.chapters !== undefined && (
                     <span>{currentFeatured._count.chapters} chương</span>
                   )}
@@ -385,10 +397,25 @@ export default function HomePage() {
               <div className={styles.rankInfo}>
                 <span className={styles.rankTitle}>{story.title}</span>
                 <span className={styles.rankMeta}>
-                  {story.author?.displayName ||
-                    story.author?.username ||
-                    story.author?.name ||
-                    "Unknown"}
+                  {story.author?.id ? (
+                    <Link
+                      href={`/users/${story.author.id}`}
+                      className={styles.rankAuthor}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {story.author?.displayName ||
+                        story.author?.username ||
+                        story.author?.name ||
+                        "Tác giả"}
+                    </Link>
+                  ) : (
+                    <span>
+                      {story.author?.displayName ||
+                        story.author?.username ||
+                        story.author?.name ||
+                        "Tác giả"}
+                    </span>
+                  )}
                   {story.genres && story.genres.length > 0 && (
                     <> · {story.genres[0].name}</>
                   )}
