@@ -45,7 +45,10 @@ export default function HistoryPage() {
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>,
   ) => {
-    (e.target as HTMLImageElement).src = DEFAULT_COVER;
+    const target = e.target as HTMLImageElement;
+    if (target.src !== DEFAULT_COVER) {
+      target.src = DEFAULT_COVER;
+    }
   };
 
   const formatDate = (dateStr: string) => {

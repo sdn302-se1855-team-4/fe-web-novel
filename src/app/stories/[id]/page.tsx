@@ -272,7 +272,10 @@ export default function StoryDetailPage() {
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>,
   ) => {
-    (e.target as HTMLImageElement).src = DEFAULT_COVER;
+    const target = e.target as HTMLImageElement;
+    if (target.src !== DEFAULT_COVER) {
+      target.src = DEFAULT_COVER;
+    }
   };
 
   return (
