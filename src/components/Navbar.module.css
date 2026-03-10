@@ -512,10 +512,6 @@
     display: none;
   }
 
-  .notifWrap {
-    /* keep bell visible on mobile */
-  }
-
   .userMenuWrap {
     display: none;
   }
