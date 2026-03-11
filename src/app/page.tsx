@@ -65,7 +65,8 @@ export default function HomePage() {
 
   useEffect(() => {
     const logged = isLoggedIn();
-    setLoggedIn(logged);
+    // Defer state update to avoid cascading render warning
+    Promise.resolve().then(() => setLoggedIn(logged));
 
     const fetches: Promise<void>[] = [
       apiFetch<{ data: Story[] } | Story[]>("/stories?limit=8&sort=latest")

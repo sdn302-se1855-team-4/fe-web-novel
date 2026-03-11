@@ -19,6 +19,7 @@ interface AnalyticsStory {
   id: string;
   title: string;
   viewCount: number;
+  totalEarnings?: number;
   _count?: {
     chapters: number;
   };
@@ -38,24 +39,31 @@ export default function AnalyticsDashboardPage() {
     // In a real app we'd have a specific /studio/analytics endpoint.
     // Here we aggregate from my stories and wallet if necessary, or just mock some fields if missing,
     // assuming we fetch my stories to sum the views.
-    apiFetch<AnalyticsStory[] | { data: AnalyticsStory[] }>("/stories/my")
-      .then((res) => {
-        const storiesList = Array.isArray(res)
-          ? res
-          : (res as { data: AnalyticsStory[] }).data || [];
+    Promise.all([
+      apiFetch<AnalyticsStory[] | { data: AnalyticsStory[] }>("/stories/my").catch(() => []),
+      apiFetch<{ totalEarned: number }>("/wallet").catch(() => null)
+    ])
+      .then(([storiesRes, walletRes]) => {
+        const storiesList = Array.isArray(storiesRes)
+          ? storiesRes
+          : (storiesRes as { data: AnalyticsStory[] }).data || [];
+          
         const totalViews = storiesList.reduce(
           (acc, s) => acc + (s.viewCount || 0),
           0,
         );
-        // Simulate followers and earnings based on views for presentation
+        
+        // Use real wallet earnings, default to 0
+        const actualEarnings = walletRes ? walletRes.totalEarned : 0;
+        
+        // Still mock followers for now since we don't have a simple /me endpoint with followers count
         const mockFollowers = Math.floor(totalViews * 0.15);
-        const mockEarnings = totalViews * 5; // 5 xu per view as a funny metric
 
         setData({
           totalViews,
           totalFollowers: mockFollowers,
           totalStories: storiesList.length,
-          totalEarnings: mockEarnings,
+          totalEarnings: actualEarnings,
           stories: storiesList.sort(
             (a, b) => (b.viewCount || 0) - (a.viewCount || 0),
           ),
@@ -246,8 +254,11 @@ export default function AnalyticsDashboardPage() {
                     >
                       <BookOpen size={16} /> {story.title}
                     </strong>
-                    <span style={{ fontWeight: 600 }}>
-                      {(story.viewCount || 0).toLocaleString()} lượt đọc
+                    <span style={{ fontWeight: 600, display: "flex", gap: "1rem" }}>
+                      <span>{(story.viewCount || 0).toLocaleString()} lượt đọc</span>
+                      <span style={{ color: "var(--color-primary)" }}>
+                        {(story.totalEarnings || 0).toLocaleString()} xu
+                      </span>
                     </span>
                   </div>
                   <div
