@@ -17,6 +17,8 @@ import {
   Gift,
   Clock,
   Share2,
+  ChevronLeft,
+  ThumbsUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
@@ -271,14 +273,14 @@ export default function StoryDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#020617] pt-24 pb-20">
+      <div className="min-h-screen bg-bg-brand pt-24 pb-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row gap-8">
-            <div className="w-full md:w-72 aspect-[2/3] bg-white/5 rounded-2xl animate-pulse" />
+            <div className="w-full md:w-72 aspect-[2/3] bg-surface-elevated rounded-2xl animate-pulse" />
             <div className="flex-1 space-y-4">
-              <div className="h-10 bg-white/5 rounded-lg animate-pulse w-2/3" />
-              <div className="h-6 bg-white/5 rounded-lg animate-pulse w-1/3" />
-              <div className="h-32 bg-white/5 rounded-lg animate-pulse w-full" />
+              <div className="h-10 bg-surface-elevated rounded-lg animate-pulse w-2/3" />
+              <div className="h-6 bg-surface-elevated rounded-lg animate-pulse w-1/3" />
+              <div className="h-32 bg-surface-elevated rounded-lg animate-pulse w-full" />
             </div>
           </div>
         </div>
@@ -288,10 +290,10 @@ export default function StoryDetailPage() {
 
   if (!story) {
     return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center text-white">
+      <div className="min-h-screen bg-bg-brand flex items-center justify-center text-text-primary">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Không tìm thấy truyện</h2>
-          <Button onClick={() => router.push("/stories")} variant="outline" className="border-white/10 hover:bg-white/5 text-white">
+          <Button onClick={() => router.push("/stories")} variant="outline" className="border-border-brand hover:bg-surface-elevated text-text-primary">
             Quay lại danh sách
           </Button>
         </div>
@@ -300,80 +302,71 @@ export default function StoryDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] pb-20 overflow-x-hidden">
+    <div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden -mt-[var(--navbar-height)]">
       {/* Immersive Background Header */}
-      <div className="relative h-[40vh] md:h-[50vh] w-full overflow-hidden">
+      <div className="relative h-[25vh] md:h-[30vh] w-full overflow-hidden">
         {story.coverImage && (
           <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-2xl opacity-30 transition-opacity duration-1000"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-3xl opacity-20 transition-opacity duration-1000"
             style={{ backgroundImage: `url(${story.coverImage})` }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/0 via-[#020617]/60 to-[#020617]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-bg-brand/0 via-bg-brand/80 to-bg-brand" />
       </div>
 
-      <div className="container max-w-7xl mx-auto px-4 -mt-32 md:-mt-48 relative z-10">
+      <div className="container max-w-7xl mx-auto px-6 -mt-24 md:-mt-32 relative z-10">
+        <div className="mb-6">
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-bold text-xs group"
+          >
+            <div className="p-1.5 rounded-lg bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
+              <ChevronLeft size={14} />
+            </div>
+            Quay lại
+          </button>
+        </div>
+
         <div className="flex flex-col md:flex-row gap-8 md:gap-12">
           {/* Left Sidebar - Cover Image */}
           <motion.div 
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full md:w-72 lg:w-80 shrink-0"
+            className="w-full md:w-56 lg:w-64 shrink-0"
           >
-            <div className="relative group rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 aspect-[2/3] bg-slate-900">
+            <div className="relative group rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-border-brand aspect-[2/3] bg-surface-elevated">
               {story.coverImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={story.coverImage}
                   alt={story.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   onError={handleImageError}
                 />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-slate-700 bg-slate-900">
+                <div className="w-full h-full flex flex-col items-center justify-center text-text-muted bg-surface-elevated">
                   <BookOpen size={64} className="mb-4 opacity-20" />
                   <span className="text-sm font-medium opacity-40">Không có ảnh bìa</span>
                 </div>
               )}
-              
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                <Button variant="outline" className="w-full bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-[#10b981] hover:border-[#10b981] hover:text-[#020617] transition-all rounded-xl">
-                  Xem ảnh lớn
-                </Button>
-              </div>
             </div>
 
-            <div className="mt-8 space-y-4">
+            <div className="mt-6 space-y-3">
               <Button 
-                onClick={handleBookmark}
-                className={cn(
-                  "w-full h-12 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg",
-                  bookmarked 
-                    ? "bg-[#10b981] text-[#020617] hover:bg-[#0da673]" 
-                    : "bg-white/5 text-white border border-white/10 hover:bg-white/10"
-                )}
+                variant="outline" 
+                onClick={() => setShowDonate(true)}
+                className="w-full h-10 border-rose-500/20 bg-surface-elevated text-rose-500 hover:bg-rose-500/10 transition-all rounded-lg gap-1.5 font-bold cursor-pointer text-xs"
               >
-                {bookmarked ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
-                {bookmarked ? "Đã theo dõi" : "Theo dõi truyện"}
+                <Heart size={14} fill="currentColor" />
+                Ủng hộ tác giả
               </Button>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowDonate(true)}
-                  className="h-12 border-rose-500/20 bg-rose-500/5 text-rose-500 hover:bg-rose-500 hover:text-white transition-all rounded-xl gap-2 cursor-pointer"
-                >
-                  <Heart size={18} fill="currentColor" />
-                  Ủng hộ
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-12 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all rounded-xl gap-2 cursor-pointer"
-                >
-                  <Share2 size={18} />
-                  Chia sẻ
-                </Button>
-              </div>
+              <Button 
+                variant="outline" 
+                className="w-full h-10 border-border-brand bg-surface-elevated text-text-primary hover:bg-surface-brand transition-all rounded-lg gap-1.5 font-bold cursor-pointer text-xs"
+              >
+                <Share2 size={14} />
+                Chia sẻ truyện
+              </Button>
             </div>
           </motion.div>
 
@@ -399,44 +392,44 @@ export default function StoryDetailPage() {
                     </Badge>
                   )}
                   {story.type && (
-                    <Badge variant="outline" className="px-3 py-1 rounded-full text-xs font-bold tracking-wider border-white/10 text-slate-400">
+                    <Badge variant="outline" className="px-3 py-1 rounded-full text-xs font-bold tracking-wider border-border-brand text-text-muted">
                       {story.type}
                     </Badge>
                   )}
                 </div>
 
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-text-primary leading-[1.2] tracking-tight">
                   {story.title}
                 </h1>
 
-                <div className="flex flex-wrap items-center gap-6 text-slate-400 font-medium">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted font-bold">
                   {story.author?.id ? (
-                    <Link href={`/users/${story.author.id}`} className="flex items-center gap-2 hover:text-[#10b981] transition-colors group">
-                      <div className="w-8 h-8 rounded-full bg-[#10b981]/10 flex items-center justify-center text-[#10b981] group-hover:bg-[#10b981] group-hover:text-[#020617] transition-all">
-                        <User size={14} />
+                    <Link href={`/users/${story.author.id}`} className="flex items-center gap-2 hover:text-primary-brand transition-colors group text-sm">
+                      <div className="w-7 h-7 rounded-full bg-primary-brand/10 flex items-center justify-center text-primary-brand group-hover:bg-primary-brand group-hover:text-white transition-all shadow-sm">
+                        <User size={12} />
                       </div>
-                      <span>{authorName}</span>
+                      <span className="text-text-primary">{authorName}</span>
                     </Link>
                   ) : (
                     <span className="flex items-center gap-2">
-                      <User size={16} />
+                      <User size={14} />
                       {authorName}
                     </span>
                   )}
 
-                  <div className="flex items-center gap-2">
-                    <Star className="text-yellow-500" size={16} fill="currentColor" />
-                    <span className="text-white font-bold">{story.rating?.toFixed(1) || "5.0"}</span>
+                  <div className="flex items-center gap-1.5">
+                    <Star className="text-accent-brand" size={14} fill="currentColor" />
+                    <span className="text-text-primary font-black">{story.rating?.toFixed(1) || "5.0"}</span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Eye size={16} />
+                  <div className="flex items-center gap-1.5">
+                    <Eye size={14} className="text-primary-brand" />
                     <span>{Intl.NumberFormat("vi").format(story.viewCount || 0)} lượt xem</span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Clock size={16} />
-                    <span>Cập nhật: {story.updatedAt ? new Intl.DateTimeFormat("vi").format(new Date(story.updatedAt)) : "Vừa xong"}</span>
+                  <div className="flex items-center gap-1.5">
+                    <Clock size={14} className="text-secondary-brand" />
+                    <span>{story.updatedAt ? new Intl.DateTimeFormat("vi").format(new Date(story.updatedAt)) : "Vừa xong"}</span>
                   </div>
                 </div>
               </div>
@@ -456,34 +449,54 @@ export default function StoryDetailPage() {
                 </div>
               )}
 
-              <Separator className="bg-white/5" />
+              <Separator className="bg-border-brand" />
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <div className="w-1.5 h-6 bg-[#10b981] rounded-full" />
+              <div className="space-y-3">
+                <h3 className="text-lg font-black text-text-primary flex items-center gap-2">
+                  <div className="w-1.5 h-5 bg-primary-brand rounded-full shadow-lg shadow-primary-glow" />
                   Cốt truyện
                 </h3>
-                <p className="text-slate-400 leading-relaxed text-lg line-clamp-6 hover:line-clamp-none transition-all duration-500 cursor-pointer italic">
+                <p className="text-text-secondary leading-relaxed text-sm md:text-base line-clamp-4 hover:line-clamp-none transition-all duration-500 cursor-pointer italic">
                   {story.description || "Chưa có mô tả cho bộ truyện này."}
                 </p>
               </div>
 
-              <div className="pt-4 flex flex-wrap gap-4">
+              <div className="pt-2 flex flex-wrap gap-2">
                 {chapters.length > 0 && (
                   <Button 
                     onClick={() => router.push(`/stories/${story.id}/chapters/${chapters[0]?.chapterNumber || 1}`)}
-                    className="h-14 px-10 bg-[#10b981] hover:bg-[#0da673] text-[#020617] font-black rounded-2xl gap-2 shadow-[0_10px_30px_rgba(16,185,129,0.3)] transition-all hover:scale-105 active:scale-95"
+                    className="h-10 px-6 bg-[#8ac94e] hover:bg-[#7ab343] text-white font-black rounded-lg gap-2 shadow-md transition-all hover:scale-105 active:scale-95 text-xs border-none"
                   >
-                    <BookOpen size={20} />
-                    ĐỌC TỪ ĐẦU
+                    <BookOpen size={16} />
+                    Đọc từ đầu
                   </Button>
                 )}
+                
+                <Button 
+                  onClick={handleBookmark}
+                  className={cn(
+                    "h-10 px-6 font-black rounded-lg gap-2 shadow-md transition-all hover:scale-105 active:scale-95 text-xs border-none",
+                    bookmarked 
+                      ? "bg-primary-brand text-slate-950" 
+                      : "bg-[#ff3b5c] hover:bg-[#e63250] text-white"
+                  )}
+                >
+                  {bookmarked ? <BookmarkCheck size={16} /> : "Theo dõi"}
+                </Button>
+
+                <Button 
+                  className="h-10 px-6 bg-[#b11ae1] hover:bg-[#9d17c8] text-white font-black rounded-lg gap-2 shadow-md transition-all hover:scale-105 active:scale-95 text-xs border-none"
+                >
+                  <ThumbsUp size={16} fill="currentColor" />
+                  Thích
+                </Button>
+
                 <Button 
                   variant="outline" 
-                  className="h-14 px-8 border-white/10 bg-white/5 text-white hover:bg-white/10 font-bold rounded-2xl gap-2"
+                  className="h-10 px-4 border-border-brand bg-surface-elevated text-text-primary hover:bg-surface-brand font-bold rounded-lg gap-2 text-xs"
                 >
-                  <MessageCircle size={20} />
-                  BÌNH LUẬN
+                  <MessageCircle size={16} />
+                  Bình luận
                 </Button>
               </div>
             </motion.div>
@@ -493,56 +506,56 @@ export default function StoryDetailPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mt-16"
+              className="mt-12"
             >
               <Tabs defaultValue="chapters" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="bg-white/5 p-1.5 h-auto rounded-2xl border border-white/10 backdrop-blur-xl mb-8 flex-wrap justify-start">
+                <TabsList className="bg-surface-elevated p-1 h-auto rounded-xl border border-border-brand backdrop-blur-xl mb-6 flex-wrap justify-start">
                   <TabsTrigger 
                     value="chapters" 
-                    className="rounded-xl px-6 py-3 data-[state=active]:bg-[#10b981] data-[state=active]:text-[#020617] text-slate-400 font-bold transition-all gap-2"
+                    className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-primary-brand data-[state=active]:text-slate-950 text-text-muted font-black transition-all gap-1.5"
                   >
-                    <BookOpen size={18} />
+                    <BookOpen size={14} />
                     CHƯƠNG ({chapters.length})
                   </TabsTrigger>
                   <TabsTrigger 
                     value="comments" 
-                    className="rounded-xl px-6 py-3 data-[state=active]:bg-[#10b981] data-[state=active]:text-[#020617] text-slate-400 font-bold transition-all gap-2"
+                    className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-primary-brand data-[state=active]:text-slate-950 text-text-muted font-black transition-all gap-1.5"
                   >
-                    <MessageCircle size={18} />
+                    <MessageCircle size={14} />
                     BÌNH LUẬN ({comments.length})
                   </TabsTrigger>
                   <TabsTrigger 
                     value="reviews" 
-                    className="rounded-xl px-6 py-3 data-[state=active]:bg-[#10b981] data-[state=active]:text-[#020617] text-slate-400 font-bold transition-all gap-2"
+                    className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-primary-brand data-[state=active]:text-slate-950 text-text-muted font-black transition-all gap-1.5"
                   >
-                    <Star size={18} />
+                    <Star size={14} />
                     PHẢN HỒI ({reviews.length})
                   </TabsTrigger>
                 </TabsList>
 
                 {/* Chapters Content */}
                 <TabsContent value="chapters" className="mt-0 outline-none">
-                  <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden divide-y divide-white/5 backdrop-blur-md shadow-2xl">
+                  <div className="bg-surface-brand border border-border-brand rounded-3xl overflow-hidden divide-y divide-border-brand backdrop-blur-md shadow-2xl">
                     {chapters.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border-brand">
                         {chapters.map((ch) => (
                           <Link
                             key={ch.id}
                             href={`/stories/${story.id}/chapters/${ch.chapterNumber}`}
-                            className="flex items-center justify-between p-6 bg-[#020617]/40 hover:bg-white/5 hover:pl-8 transition-all group"
+                            className="flex items-center justify-between p-4 bg-surface-brand hover:bg-surface-elevated hover:pl-6 transition-all group"
                           >
-                            <div className="flex items-center gap-4 min-w-0">
-                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center font-bold text-slate-400 group-hover:bg-[#10b981] group-hover:text-[#020617] transition-all">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-surface-elevated border border-border-brand flex items-center justify-center font-black text-[10px] text-text-muted group-hover:bg-primary-brand group-hover:text-white transition-all shadow-sm">
                                   {ch.chapterNumber}
                                 </div>
                                 <div className="truncate">
-                                  <p className="text-white font-bold truncate group-hover:text-[#10b981] transition-colors">{ch.title}</p>
-                                  <p className="text-xs text-slate-500 mt-0.5">Cập nhật: {ch.createdAt ? new Intl.DateTimeFormat("vi").format(new Date(ch.createdAt)) : "Hôm nay"}</p>
+                                  <p className="text-text-primary font-bold text-sm truncate group-hover:text-primary-brand transition-colors">{ch.title}</p>
+                                  <p className="text-[10px] text-text-muted mt-0.5">Cập nhật: {ch.createdAt ? new Intl.DateTimeFormat("vi").format(new Date(ch.createdAt)) : "Hôm nay"}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3 shrink-0 ml-4">
-                              {ch.isPremium && <Crown size={14} className="text-yellow-500" />}
-                              <ChevronRight size={18} className="text-slate-700 group-hover:text-white transition-colors" />
+                            <div className="flex items-center gap-2 shrink-0 ml-4">
+                              {ch.isPremium && <Crown size={12} className="text-accent-brand" />}
+                              <ChevronRight size={14} className="text-text-muted group-hover:text-primary-brand transition-colors" />
                             </div>
                           </Link>
                         ))}
@@ -559,12 +572,12 @@ export default function StoryDetailPage() {
                 <TabsContent value="comments" className="mt-0 outline-none">
                   <div className="space-y-8">
                     {/* Comment Form */}
-                    <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-xl space-y-4">
-                       <h4 className="text-lg font-bold text-white">Viết bình luận</h4>
+                    <div className="bg-surface-elevated border border-border-brand p-6 rounded-3xl backdrop-blur-xl space-y-4 shadow-xl">
+                       <h4 className="text-xl font-black text-text-primary">Viết bình luận</h4>
                        <textarea 
                          rows={4}
                          placeholder="Bạn nghĩ gì về bộ truyện này?"
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 transition-all resize-none"
+                         className="w-full bg-surface-brand border border-border-brand rounded-2xl p-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-brand/50 transition-all resize-none shadow-inner"
                          value={newComment}
                          onChange={(e) => setNewComment(e.target.value)}
                        />
@@ -572,7 +585,7 @@ export default function StoryDetailPage() {
                          <Button 
                            onClick={handleComment} 
                            disabled={commentLoading || !newComment.trim()}
-                           className="bg-[#10b981] hover:bg-[#0da673] text-[#020617] font-bold rounded-xl px-8"
+                           className="bg-primary-brand hover:bg-primary-light text-white font-black rounded-xl px-10 h-12 shadow-lg shadow-primary-glow"
                          >
                            GỬI BÌNH LUẬN
                          </Button>
@@ -583,22 +596,22 @@ export default function StoryDetailPage() {
                     <div className="space-y-6">
                       {rootComments.length > 0 ? rootComments.map((comment) => (
                         <div key={comment.id} className="group">
-                           <div className="bg-white/5 border border-white/10 p-6 rounded-3xl group-hover:bg-white/[0.07] transition-all">
+                           <div className="bg-surface-brand border border-border-brand p-6 rounded-3xl group-hover:bg-surface-elevated transition-all shadow-md">
                               <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-[#10b981] flex items-center justify-center text-white font-black text-sm">
+                                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-lg shadow-lg">
                                     {(comment.user?.name || "A")[0].toUpperCase()}
                                   </div>
                                   <div>
-                                    <p className="font-bold text-white">{comment.user?.name || "Người dùng ẩn danh"}</p>
-                                    <p className="text-xs text-slate-500">{new Intl.DateTimeFormat("vi").format(new Date(comment.createdAt))}</p>
+                                    <p className="font-black text-text-primary">{comment.user?.name || "Người dùng ẩn danh"}</p>
+                                    <p className="text-xs text-text-muted font-medium">{new Intl.DateTimeFormat("vi").format(new Date(comment.createdAt))}</p>
                                   </div>
                                 </div>
-                                <Button variant="ghost" size="sm" className="text-slate-500 hover:text-white" onClick={() => setReplyTo(comment.id)}>
+                                <Button variant="ghost" size="sm" className="text-text-muted hover:text-primary-brand font-bold" onClick={() => setReplyTo(comment.id)}>
                                   Trả lời
                                 </Button>
                               </div>
-                              <p className="text-slate-300 leading-relaxed pl-13">
+                              <p className="text-text-secondary leading-relaxed pl-15 italic">
                                 {comment.content}
                               </p>
                            </div>
@@ -642,14 +655,14 @@ export default function StoryDetailPage() {
                   </div>
                 </TabsContent>
 
-                {/* Reviews Content */}
+                 {/* Reviews Content */}
                 <TabsContent value="reviews" className="mt-0 outline-none">
                   <div className="space-y-8">
-                     <div className="bg-gradient-to-br from-[#10b981]/5 to-blue-500/5 border border-[#10b981]/10 p-8 rounded-3xl backdrop-blur-xl">
+                     <div className="bg-surface-elevated border border-border-brand p-8 rounded-3xl backdrop-blur-xl shadow-2xl">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
                            <div className="space-y-4">
-                              <h4 className="text-2xl font-black text-white">Xếp hạng của bạn</h4>
-                              <p className="text-slate-400 max-w-sm">Chia sẻ cảm nhận của bạn để cộng đồng cùng biết nhé!</p>
+                              <h4 className="text-2xl font-black text-text-primary">Xếp hạng của bạn</h4>
+                              <p className="text-text-muted font-medium">Chia sẻ cảm nhận của bạn để cộng đồng cùng biết nhé!</p>
                               <div className="flex items-center gap-2">
                                  {[1, 2, 3, 4, 5].map((star) => (
                                    <motion.button
@@ -663,7 +676,7 @@ export default function StoryDetailPage() {
                                        size={36}
                                        className={cn(
                                          "transition-all duration-300",
-                                         star <= newReviewRating ? "text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" : "text-slate-700"
+                                         star <= newReviewRating ? "text-accent-brand drop-shadow-glow" : "text-border-brand"
                                        )}
                                        fill={star <= newReviewRating ? "currentColor" : "none"}
                                      />
@@ -671,17 +684,17 @@ export default function StoryDetailPage() {
                                  ))}
                               </div>
                            </div>
-                           <div className="flex-1 space-y-4">
+                            <div className="flex-1 space-y-4">
                               <textarea 
                                 placeholder="Viết cảm nhận chi tiết hơn về truyện (tùy chọn)..."
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 transition-all resize-none min-h-[100px]"
+                                className="w-full bg-surface-brand border border-border-brand rounded-2xl p-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-brand/50 transition-all resize-none min-h-[100px] shadow-inner"
                                 value={newReviewContent}
                                 onChange={(e) => setNewReviewContent(e.target.value)}
                               />
                               <Button 
                                 onClick={handleReview} 
                                 disabled={reviewLoading}
-                                className="w-full bg-[#10b981] hover:bg-[#0da673] text-[#020617] font-bold rounded-xl h-12"
+                                className="w-full bg-primary-brand hover:bg-primary-light text-white font-black rounded-xl h-14 shadow-lg shadow-primary-glow"
                               >
                                 {reviewLoading ? "ĐANG GỬI..." : "GỬI ĐÁNH GIÁ"}
                               </Button>
@@ -691,25 +704,25 @@ export default function StoryDetailPage() {
 
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {reviews.length > 0 ? reviews.map((review) => (
-                          <div key={review.id} className="bg-white/5 border border-white/10 p-6 rounded-3xl hover:bg-white/[0.08] transition-all">
+                          <div key={review.id} className="bg-surface-brand border border-border-brand p-6 rounded-3xl hover:bg-surface-elevated transition-all shadow-md">
                              <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
-                                   <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-slate-300 font-bold">
+                                   <div className="w-10 h-10 rounded-xl bg-surface-elevated flex items-center justify-center text-text-muted font-bold border border-border-brand">
                                       {(review.user?.name || "U")[0]}
                                    </div>
                                    <div>
-                                      <p className="font-bold text-white text-sm">{review.user?.name || "Người dùng"}</p>
+                                      <p className="font-black text-text-primary text-sm">{review.user?.name || "Người dùng"}</p>
                                       <div className="flex gap-0.5">
                                          {[...Array(5)].map((_, i) => (
-                                           <Star key={i} size={10} className={i < review.rating ? "text-yellow-500" : "text-slate-800"} fill={i < review.rating ? "currentColor" : "none"} />
+                                           <Star key={i} size={10} className={i < review.rating ? "text-accent-brand" : "text-border-brand"} fill={i < review.rating ? "currentColor" : "none"} />
                                          ))}
                                       </div>
                                    </div>
                                 </div>
-                                <span className="text-[10px] text-slate-600 font-bold tracking-widest uppercase">{new Intl.DateTimeFormat("vi").format(new Date(review.createdAt))}</span>
+                                <span className="text-[10px] text-text-muted font-black tracking-widest uppercase">{new Intl.DateTimeFormat("vi").format(new Date(review.createdAt))}</span>
                              </div>
                              {review.content && (
-                               <p className="text-slate-400 text-sm leading-relaxed italic">"{review.content}"</p>
+                               <p className="text-text-secondary text-sm leading-relaxed italic">"{review.content}"</p>
                              )}
                           </div>
                         )) : (
@@ -728,30 +741,30 @@ export default function StoryDetailPage() {
 
       {/* Donate Dialog (Refined) */}
       <Dialog open={showDonate} onOpenChange={setShowDonate}>
-        <DialogContent className="bg-[#0f172a]/95 backdrop-blur-3xl border-white/10 text-white rounded-[2rem] max-w-md w-[95%]">
+        <DialogContent className="bg-surface-brand/95 backdrop-blur-3xl border-border-brand text-text-primary rounded-[2rem] max-w-md w-[95%] shadow-2xl">
           <DialogHeader className="items-center text-center pb-4">
-             <div className="w-20 h-20 bg-rose-500/20 rounded-full flex items-center justify-center mb-4 border border-rose-500/30">
+             <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mb-4 border border-rose-500/20">
                 <Heart size={40} className="text-rose-500 animate-pulse" fill="currentColor" />
              </div>
-             <DialogTitle className="text-2xl font-black tracking-tight">Ủng Hộ Truyện</DialogTitle>
-             <DialogDescription className="text-slate-400 font-medium">
+             <DialogTitle className="text-2xl font-black tracking-tight text-text-primary">Ủng Hộ Truyện</DialogTitle>
+             <DialogDescription className="text-text-muted font-bold">
                Tiếp sức để tác giả có thêm động lực ra chương mới nhé!
              </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6 py-4">
             <div className="space-y-3">
-               <label className="text-sm font-bold text-slate-400 uppercase tracking-widest pl-1">Chọn số xu</label>
+               <label className="text-xs font-black text-text-muted uppercase tracking-widest pl-1">Chọn số xu</label>
                <div className="grid grid-cols-3 gap-3">
                   {[100, 500, 1000, 5000, 10000].map(amt => (
                     <button 
                       key={amt}
                       onClick={() => setDonateAmount(amt)}
                       className={cn(
-                        "py-3 rounded-xl border font-black transition-all",
+                        "py-3 rounded-xl border-2 font-black transition-all",
                         donateAmount === amt 
-                          ? "bg-[#10b981] border-[#10b981] text-[#020617] shadow-[0_0_15px_rgba(16,185,129,0.3)]" 
-                          : "bg-white/5 border-white/10 text-slate-300 hover:border-white/20"
+                          ? "bg-primary-brand border-primary-brand text-white shadow-lg shadow-primary-glow" 
+                          : "bg-surface-elevated border-border-brand text-text-secondary hover:border-primary-brand/30"
                       )}
                     >
                       {amt}
@@ -761,7 +774,7 @@ export default function StoryDetailPage() {
                     <input 
                       type="number"
                       placeholder="Số khác"
-                      className="w-full h-full bg-white/5 border border-white/10 rounded-xl px-3 text-center text-sm font-bold focus:outline-none focus:ring-1 focus:ring-[#10b981] appearance-none"
+                      className="w-full h-full bg-surface-elevated border-2 border-border-brand rounded-xl px-3 text-center text-sm font-black focus:outline-none focus:ring-1 focus:ring-primary-brand appearance-none text-text-primary"
                       onChange={(e) => setDonateAmount(Number(e.target.value))}
                     />
                   </div>
@@ -769,11 +782,11 @@ export default function StoryDetailPage() {
             </div>
 
             <div className="space-y-3">
-               <label className="text-sm font-bold text-slate-400 uppercase tracking-widest pl-1">Lời nhắn động viên</label>
+               <label className="text-xs font-black text-text-muted uppercase tracking-widest pl-1">Lời nhắn động viên</label>
                <textarea 
                   rows={3} 
                   placeholder="Viết lời nhắn gửi đến tác giả..."
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:ring-1 focus:ring-[#10b981] transition-all resize-none text-sm"
+                  className="w-full bg-surface-elevated border border-border-brand rounded-2xl p-4 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary-brand transition-all resize-none text-sm shadow-inner"
                   value={donateMessage}
                   onChange={(e) => setDonateMessage(e.target.value)}
                />

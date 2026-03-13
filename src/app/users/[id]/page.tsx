@@ -9,7 +9,9 @@ import {
   Calendar,
   UserPlus,
   UserMinus,
+  ChevronLeft,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import StoryCard from "@/components/StoryCard";
@@ -46,6 +48,7 @@ interface ProfileData {
 
 export default function PublicProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const userId = params.id as string;
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -141,6 +144,18 @@ export default function PublicProfilePage() {
 
   return (
     <div className={`container ${styles.page}`}>
+      <div className="mb-6">
+        <button 
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-medium text-sm group"
+        >
+          <div className="p-1.5 rounded-full bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
+            <ChevronLeft size={16} />
+          </div>
+          Quay lại
+        </button>
+      </div>
+
       {/* Profile Header */}
       <div className={styles.profileHeader}>
         <div className={styles.avatarWrap}>
@@ -167,19 +182,24 @@ export default function PublicProfilePage() {
           <p className={styles.username}>@{profile.username}</p>
           {profile.bio && <p className={styles.bio}>{profile.bio}</p>}
           <div className={styles.statsRow}>
-            <span className={styles.stat}>
-              <BookOpen size={14} /> {profile._count.stories} truyện
-            </span>
-            <span className={styles.stat}>
-              <Users size={14} /> {profile._count.followers} người theo dõi
-            </span>
-            <span className={styles.stat}>
-              <UserPlus size={14} /> {profile._count.following} đang theo dõi
-            </span>
-            <span className={styles.stat}>
-              <Calendar size={14} /> Tham gia{" "}
-              {new Date(profile.createdAt).toLocaleDateString("vi")}
-            </span>
+            <div className={styles.stat}>
+              <span className={styles.statValue}>{profile._count.stories}</span>
+              <span className={styles.statLabel}>Truyện</span>
+            </div>
+            <div className={styles.stat}>
+              <span className={styles.statValue}>{profile._count.followers}</span>
+              <span className={styles.statLabel}>Người theo dõi</span>
+            </div>
+            <div className={styles.stat}>
+              <span className={styles.statValue}>{profile._count.following}</span>
+              <span className={styles.statLabel}>Đang theo dõi</span>
+            </div>
+            <div className={styles.stat}>
+              <span className={styles.statValue}>
+                {new Date(profile.createdAt).toLocaleDateString("vi", { month: 'short', year: 'numeric' })}
+              </span>
+              <span className={styles.statLabel}>Thành viên</span>
+            </div>
           </div>
           {loggedIn && currentUserId !== userId && (
             <button

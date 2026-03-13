@@ -88,6 +88,8 @@ export default function HomePage() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [latestStories, setLatestStories] = useState<Story[]>([]);
   const [topViewedStories, setTopViewedStories] = useState<Story[]>([]);
+  const [topRatedStories, setTopRatedStories] = useState<Story[]>([]);
+  const [exclusiveStories, setExclusiveStories] = useState<Story[]>([]);
   const [completedStories, setCompletedStories] = useState<Story[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [api, setApi] = useState<CarouselApi>();
@@ -123,6 +125,28 @@ export default function HomePage() {
           setCompletedStories(
             Array.isArray(res) ? res : (res as { data: Story[] }).data || [],
           );
+        })
+        .catch(() => {}),
+      apiFetch<{ data: Story[] } | Story[]>(
+        "/stories?limit=6&sortBy=rating&sortOrder=desc",
+      )
+        .then((res) => {
+          const data = Array.isArray(res) ? res : (res as { data: Story[] }).data || [];
+          setTopRatedStories(data);
+          if (data.length === 0 && latestStories.length > 0) {
+             // Fallback to latest but skip first 5 (hero)
+             setTopRatedStories(latestStories.slice(5, 11));
+          }
+        })
+        .catch(() => {}),
+      apiFetch<{ data: Story[] } | Story[]>("/stories?limit=6&sort=trending")
+        .then((res) => {
+          const data = Array.isArray(res) ? res : (res as { data: Story[] }).data || [];
+          setExclusiveStories(data);
+          // If exclusive is empty, fallback to some trending data
+          if (data.length === 0) {
+             setExclusiveStories(topViewedStories.slice(0, 6));
+          }
         })
         .catch(() => {}),
     ];
@@ -181,147 +205,99 @@ export default function HomePage() {
   const currentFeatured = featuredStories[carouselIdx];
 
   return (
-    <div className="min-h-screen bg-[#020617] text-[#f8fafc] overflow-x-hidden">
+    <div className="min-h-screen bg-bg-brand text-text-primary overflow-x-hidden pb-20">
       {/* ── HERO CAROUSEL ── */}
-      {loading ? (
-        <section className="relative w-full h-screen overflow-hidden">
-          <Skeleton className="absolute inset-0 bg-[#020617]" />
-        </section>
-      ) : featuredStories.length > 0 ? (
-        <section className="relative w-full h-screen overflow-hidden">
-          <Carousel
-            opts={{ loop: true } as any}
-            className="w-full h-screen"
-            setApi={(api) => {
-              setApi(api);
-              api?.on("select", () => {
-                setCarouselIdx(api.selectedScrollSnap());
-              });
-            }}
-          >
-            <CarouselContent className="h-full ml-0" wrapperClassName="h-full">
-              {featuredStories.map((story, i) => (
-                <CarouselItem key={story.id} className="h-full pl-0">
-                  <div className="relative w-full h-full flex flex-col justify-center">
-                    {/* Background */}
-                    <div className="absolute inset-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={story.coverImage || DEFAULT_COVER}
-                        alt=""
-                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-                        onError={handleImageError}
-                      />
-                      {/* Immersive Gradients */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-[#020617] via-[#020617]/60 to-transparent z-10" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent z-10" />
-                      <div className="absolute inset-0 bg-black/20 z-0" />
-                    </div>
-
-                    <div className="relative z-20 h-full w-full max-w-7xl mx-auto px-8 md:px-12 flex flex-col justify-center">
-                      <div className="max-w-2xl">
-                        {story.genres && (
-                          <div className="flex flex-wrap gap-2 mb-6">
-                            {story.genres.slice(0, 3).map((g) => (
-                              <Badge
-                                key={g.id}
-                                variant="secondary"
-                                className="bg-white/10 hover:bg-white/20 text-white border-none px-3 py-1 font-medium"
-                              >
-                                {g.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        <h1
-                          className="text-5xl md:text-7xl font-bold leading-tight mb-6 text-white tracking-tighter drop-shadow-2xl"
-                          style={{ fontFamily: "var(--font-heading)" }}
-                        >
-                          {story.title}
-                        </h1>
-                        <p className="text-[#e2e8f0] text-lg leading-relaxed mb-8 line-clamp-3 max-w-xl drop-shadow-md">
-                          {story.description
-                            ? story.description.slice(0, 200) + "..."
-                            : "Khám phá câu chuyện hấp dẫn tại BestNovelVN"}
-                        </p>
-                        <div className="flex items-center gap-6 text-sm text-[#cbd5e1] mb-10">
-                          <span className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-full backdrop-blur-sm">
-                            <BookOpen size={14} className="text-[#10b981]" />{" "}
-                            {story._count?.chapters} chương
-                          </span>
-                          <span className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-full backdrop-blur-sm">
-                            <Star
-                              size={14}
-                              fill="currentColor"
-                              className="text-[#f59e0b]"
-                            />{" "}
-                            {story.rating?.toFixed(1)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <Link href={`/stories/${story.id}`}>
-                            <Button
-                              size="lg"
-                              className="rounded-full px-10 py-7 text-lg font-bold bg-[#10b981] hover:bg-[#34d399] text-[#020617] cursor-pointer shadow-2xl shadow-[#10b981]/40 scale-100 hover:scale-105 transition-transform"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center">
-                                  <ArrowRight size={20} />
-                                </div>
-                                Bắt đầu đọc
+      <section className="relative px-6 pt-6 pb-10 max-w-7xl mx-auto">
+        {loading ? (
+          <Skeleton className="h-[450px] w-full rounded-3xl bg-surface-elevated" />
+        ) : latestStories.length > 0 ? (
+          <div className="relative group">
+            <Carousel setApi={setApi} className="w-full">
+              <CarouselContent>
+                {latestStories.slice(0, 5).map((story, index) => (
+                  <CarouselItem key={story.id}>
+                    <Link href={`/stories/${story.id}`}>
+                      <div className="relative h-[450px] w-full overflow-hidden rounded-3xl cursor-pointer">
+                        {/* Background Image with blur effect */}
+                        <img
+                          src={story.coverImage || DEFAULT_COVER}
+                          alt={story.title}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          onError={handleImageError}
+                        />
+                        {/* Overlay Gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                        
+                        {/* Content */}
+                        <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full max-w-2xl">
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="space-y-4"
+                          >
+                            <div className="flex gap-2">
+                              {story.genres?.slice(0, 2).map(g => (
+                                <Badge key={g.id} className="bg-emerald-500 text-white border-0">
+                                  {g.name}
+                                </Badge>
+                              ))}
+                              {story.status === "COMPLETED" && (
+                                <Badge className="bg-blue-600 text-white border-0">Full</Badge>
+                              )}
+                            </div>
+                            <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+                              {story.title}
+                            </h2>
+                            <p className="text-sm md:text-base text-gray-200 line-clamp-2 max-w-lg font-medium">
+                              {story.description || "Khám phá thế giới tiểu thuyết đầy hấp dẫn..."}
+                            </p>
+                            <div className="flex items-center gap-6 pt-2">
+                              <Button className="bg-[#10b981] hover:bg-[#10b981]/90 text-white px-8 py-6 rounded-2xl font-bold flex gap-2 text-base">
+                                <BookOpen size={20} /> Đọc ngay
+                              </Button>
+                              <div className="flex items-center gap-4 text-white/80">
+                                <span className="flex items-center gap-1.5 font-bold">
+                                  <Eye size={18} className="text-emerald-400" />
+                                  {Intl.NumberFormat("vi", { notation: "compact" }).format(story.viewCount || 0)}
+                                </span>
+                                <span className="flex items-center gap-1.5 font-bold">
+                                  <Star size={18} className="text-yellow-400" fill="currentColor" />
+                                  {(story.rating || 0).toFixed(1)}
+                                </span>
                               </div>
-                            </Button>
-                          </Link>
+                            </div>
+                          </motion.div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <div className="absolute bottom-12 right-12 z-40 flex flex-col items-end gap-8">
-              {featuredStories.length > 1 && (
-                <div className="flex items-center gap-3">
-                  {featuredStories.map((s, i) => (
-                    <button
-                      key={s.id}
-                      onClick={() => api?.scrollTo(i)}
-                      className={`relative flex-shrink-0 transition-all duration-500 overflow-hidden rounded-xl border-2 cursor-pointer ${
-                        i === carouselIdx
-                          ? "w-32 h-18 border-[#10b981] scale-100 shadow-2xl"
-                          : "w-28 h-16 border-white/10 opacity-60 hover:opacity-100 scale-95"
-                      }`}
-                    >
-                      <img
-                        src={s.coverImage || DEFAULT_COVER}
-                        alt=""
-                        className="w-full h-full object-cover"
-                        onError={handleImageError}
-                      />
-                      {i !== carouselIdx && (
-                        <div className="absolute inset-0 bg-black/40" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center gap-2 pr-4">
-                {featuredStories.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => api?.scrollTo(i)}
-                    className={`transition-all duration-300 rounded-full cursor-pointer ${i === carouselIdx ? "w-10 h-1.5 bg-[#10b981]" : "w-2 h-1.5 bg-white/30"}`}
-                  />
+                    </Link>
+                  </CarouselItem>
                 ))}
+              </CarouselContent>
+              
+              <div className="absolute top-1/2 -translate-y-1/2 left-4 md:left-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                <CarouselPrevious className="relative left-0 bg-white/10 hover:bg-white/20 border-white/20 text-white" />
               </div>
-            </div>
-            <CarouselPrevious className="left-6 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-[#10b981] border-none text-white w-12 h-20 rounded-xl rounded-l-none opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CarouselNext className="right-6 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-[#10b981] border-none text-white w-12 h-20 rounded-xl rounded-r-none opacity-0 group-hover:opacity-100 transition-opacity" />
-          </Carousel>
-        </section>
-      ) : null}
+              <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                <CarouselNext className="relative right-0 bg-white/10 hover:bg-white/20 border-white/20 text-white" />
+              </div>
+            </Carousel>
 
-      {/* ── CONTINUE READING ── */}
+            {/* Pagination custom indicators */}
+            <div className="absolute bottom-6 right-12 flex gap-2">
+              {latestStories.slice(0, 5).map((_, i) => (
+                <div 
+                  key={i} 
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-300",
+                    carouselIdx === i ? "w-8 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" : "w-1.5 bg-white/40"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </section>
       {loggedIn && history.length > 0 && (
         <motion.section
           className="max-w-7xl mx-auto px-6 py-10"
@@ -339,11 +315,11 @@ export default function HomePage() {
             {history.map((item) => (
               <Link
                 key={item.id}
-                href={`/stories/${item.story.id}/chapters/${item.chapter.chapterNumber}`}
-                className="flex-shrink-0 flex gap-4 items-center w-[300px] 
-                           bg-[#0f172a] border border-white/5 p-4 rounded-2xl
-                           hover:border-[#10b981]/30 hover:bg-[#0f172a]/80
-                           transition-all duration-300 cursor-pointer group"
+              href={`/stories/${item.story.id}/chapters/${item.chapter.chapterNumber}`}
+              className="flex-shrink-0 flex gap-4 items-center w-[300px] 
+                         bg-surface-brand border border-border-brand p-4 rounded-2xl
+                         hover:border-[#10b981]/30 hover:bg-surface-elevated
+                         transition-all duration-300 cursor-pointer group"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -353,14 +329,14 @@ export default function HomePage() {
                   onError={handleImageError}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[#f8fafc] truncate">
+                  <p className="text-sm font-bold text-text-primary truncate">
                     {item.story.title}
                   </p>
-                  <p className="text-xs text-[#64748b] mt-0.5 truncate">
+                  <p className="text-xs text-text-muted mt-0.5 truncate">
                     <Clock size={11} className="inline mr-1" />
                     Chương {item.chapter.chapterNumber}
                   </p>
-                  <div className="mt-2 w-full h-1.5 bg-[#1e293b] rounded-full overflow-hidden">
+                  <div className="mt-2 w-full h-1.5 bg-surface-elevated rounded-full overflow-hidden">
                     <div
                       className="h-full bg-[#10b981] rounded-full"
                       style={{ width: `${item.progress || 0}%` }}
@@ -382,7 +358,7 @@ export default function HomePage() {
         variants={fadeUp}
       >
         <SectionHeader
-          title="Chương mới cập nhật"
+          title="Truyện mới cập nhật"
           href="/stories"
           linkLabel="Khám phá thêm"
         />
@@ -391,10 +367,10 @@ export default function HomePage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="space-y-3">
-                <Skeleton className="aspect-[2/3] w-full rounded-2xl" />
+                <Skeleton className="aspect-[2/3] w-full rounded-2xl bg-surface-elevated" />
                 <div className="space-y-1">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-4 w-3/4 bg-surface-elevated" />
+                  <Skeleton className="h-3 w-1/2 bg-surface-elevated" />
                 </div>
               </div>
             ))}
@@ -403,6 +379,9 @@ export default function HomePage() {
           <motion.div
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
             variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
           >
             {latestStories.map((story) => (
               <motion.div key={story.id} variants={cardVariant}>
@@ -415,132 +394,125 @@ export default function HomePage() {
         )}
       </motion.section>
 
-      {/* ── RANKINGS + COMPLETED (2-col) ── */}
-      <section className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid lg:grid-cols-[1fr_2fr] gap-10">
-          {/* — Rankings — */}
+      {/* ── TOP VIEWED STORIES (XEM NHIỀU NHẤT) ── */}
+      {topViewedStories.length > 0 && (
+        <motion.section
+          className="max-w-7xl mx-auto px-6 py-10"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+          variants={fadeUp}
+        >
+          <SectionHeader
+            title="Được xem nhiều nhất"
+            href="/rankings?tab=week"
+            linkLabel="Bảng xếp hạng"
+          />
           <motion.div
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
+            variants={stagger}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-60px" }}
-            variants={fadeUp}
           >
-            <SectionHeader title="Bảng xếp hạng" />
-
-            {/* Tab row */}
-            <Tabs
-              defaultValue="views"
-              value={rankTab}
-              onValueChange={(val) => setRankTab(val as any)}
-            >
-              <TabsList className="w-full mb-6 bg-[#0f172a] p-1.5 rounded-xl border border-white/5">
-                {RANK_TABS.map(({ key, label, icon: Icon }) => (
-                  <TabsTrigger
-                    key={key}
-                    value={key}
-                    className={cn(
-                      "flex-1 text-[10px] font-black py-2.5 px-2 flex items-center justify-center gap-2 uppercase tracking-wider transition-all duration-500 cursor-pointer rounded-lg hover:bg-white/5 active:scale-95",
-                      rankTab === key
-                        ? "bg-[#10b981] text-[#020617] shadow-[0_0_25px_rgba(16,185,129,0.4)] scale-[1.02]"
-                        : "text-slate-400",
-                    )}
-                  >
-                    <Icon size={12} />
-                    <span className="hidden sm:inline">{label}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              <AnimatePresence mode="wait">
-                <TabsContent key={rankTab} value={rankTab} className="mt-0">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="space-y-px"
-                  >
-                    {getRankedStories().map((story, idx) => (
-                      <Link
-                        key={story.id}
-                        href={`/stories/${story.id}`}
-                        className="flex items-center gap-4 p-3 rounded-2xl
-                                   hover:bg-white/5 transition-all duration-300 
-                                   group cursor-pointer"
-                      >
-                        <span
-                          className={`text-base font-bold w-7 text-center flex-shrink-0
-                            ${idx === 0 ? "text-[#f59e0b]" : idx === 1 ? "text-[#94a3b8]" : idx === 2 ? "text-[#a16207]" : "text-[#334155]"}`}
-                        >
-                          {String(idx + 1).padStart(2, "0")}
-                        </span>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={story.coverImage || DEFAULT_COVER}
-                          alt={story.title}
-                          className="w-10 h-14 object-cover flex-shrink-0 rounded-md"
-                          onError={handleImageError}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm text-[#f8fafc] truncate group-hover:text-[#10b981] transition-colors">
-                            {story.title}
-                          </p>
-                          <p className="text-xs text-[#64748b] flex items-center gap-1 mt-0.5">
-                            {rankTab === "rating" ? (
-                              <>
-                                <Star
-                                  size={11}
-                                  fill="currentColor"
-                                  className="text-[#f59e0b]"
-                                />{" "}
-                                {(story.rating || 0).toFixed(1)}
-                              </>
-                            ) : (
-                              <>
-                                <Eye size={11} />{" "}
-                                {Intl.NumberFormat("vi", {
-                                  notation: "compact",
-                                }).format(story.viewCount || 0)}{" "}
-                                lượt
-                              </>
-                            )}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </motion.div>
-                </TabsContent>
-              </AnimatePresence>
-            </Tabs>
-          </motion.div>
-
-          {/* — Completed novels — */}
-          {completedStories.length > 0 && (
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-60px" }}
-              variants={fadeUp}
-            >
-              <SectionHeader
-                title="Tiểu thuyết trọn bộ"
-                href="/stories?status=COMPLETED"
-                linkLabel="Xem tất cả"
-              />
-              <motion.div
-                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
-                variants={stagger}
-              >
-                {completedStories.map((story) => (
-                  <motion.div key={story.id} variants={cardVariant}>
-                    <StoryCard story={story} />
-                  </motion.div>
-                ))}
+            {topViewedStories.slice(0, 6).map((story) => (
+              <motion.div key={story.id} variants={cardVariant}>
+                <StoryCard story={story} />
               </motion.div>
-            </motion.div>
-          )}
-        </div>
-      </section>
+            ))}
+          </motion.div>
+        </motion.section>
+      )}
+
+      {/* ── TOP RATED STORIES (TRUYỆN HAY) ── */}
+      {topRatedStories.length > 0 && (
+        <motion.section
+          className="max-w-7xl mx-auto px-6 py-10"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+          variants={fadeUp}
+        >
+          <SectionHeader
+            title="Truyện Hay"
+            href="/rankings?tab=favorites"
+            linkLabel="Xem tất cả"
+          />
+          <motion.div
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
+          >
+            {topRatedStories.map((story) => (
+              <motion.div key={story.id} variants={cardVariant}>
+                <StoryCard story={story} />
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.section>
+      )}
+
+      {/* ── EXCLUSIVE STORIES (TRUYỆN ĐỘC QUYỀN) ── */}
+      {exclusiveStories.length > 0 && (
+        <motion.section
+          className="max-w-7xl mx-auto px-6 py-10"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+          variants={fadeUp}
+        >
+          <SectionHeader
+            title="Truyện Độc Quyền"
+            href="/rankings?tab=week"
+            linkLabel="Khám phá ngay"
+          />
+          <motion.div
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
+          >
+            {exclusiveStories.map((story) => (
+              <motion.div key={story.id} variants={cardVariant}>
+                <StoryCard story={story} />
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.section>
+      )}
+
+      {/* ── COMPLETED NOVELS ── */}
+      {completedStories.length > 0 && (
+        <motion.section
+          className="max-w-7xl mx-auto px-6 py-10"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+          variants={fadeUp}
+        >
+          <SectionHeader
+            title="Tiểu thuyết trọn bộ"
+            href="/rankings?tab=full"
+            linkLabel="Xem tất cả"
+          />
+          <motion.div
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
+          >
+            {completedStories.map((story) => (
+              <motion.div key={story.id} variants={cardVariant}>
+                <StoryCard story={story} />
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.section>
+      )}
     </div>
   );
 }
@@ -559,9 +531,9 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between mb-5">
       <div className="flex items-center gap-4">
-        <div className="w-1.5 h-8 bg-[#10b981] rounded-full shadow-lg shadow-[#10b981]/20" />
+        <div className="w-1.5 h-8 bg-primary-brand rounded-full shadow-lg shadow-primary-glow" />
         <h2
-          className="text-lg font-bold text-white tracking-tight"
+          className="text-xl font-black text-text-primary tracking-tight"
           style={{ fontFamily: "var(--font-heading)" }}
         >
           {title}
@@ -582,7 +554,7 @@ function SectionHeader({
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-20 gap-3 text-[#334155]">
+    <div className="flex flex-col items-center justify-center py-20 gap-3 text-text-muted">
       <BookOpen size={48} strokeWidth={1} />
       <p className="text-sm">Chưa có câu chuyện nào được cập nhật.</p>
     </div>

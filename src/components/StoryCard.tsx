@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Star, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
 
 interface Story {
   id: string;
@@ -19,11 +21,27 @@ interface Story {
     username?: string;
   };
   genres?: { id: string; name: string }[];
+  updatedAt?: string | Date;
   _count?: { chapters: number };
 }
 
 const DEFAULT_COVER =
   "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop";
+
+function formatTimeAgo(date?: string | Date) {
+  if (!date) return "Mới đây";
+  try {
+    const d = typeof date === "string" ? new Date(date) : date;
+    const distance = formatDistanceToNow(d, { locale: vi });
+    // distance is something like "19 giờ", "2 ngày"
+    // We want "19 Giờ Trước" or "2 Ngày Trước"
+    const words = distance.replace("khoảng ", "").split(" ");
+    const formattedDistance = words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    return `${formattedDistance} Trước`;
+  } catch (e) {
+    return "Vừa cập nhật";
+  }
+}
 
 function typeLabel(type: string) {
   switch (type) {
@@ -48,13 +66,24 @@ export default function StoryCard({ story }: { story: Story }) {
     if (target.src !== DEFAULT_COVER) target.src = DEFAULT_COVER;
   };
 
+  // Logic for HOT badge: Updated in last 24h and has view count > threshold
+  const isHot = () => {
+    if (!story.updatedAt) return false;
+    const updatedAt = new Date(story.updatedAt);
+    const now = new Date();
+    const hoursSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
+    return hoursSinceUpdate < 24 && (story.viewCount || 0) > 100;
+  };
+
+  const hot = isHot();
+
   return (
     <Link
       href={`/stories/${story.id}`}
       className="group relative block cursor-pointer"
     >
       {/* Cover */}
-      <div className="relative aspect-[2/3] overflow-hidden bg-[#1e293b] rounded-2xl border border-white/5 group-hover:border-[#10b981]/30 transition-all duration-300">
+      <div className="relative aspect-[2/3] overflow-hidden bg-surface-elevated/80 rounded-2xl border border-border-bright group-hover:border-primary-brand/30 transition-all duration-300 shadow-sm group-hover:shadow-md">
         {story.coverImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -66,90 +95,52 @@ export default function StoryCard({ story }: { story: Story }) {
             onError={handleImageError}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-[#334155]">
+          <div className="w-full h-full flex items-center justify-center text-text-muted">
             <BookOpen size={32} strokeWidth={1} />
           </div>
         )}
 
-        {/* Dark overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent
-                        opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
+        {/* Dark overlay gradient at bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
 
-        {/* Badges */}
-        {story.type && (
+        {/* Top Left Badges - Grouped together as per image */}
+        <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10">
           <Badge
-            variant="emerald"
-            className="absolute top-2 left-2 text-[10px] font-bold uppercase tracking-wider
-                       px-2 py-0.5 shadow-lg shadow-black/20"
+            className="bg-[#5bc0de] hover:bg-[#5bc0de] text-white text-[10px] font-bold border-none rounded-lg px-2 py-1 shadow-md whitespace-nowrap"
           >
-            {typeLabel(story.type)}
+            {formatTimeAgo(story.updatedAt)}
           </Badge>
-        )}
-        {story.status === "COMPLETED" && (
-          <Badge
-            variant="amber"
-            className="absolute top-2 right-2 text-[10px] font-bold uppercase tracking-wider
-                       px-2 py-0.5 shadow-lg shadow-black/20"
-          >
-            Full
-          </Badge>
-        )}
+          
+          {hot && (
+            <Badge
+              className="bg-[#ff3b5c] hover:bg-[#ff3b5c] text-white text-[10px] font-black border-none rounded-lg px-2.5 py-1 shadow-md uppercase tracking-tight"
+            >
+              Hot
+            </Badge>
+          )}
+        </div>
 
-        {/* Rating overlay at bottom */}
+
+        {/* Subtle Rating overlay if needed */}
         {story.rating !== undefined && story.rating > 0 && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-1 text-[10px] text-[#f59e0b]">
+          <div className="absolute bottom-2 left-3 flex items-center gap-1 text-[10px] text-accent-brand font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
             <Star size={10} fill="currentColor" />
             {story.rating.toFixed(1)}
           </div>
         )}
-
-        {/* Chapters count */}
-        {story._count?.chapters !== undefined && (
-          <div className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] text-[#94a3b8]">
-            <BookOpen size={10} />
-            {story._count.chapters}
-          </div>
-        )}
       </div>
 
-      {/* Info */}
-      <div className="pt-2">
+      {/* Info - Center Aligned as per image */}
+      <div className="pt-3 text-center">
         <h3
-          className="text-sm font-semibold text-[#f8fafc] leading-snug line-clamp-2
-                     group-hover:text-[#10b981] transition-colors duration-200"
+          className="text-base font-bold text-text-primary leading-tight line-clamp-2
+                     group-hover:text-primary-brand transition-colors duration-200"
         >
           {story.title}
         </h3>
-        {story.author && (
-          <p
-            className="text-xs text-[#64748b] mt-0.5 truncate hover:text-[#94a3b8]
-                       transition-colors cursor-pointer"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              window.location.href = `/users/${story.author!.id}`;
-            }}
-            title={`Xem hồ sơ ${authorName}`}
-          >
-            {authorName}
-          </p>
-        )}
-
-        {/* Genres */}
-        {story.genres && story.genres.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1.5">
-            {story.genres.slice(0, 2).map((g) => (
-              <Badge
-                key={g.id}
-                variant="outline"
-                className="text-[10px] px-2 py-0.5 bg-[#1e293b] text-[#64748b] 
-                           border border-white/5 rounded-full"
-              >
-                {g.name}
-              </Badge>
-            ))}
-          </div>
-        )}
+        <p className="text-xs font-bold text-text-primary/80 mt-1 uppercase tracking-wide">
+          Chương {story._count?.chapters || 0}
+        </p>
       </div>
     </Link>
   );

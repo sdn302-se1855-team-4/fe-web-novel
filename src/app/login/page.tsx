@@ -50,7 +50,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-6 sm:p-10 overflow-hidden bg-[#020617]">
+    <div className="relative min-h-screen w-full flex items-center justify-center p-6 sm:p-10 overflow-hidden bg-bg-brand">
       {/* Immersive Background Brushes */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[120px]" />
@@ -65,7 +65,7 @@ export default function LoginPage() {
       >
         <Link 
           href="/" 
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-8 group transition-colors"
+          className="inline-flex items-center gap-2 text-text-muted hover:text-text-primary mb-8 group transition-colors"
         >
           <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
           <span className="text-sm font-medium">Quay lại trang chủ</span>
@@ -77,17 +77,17 @@ export default function LoginPage() {
             <BookOpen size={32} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">BestNovelVN</h2>
+            <h2 className="text-2xl font-bold text-text-primary tracking-tight">BestNovelVN</h2>
             <p className="text-emerald-500/60 text-xs font-bold uppercase tracking-widest mt-0.5">Premium Portal</p>
           </div>
         </div>
 
-        <Card className="bg-white/[0.03] border-white/5 backdrop-blur-2xl shadow-2xl rounded-3xl overflow-hidden p-2">
+        <Card className="bg-surface-brand border-border-brand backdrop-blur-2xl shadow-2xl rounded-3xl overflow-hidden p-2">
           <CardHeader className="space-y-2 pb-8 pt-8 px-6 text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight text-white" style={{ fontFamily: "var(--font-heading)" }}>
+            <CardTitle className="text-3xl font-bold tracking-tight text-text-primary" style={{ fontFamily: "var(--font-heading)" }}>
               Chào mừng trở lại!
             </CardTitle>
-            <CardDescription className="text-slate-400 text-sm">
+            <CardDescription className="text-text-muted text-sm">
               Đăng nhập để khám phá hàng ngàn câu chuyện hấp dẫn.
             </CardDescription>
           </CardHeader>
@@ -109,14 +109,14 @@ export default function LoginPage() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-300 text-sm font-semibold ml-1">Email</Label>
+                  <Label htmlFor="email" className="text-text-secondary text-sm font-semibold ml-1">Email</Label>
                   <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors" size={18} />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-emerald-500 transition-colors" size={18} />
                     <Input
                       id="email"
                       type="email"
                       placeholder="you@example.com"
-                      className="pl-12 h-14 bg-white/5 border-white/10 hover:border-white/20 transition-all rounded-2xl"
+                      className="pl-12 h-14 bg-surface-elevated border-border-brand hover:border-emerald-500/30 transition-all rounded-2xl text-text-primary placeholder:text-text-muted"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -126,18 +126,18 @@ export default function LoginPage() {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between ml-1">
-                    <Label htmlFor="password" className="text-slate-300 text-sm font-semibold">Mật khẩu</Label>
+                    <Label htmlFor="password" className="text-text-secondary text-sm font-semibold">Mật khẩu</Label>
                     <Link href="#" className="text-xs font-semibold text-emerald-500 hover:text-emerald-400 transition-colors">
                       Quên mật khẩu?
                     </Link>
                   </div>
                   <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors" size={18} />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-emerald-500 transition-colors" size={18} />
                     <Input
                       id="password"
                       type="password"
                       placeholder="••••••••"
-                      className="pl-12 h-14 bg-white/5 border-white/10 hover:border-white/20 transition-all rounded-2xl"
+                      className="pl-12 h-14 bg-surface-elevated border-border-brand hover:border-emerald-500/30 transition-all rounded-2xl text-text-primary placeholder:text-text-muted"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -162,8 +162,8 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-8 text-center pt-6 border-t border-white/5">
-              <p className="text-slate-400 text-sm">
+            <div className="mt-8 text-center pt-6 border-t border-border-brand">
+              <p className="text-text-muted text-sm">
                 Bạn chưa có tài khoản?{" "}
                 <Link href="/register" className="font-bold text-emerald-500 hover:text-emerald-400 transition-colors">
                   Đăng ký miễn phí

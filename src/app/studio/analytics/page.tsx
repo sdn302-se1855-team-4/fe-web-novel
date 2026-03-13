@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
-import { BarChart3, TrendingUp, Users, BookOpen, Coins } from "lucide-react";
+import { BarChart3, TrendingUp, Users, BookOpen, Coins, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { isLoggedIn } from "@/lib/auth";
 import { useRouter } from "next/navigation";
@@ -90,7 +90,19 @@ export default function AnalyticsDashboardPage() {
   const maxViews = Math.max(...data.stories.map((s) => s.viewCount || 0), 10); // Minimum 10 to avoid div by zero
 
   return (
-    <div className="page-wrapper container">
+    <div className="pb-12">
+      <div className="mb-8">
+        <button 
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-bold text-sm group"
+        >
+          <div className="p-2 rounded-xl bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
+            <ChevronLeft size={18} />
+          </div>
+          Quay lại
+        </button>
+      </div>
+
       <div
         style={{
           display: "flex",
@@ -103,9 +115,6 @@ export default function AnalyticsDashboardPage() {
           <BarChart3 size={28} style={{ marginRight: "0.5rem" }} /> Thống kê Tác
           giả
         </h1>
-        <Link href="/studio" className="btn btn-outline">
-          Về Studio
-        </Link>
       </div>
 
       {/* Stats Cards */}
