@@ -14,6 +14,7 @@ import {
   Lock,
   Coins,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
@@ -37,6 +38,7 @@ export default function ChapterReaderPage() {
   const chapterNumber = Number(params.number);
 
   const [chapter, setChapter] = useState<Chapter | null>(null);
+  const [allChapters, setAllChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [fontSize, setFontSize] = useState(18);
   const [readerTheme, setReaderTheme] = useState<"light" | "dark" | "sepia">(
@@ -51,16 +53,16 @@ export default function ChapterReaderPage() {
       setLoading(true);
       Promise.all([
         apiFetch<Chapter>(`/stories/${storyId}/chapters/${chapterNumber}`),
-        apiFetch<{ length: number } | unknown[]>(
-          `/stories/${storyId}/chapters`,
-        ),
+        apiFetch<Chapter[]>(`/stories/${storyId}/chapters`),
       ])
         .then(([chData, chaptersData]) => {
           setChapter(chData);
-          const total = Array.isArray(chaptersData) ? chaptersData.length : 0;
-          setTotalChapters(total);
+          const sortedChapters = Array.isArray(chaptersData) 
+            ? [...chaptersData].sort((a, b) => a.chapterNumber - b.chapterNumber)
+            : [];
+          setAllChapters(sortedChapters);
+          setTotalChapters(sortedChapters.length);
 
-          // Save reading history
           if (isLoggedIn() && chData?.id) {
             apiFetch("/reading-history", {
               method: "POST",
@@ -80,16 +82,10 @@ export default function ChapterReaderPage() {
   }, [storyId, chapterNumber, router]);
 
   useEffect(() => {
-    Promise.resolve().then(() => {
-      const stored = localStorage.getItem("readerFontSize");
-      if (stored) setFontSize(Number(stored));
-      const storedTheme = localStorage.getItem("readerTheme") as
-        | "light"
-        | "dark"
-        | "sepia"
-        | null;
-      if (storedTheme) setReaderTheme(storedTheme);
-    });
+    const stored = localStorage.getItem("readerFontSize");
+    if (stored) setFontSize(Number(stored));
+    const storedTheme = localStorage.getItem("readerTheme") as any;
+    if (storedTheme) setReaderTheme(storedTheme);
   }, []);
 
   const changeFontSize = (delta: number) => {
@@ -102,19 +98,22 @@ export default function ChapterReaderPage() {
 
   const cycleTheme = () => {
     setReaderTheme((prev) => {
-      const next =
-        prev === "light" ? "sepia" : prev === "sepia" ? "dark" : "light";
+      const next = prev === "light" ? "sepia" : prev === "sepia" ? "dark" : "light";
       localStorage.setItem("readerTheme", next);
       return next;
     });
   };
 
+  const navigateChapter = (num: number) => {
+    router.push(`/stories/${storyId}/chapters/${num}`);
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft" && chapterNumber > 1) {
-        router.push(`/stories/${storyId}/chapters/${chapterNumber - 1}`);
+        navigateChapter(chapterNumber - 1);
       } else if (e.key === "ArrowRight" && chapterNumber < totalChapters) {
-        router.push(`/stories/${storyId}/chapters/${chapterNumber + 1}`);
+        navigateChapter(chapterNumber + 1);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -125,20 +124,9 @@ export default function ChapterReaderPage() {
     return (
       <div className={styles.page} data-reader-theme="light">
         <div className={styles.content}>
-          <div
-            className="skeleton"
-            style={{ height: 32, width: "60%", marginBottom: 24 }}
-          />
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="skeleton"
-              style={{
-                height: 16,
-                width: `${70 + (i % 3) * 10}%`,
-                marginBottom: 12,
-              }}
-            />
+          <div className="animate-pulse bg-gray-200/50 h-10 w-3/4 rounded-xl mx-auto mb-10" />
+          {[...Array(12)].map((_, i) => (
+            <div key={i} className="animate-pulse bg-gray-200/30 h-4 rounded-full mb-4" style={{ width: `${85 + Math.random() * 15}%` }} />
           ))}
         </div>
       </div>
@@ -150,7 +138,11 @@ export default function ChapterReaderPage() {
   return (
     <div className={styles.page} data-reader-theme={readerTheme}>
       {/* Top Bar */}
-      <div className={styles.topBar}>
+      <motion.div 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className={styles.topBar}
+      >
         <Link href={`/stories/${storyId}`} className={styles.backLink}>
           <ChevronLeft size={18} />
           <span className={styles.storyTitle}>
@@ -158,122 +150,144 @@ export default function ChapterReaderPage() {
           </span>
         </Link>
         <div className={styles.controls}>
-          <button
-            className="btn-icon"
-            onClick={() => changeFontSize(-2)}
-            aria-label="Giảm cỡ chữ"
-          >
+          <button className="btn-icon" onClick={() => changeFontSize(-2)} aria-label="Giảm chữ">
             <Minus size={16} />
           </button>
-          <span className={styles.fontSizeLabel}>{fontSize}px</span>
-          <button
-            className="btn-icon"
-            onClick={() => changeFontSize(2)}
-            aria-label="Tăng cỡ chữ"
-          >
+          <span className={styles.fontSizeLabel}>{fontSize}PX</span>
+          <button className="btn-icon" onClick={() => changeFontSize(2)} aria-label="Tăng chữ">
             <Plus size={16} />
           </button>
-          <button
-            className="btn-icon"
-            onClick={cycleTheme}
-            aria-label="Đổi chế độ đọc"
-          >
+          <button className="btn-icon" onClick={cycleTheme} aria-label="Đổi nền">
             {readerTheme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
           </button>
-          <Link
-            href={`/stories/${storyId}`}
-            className="btn-icon"
-            aria-label="Danh sách chương"
-          >
-            <List size={18} />
-          </Link>
         </div>
-      </div>
+      </motion.div>
 
       {/* Chapter Content */}
-      <article className={styles.content} style={{ fontSize: `${fontSize}px` }}>
-        <h1 className={styles.chapterHeading}>
-          Chương {chapter.chapterNumber}: {chapter.title}
-          {chapter.isPremium && (
-            <span className={styles.premiumBadge}>
-              <Coins size={12} /> Premium
-            </span>
-          )}
-        </h1>
+      <AnimatePresence mode="wait">
+        <motion.article 
+          key={chapter.id}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.02 }}
+          transition={{ duration: 0.3 }}
+          className={styles.content} 
+          style={{ fontSize: `${fontSize}px` }}
+        >
+          <h1 className={styles.chapterHeading}>
+            Chương {chapter.chapterNumber}: {chapter.title}
+            {chapter.isPremium && (
+              <span className={styles.premiumBadge}>
+                <Coins size={14} /> PREMIUM
+              </span>
+            )}
+          </h1>
 
-        {chapter.isPremium && chapter.isLocked ? (
-          <div className={styles.paywall}>
-            <Lock size={48} />
-            <h2>Chương này yêu cầu mở khóa</h2>
-            <p>
-              Giá:{" "}
-              <strong>{chapter.price?.toLocaleString("vi") || 0} xu</strong>
-            </p>
-            <button
-              className="btn btn-primary"
-              disabled={purchasing}
-              onClick={async () => {
-                setPurchasing(true);
-                try {
-                  await apiFetch("/wallet/purchase-chapter", {
-                    method: "POST",
-                    body: JSON.stringify({
-                      storyId,
-                      chapterId: chapter.id,
-                    }),
-                  });
-                  window.location.reload();
-                } catch (err: unknown) {
-                  const msg =
-                    err instanceof Error ? err.message : "Lỗi mua chương";
-                  showToast(msg, "error");
-                }
-                setPurchasing(false);
-              }}
+          {/* Inline Navigation Bar */}
+          <div className={styles.inlineNav}>
+            <button 
+              className={styles.navIconBtn} 
+              disabled={chapterNumber <= 1}
+              onClick={() => navigateChapter(chapterNumber - 1)}
             >
-              {purchasing ? "Đang xử lý..." : `Mở khóa (${chapter.price} xu)`}
+              <ChevronLeft size={20} />
             </button>
-            <Link href="/wallet" className={styles.paywallLink}>
-              Nạp thêm xu →
-            </Link>
+            
+            <select 
+              className={styles.chapterSelect}
+              value={chapterNumber}
+              onChange={(e) => navigateChapter(Number(e.target.value))}
+            >
+              {allChapters.map(ch => (
+                <option key={ch.id} value={ch.chapterNumber}>
+                  Chương {ch.chapterNumber}: {ch.title}
+                </option>
+              ))}
+            </select>
+
+            <button 
+              className={styles.navIconBtn} 
+              disabled={chapterNumber >= totalChapters}
+              onClick={() => navigateChapter(chapterNumber + 1)}
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
-        ) : (
-          <div
-            className={
-              chapter.story?.type === "MANGA" || chapter.story?.type === "COMIC"
-                ? styles.mangaReader
-                : styles.chapterText
-            }
-            dangerouslySetInnerHTML={{ __html: chapter.content || "" }}
-          />
-        )}
-      </article>
+
+          {chapter.isPremium && chapter.isLocked ? (
+            <div className={styles.paywall}>
+              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-4 border-2 border-amber-200">
+                <Lock size={40} className="text-amber-600" />
+              </div>
+              <h2>Mở khóa nội dung Premium</h2>
+              <p>Chương này cần <strong>{chapter.price?.toLocaleString("vi") || 0} xu</strong> để tiếp tục đọc.</p>
+              <button
+                className="btn btn-primary w-full max-w-xs h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 border-none shadow-lg shadow-amber-500/20 text-white font-black text-lg"
+                disabled={purchasing}
+                onClick={async () => {
+                  setPurchasing(true);
+                  try {
+                    await apiFetch("/wallet/purchase-chapter", {
+                      method: "POST",
+                      body: JSON.stringify({ storyId, chapterId: chapter.id }),
+                    });
+                    window.location.reload();
+                  } catch (err: any) {
+                    showToast(err.message || "Lỗi mua chương", "error");
+                  }
+                  setPurchasing(false);
+                }}
+              >
+                {purchasing ? "ĐANG XỬ LÝ..." : `MỞ KHÓA (${chapter.price} XU)`}
+              </button>
+              <Link href="/wallet" className={styles.paywallLink}>
+                Nạp thêm xu vào ví →
+              </Link>
+            </div>
+          ) : (
+            <div
+              className={
+                chapter.story?.type === "MANGA" || chapter.story?.type === "COMIC"
+                  ? styles.mangaReader
+                  : styles.chapterText
+              }
+              dangerouslySetInnerHTML={{ __html: chapter.content || "" }}
+            />
+          )}
+        </motion.article>
+      </AnimatePresence>
 
       {/* Navigation */}
       <nav className={styles.chapterNav}>
-        {chapterNumber > 1 ? (
-          <Link
-            href={`/stories/${storyId}/chapters/${chapterNumber - 1}`}
-            className="btn btn-outline"
+        <div className={styles.inlineNav} style={{ margin: 0 }}>
+          <button 
+            className={styles.navIconBtn} 
+            disabled={chapterNumber <= 1}
+            onClick={() => navigateChapter(chapterNumber - 1)}
           >
-            <ChevronLeft size={18} /> Chương trước
-          </Link>
-        ) : (
-          <div />
-        )}
-        <Link href={`/stories/${storyId}`} className="btn btn-ghost">
-          <List size={18} /> Mục lục
-        </Link>
-        {chapterNumber < totalChapters ? (
-          <Link
-            href={`/stories/${storyId}/chapters/${chapterNumber + 1}`}
-            className="btn btn-primary"
+            <ChevronLeft size={20} />
+          </button>
+          
+          <select 
+            className={styles.chapterSelect}
+            value={chapterNumber}
+            onChange={(e) => navigateChapter(Number(e.target.value))}
           >
-            Chương sau <ChevronRight size={18} />
-          </Link>
-        ) : (
-          <div />
-        )}
+            {allChapters.map(ch => (
+              <option key={ch.id} value={ch.chapterNumber}>
+                Chương {ch.chapterNumber}: {ch.title}
+              </option>
+            ))}
+          </select>
+
+          <button 
+            className={styles.navIconBtn} 
+            disabled={chapterNumber >= totalChapters}
+            onClick={() => navigateChapter(chapterNumber + 1)}
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
       </nav>
     </div>
   );

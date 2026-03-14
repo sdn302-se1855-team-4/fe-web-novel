@@ -40,6 +40,24 @@ interface Notification {
   createdAt: string;
 }
 
+interface UserProfile {
+  id: string;
+  username: string;
+  displayName: string | null;
+  avatar: string | null;
+}
+
+interface SearchSuggestion {
+  id: string;
+  title: string;
+  coverImage?: string;
+  author?: {
+    displayName?: string;
+    username?: string;
+  };
+  genres?: { name: string }[];
+}
+
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
@@ -55,6 +73,10 @@ export default function Navbar() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [rankOpen, setRankOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const searchParams = useSearchParams();
 
   const rankTabs = [
@@ -75,11 +97,62 @@ export default function Navbar() {
     });
   }, [pathname]);
 
+  const fetchUserProfile = () => {
+    if (!isLoggedIn()) return;
+    apiFetch<UserProfile>("/auth/profile")
+      .then((res) => setUserProfile(res))
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, [loggedIn]);
+
+  useEffect(() => {
+    const handleProfileUpdate = (e: any) => {
+      if (e.detail) {
+        setUserProfile(prev => ({ 
+          ...prev, 
+          ...e.detail,
+          id: prev?.id || e.detail.id,
+          username: prev?.username || e.detail.username
+        } as UserProfile));
+      } else {
+        fetchUserProfile();
+      }
+    };
+    window.addEventListener('user-profile-updated', handleProfileUpdate as EventListener);
+    return () => window.removeEventListener('user-profile-updated', handleProfileUpdate as EventListener);
+  }, []);
+
   useEffect(() => {
     apiFetch<Genre[]>("/stories/genres")
       .then((res) => setGenres(res))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      setShowSuggestions(true);
+      try {
+        const res = await apiFetch<{ data: SearchSuggestion[] }>(`/stories?search=${encodeURIComponent(searchQuery)}&limit=5`);
+        setSuggestions(res.data || []);
+      } catch (err) {
+        setSuggestions([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (!isLoggedIn()) return;
@@ -110,6 +183,8 @@ export default function Navbar() {
       if (rankRef.current && !rankRef.current.contains(e.target as Node)) {
         setRankOpen(false);
       }
+      // Close search suggestions on click outside
+      setShowSuggestions(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -188,25 +263,88 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-xl relative">
-            <input
-              type="text"
-              className="w-full pl-4 pr-10 py-2 bg-surface-elevated border border-border-brand rounded-lg text-sm text-text-primary placeholder:text-text-muted transition-all focus:border-emerald-500/50"
-              placeholder="Bạn muốn tìm truyện gì..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-brand">
-              <Search size={18} strokeWidth={2.5} />
-            </button>
-          </form>
+          <div className="flex-1 max-w-xl relative">
+            <form onSubmit={handleSearch} className="relative w-full">
+              <input
+                type="text"
+                className="w-full pl-4 pr-10 py-2 bg-surface-elevated border border-border-brand rounded-lg text-sm text-text-primary placeholder:text-text-muted transition-all focus:border-emerald-500/50"
+                placeholder="Bạn muốn tìm truyện gì..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
+              />
+              <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-brand">
+                <Search size={18} strokeWidth={2.5} />
+              </button>
+            </form>
+
+            <AnimatePresence>
+              {showSuggestions && (searchQuery.length >= 2) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-surface-brand border border-border-brand rounded-xl shadow-2xl overflow-hidden z-[100]"
+                >
+                  <div className="p-2">
+                    {isSearching ? (
+                      <div className="p-4 flex items-center justify-center gap-2 text-text-muted text-xs">
+                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-4 h-4 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full" />
+                        Đang tìm kiếm...
+                      </div>
+                    ) : suggestions.length > 0 ? (
+                      <div className="space-y-1">
+                        {suggestions.map((story) => (
+                          <Link
+                            key={story.id}
+                            href={`/stories/${story.id}`}
+                            className="flex items-center gap-3 p-2 hover:bg-surface-elevated rounded-lg transition-colors group"
+                            onClick={() => setShowSuggestions(false)}
+                          >
+                            <div className="w-10 h-14 rounded-md overflow-hidden bg-surface-elevated shrink-0 border border-border-brand/50">
+                              <img
+                                src={story.coverImage || "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop"}
+                                alt={story.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                onError={(e) => (e.currentTarget.src = "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop")}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-bold text-text-primary truncate group-hover:text-emerald-500 transition-colors">
+                                {story.title}
+                              </h4>
+                              <p className="text-[10px] text-text-muted truncate">
+                                {story.author?.displayName || story.author?.username || "Ẩn danh"}
+                              </p>
+                              {story.genres && story.genres.length > 0 && (
+                                <span className="text-[9px] text-emerald-500/80 font-medium">
+                                  {story.genres[0].name}
+                                </span>
+                              )}
+                            </div>
+                          </Link>
+                        ))}
+                        <Link 
+                          href={`/stories?search=${encodeURIComponent(searchQuery)}`}
+                          className="block text-center py-2 text-[11px] font-bold text-emerald-500 hover:bg-emerald-500/5 transition-colors border-t border-border-brand/50 mt-1"
+                          onClick={() => setShowSuggestions(false)}
+                        >
+                          Xem tất cả kết quả
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-text-muted text-xs">
+                        Không tìm thấy kết quả nào
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Right Actions */}
           <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0 lg:flex-1">
-            <button className="p-2 text-rose-500 hover:scale-110 transition-transform" title="Sự kiện">
-              <Gift size={24} fill="currentColor" fillOpacity={0.2} />
-            </button>
 
             {loggedIn && (
               <button className="p-2 text-rose-500 bg-rose-500/5 hover:bg-rose-500/10 rounded-full transition-all">
@@ -220,10 +358,16 @@ export default function Navbar() {
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-elevated border border-border-brand hover:border-emerald-500/50 transition-all"
                   onClick={() => setUserMenuOpen((p) => !p)}
                 >
-                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500">
-                    <UserIcon size={14} />
+                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 overflow-hidden">
+                    {userProfile?.avatar ? (
+                      <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <UserIcon size={14} />
+                    )}
                   </div>
-                  <span className="text-xs font-bold text-text-primary hidden sm:block">Me</span>
+                  <span className="text-xs font-bold text-text-primary hidden sm:block">
+                    {userProfile?.displayName || userProfile?.username || "Me"}
+                  </span>
                   <ChevronDown size={12} className={cn("text-text-muted transition-transform", userMenuOpen && "rotate-180")} />
                 </button>
                 <AnimatePresence>

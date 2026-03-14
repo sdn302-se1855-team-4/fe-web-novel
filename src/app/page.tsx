@@ -19,8 +19,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
 } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -98,6 +96,8 @@ export default function HomePage() {
     "views",
   );
   const [carouselIdx, setCarouselIdx] = useState(0);
+  const [canScrollNext, setCanScrollNext] = useState(true);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
 
   useEffect(() => {
     const logged = isLoggedIn();
@@ -164,23 +164,38 @@ export default function HomePage() {
 
   const featuredStories = latestStories.slice(0, 5);
 
+  // Sync dot indicators with the actual carousel position
+  useEffect(() => {
+    if (!api) return;
+    const onSelect = () => {
+      setCarouselIdx(api.selectedScrollSnap());
+      setCanScrollNext(api.canScrollNext());
+      setCanScrollPrev(api.canScrollPrev());
+    };
+    api.on("select", onSelect);
+    onSelect();
+    return () => { api.off("select", onSelect); };
+  }, [api]);
+
   const nextSlide = useCallback(() => {
-    if (api) {
+    if (!api) return;
+    if (api.canScrollNext()) {
       api.scrollNext();
     } else {
-      setCarouselIdx(
-        (prev) => (prev + 1) % Math.max(featuredStories.length, 1),
-      );
+      // Wrap around to the first slide
+      api.scrollTo(0);
+    }
+  }, [api]);
+
+  const prevSlide = useCallback(() => {
+    if (!api) return;
+    if (api.canScrollPrev()) {
+      api.scrollPrev();
+    } else {
+      // Wrap around to the last slide
+      api.scrollTo(featuredStories.length - 1);
     }
   }, [api, featuredStories.length]);
-
-  const prevSlide = () => {
-    setCarouselIdx(
-      (prev) =>
-        (prev - 1 + featuredStories.length) %
-        Math.max(featuredStories.length, 1),
-    );
-  };
 
   useEffect(() => {
     if (featuredStories.length <= 1) return;
@@ -275,11 +290,21 @@ export default function HomePage() {
                 ))}
               </CarouselContent>
               
-              <div className="absolute top-1/2 -translate-y-1/2 left-4 md:left-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                <CarouselPrevious className="relative left-0 bg-white/10 hover:bg-white/20 border-white/20 text-white" />
+              <div className="absolute top-1/2 -translate-y-1/2 left-4 md:left-8 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <button
+                  onClick={(e) => { e.preventDefault(); prevSlide(); }}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors"
+                >
+                  <ChevronLeft size={20} />
+                </button>
               </div>
-              <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                <CarouselNext className="relative right-0 bg-white/10 hover:bg-white/20 border-white/20 text-white" />
+              <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-8 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <button
+                  onClick={(e) => { e.preventDefault(); nextSlide(); }}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors"
+                >
+                  <ChevronRight size={20} />
+                </button>
               </div>
             </Carousel>
 
@@ -316,8 +341,8 @@ export default function HomePage() {
               <Link
                 key={item.id}
               href={`/stories/${item.story.id}/chapters/${item.chapter.chapterNumber}`}
-              className="flex-shrink-0 flex gap-4 items-center w-[300px] 
-                         bg-surface-brand border border-border-brand p-4 rounded-2xl
+              className="flex-shrink-0 flex gap-3 items-center w-[300px] 
+                         bg-surface-brand border border-border-brand p-3.5 rounded-2xl
                          hover:border-[#10b981]/30 hover:bg-surface-elevated
                          transition-all duration-300 cursor-pointer group"
               >
@@ -325,20 +350,20 @@ export default function HomePage() {
                 <img
                   src={item.story.coverImage || DEFAULT_COVER}
                   alt={item.story.title}
-                  className="w-14 h-20 object-cover flex-shrink-0 rounded-lg group-hover:scale-105 transition-transform"
+                  className="w-14 h-20 object-cover flex-shrink-0 rounded shadow-sm group-hover:scale-105 transition-transform"
                   onError={handleImageError}
                 />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-text-primary truncate">
+                <div className="min-w-0 flex-1 flex flex-col justify-center">
+                  <p className="text-sm font-black text-text-primary truncate leading-tight">
                     {item.story.title}
                   </p>
-                  <p className="text-xs text-text-muted mt-0.5 truncate">
-                    <Clock size={11} className="inline mr-1" />
+                  <p className="text-[11px] font-bold text-text-muted mt-1 truncate flex items-center gap-1">
+                    <Clock size={10} className="text-emerald-500" />
                     Chương {item.chapter.chapterNumber}
                   </p>
-                  <div className="mt-2 w-full h-1.5 bg-surface-elevated rounded-full overflow-hidden">
+                  <div className="mt-3 w-full h-1.5 bg-surface-elevated rounded-full overflow-hidden block">
                     <div
-                      className="h-full bg-[#10b981] rounded-full"
+                      className="h-full bg-[#10b981] rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]"
                       style={{ width: `${item.progress || 0}%` }}
                     />
                   </div>
