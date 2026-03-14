@@ -1,119 +1,224 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;600;800&display=swap');
+
 .page {
   min-height: 100vh;
-  transition:
-    background-color var(--transition-normal),
-    color var(--transition-normal);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Reader Themes */
 .page[data-reader-theme="light"] {
-  --reader-bg: hsl(40, 30%, 97%);
-  --reader-text: hsl(20, 15%, 15%);
-  --reader-bar-bg: hsl(0, 0%, 100%);
+  --reader-bg: #f9f7f2;
+  --reader-text: #1a1a1a;
+  --reader-bar-bg: rgba(255, 255, 255, 0.85);
+  --reader-border: rgba(0, 0, 0, 0.08);
+  --reader-shadow: rgba(0, 0, 0, 0.05);
+  --reader-btn-hover: #f0ede5;
+  --reader-accent: #10b981;
 }
 
 .page[data-reader-theme="dark"] {
-  --reader-bg: hsl(220, 20%, 10%);
-  --reader-text: hsl(40, 15%, 85%);
-  --reader-bar-bg: hsl(220, 18%, 14%);
+  --reader-bg: #0f1117;
+  --reader-text: #e2e8f0;
+  --reader-bar-bg: rgba(23, 25, 35, 0.85);
+  --reader-border: rgba(255, 255, 255, 0.1);
+  --reader-shadow: rgba(0, 0, 0, 0.3);
+  --reader-btn-hover: #171923;
+  --reader-accent: #10b981;
 }
 
 .page[data-reader-theme="sepia"] {
-  --reader-bg: hsl(40, 40%, 90%);
-  --reader-text: hsl(30, 30%, 20%);
-  --reader-bar-bg: hsl(40, 35%, 85%);
+  --reader-bg: #f1e7d0;
+  --reader-text: #433422;
+  --reader-bar-bg: rgba(234, 221, 192, 0.85);
+  --reader-border: rgba(67, 52, 34, 0.15);
+  --reader-shadow: rgba(67, 52, 34, 0.08);
+  --reader-btn-hover: #e6d8b9;
+  --reader-accent: #8b4513;
 }
 
 .page {
   background: var(--reader-bg);
   color: var(--reader-text);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* Top Bar */
 .topBar {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 0.75rem 1.5rem;
   background: var(--reader-bar-bg);
-  border-bottom: 1px solid var(--color-border);
-  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--reader-border);
+  backdrop-filter: blur(12px) saturate(180%);
+  box-shadow: 0 4px 20px var(--reader-shadow);
 }
 
 .backLink {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: 0.75rem;
   color: var(--reader-text);
   text-decoration: none;
-  font-size: 0.875rem;
-  max-width: 300px;
+  font-weight: 700;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.9rem;
+  transition: transform 0.2s ease;
+  max-width: 40%;
+}
+
+.backLink:hover {
+  transform: translateX(-4px);
 }
 
 .storyTitle {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: -0.02em;
 }
 
 .controls {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: 0.5rem;
 }
 
 .fontSizeLabel {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
   color: var(--reader-text);
-  min-width: 36px;
+  min-width: 40px;
   text-align: center;
+  font-family: 'Segoe UI', sans-serif;
+  opacity: 0.8;
 }
 
-/* Content */
+/* Icons & Buttons */
+.controls :global(.btn-icon) {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--reader-border);
+  background: transparent;
+  color: var(--reader-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.controls :global(.btn-icon):hover {
+  background: var(--reader-btn-hover);
+  border-color: var(--reader-accent);
+  color: var(--reader-accent);
+  transform: translateY(-2px);
+}
+
+/* Content Area */
 .content {
-  max-width: var(--reader-max-width);
+  max-width: 800px;
   margin: 0 auto;
-  padding: var(--spacing-2xl) var(--spacing-md) var(--spacing-3xl);
-  line-height: var(--reader-line-height);
+  padding: 4rem 1.5rem 6rem;
+  width: 100%;
 }
 
 .chapterHeading {
-  font-family: var(--font-heading);
-  font-size: 1.5em;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 2rem;
   font-weight: 700;
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: 2rem;
   text-align: center;
   color: var(--reader-text);
+  line-height: 1.2;
+}
+
+.inlineNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0;
+  margin-bottom: 2.5rem;
+  width: 100%;
+}
+
+.chapterSelect {
+  background: var(--reader-bar-bg);
+  border: 1px solid var(--reader-border);
+  color: var(--reader-text);
+  padding: 0 1rem;
+  height: 42px;
+  border-radius: 12px;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  outline: none;
+  max-width: 280px;
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+}
+
+.navIconBtn {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid var(--reader-border);
+  background: var(--reader-bar-bg);
+  color: var(--reader-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navIconBtn:hover:not(:disabled) {
+  background: var(--reader-btn-hover);
+  border-color: var(--reader-accent);
+  color: var(--reader-accent);
+}
+
+.navIconBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .chapterText {
-  font-family: var(--font-reader);
-  line-height: var(--reader-line-height);
+  font-family: 'Lora', serif;
+  line-height: 1.8;
   word-break: break-word;
 }
 
 .chapterText p {
-  margin-bottom: 1em;
-  text-indent: 2em;
+  margin-bottom: 1.5rem;
+  /* text-indent: 1.5em; Disabled for a more modern web feel */
 }
 
 /* Premium Badge */
 .premiumBadge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.625rem;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  gap: 6px;
+  font-size: 0.7rem;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, #fbbf24, #d97706);
   color: #fff;
-  font-weight: 700;
+  font-weight: 900;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
   vertical-align: middle;
-  margin-left: 8px;
+  margin-left: 12px;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
 }
 
 /* Paywall */
@@ -121,36 +226,33 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-3xl) var(--spacing-xl);
+  gap: 1.5rem;
+  padding: 4rem 2rem;
   text-align: center;
   background: var(--reader-bar-bg);
-  border-radius: var(--radius-xl);
-  border: 2px dashed var(--color-border);
-  margin: var(--spacing-2xl) 0;
-  color: var(--reader-text);
+  border-radius: 2.5rem;
+  border: 1px solid var(--reader-border);
+  margin: 3rem 0;
+  box-shadow: 0 20px 40px var(--reader-shadow);
 }
 
 .paywall h2 {
-  font-family: var(--font-heading);
-  font-size: 1.25rem;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
   margin: 0;
 }
 
 .paywall p {
-  font-size: 1rem;
-  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.8;
 }
 
 .paywallLink {
-  font-size: 0.8125rem;
-  color: var(--color-accent);
+  font-size: 0.9rem;
+  color: var(--reader-accent);
   text-decoration: none;
-  font-weight: 600;
-}
-
-.paywallLink:hover {
-  text-decoration: underline;
+  font-weight: 700;
 }
 
 /* Manga/Comic Reader styles */
@@ -159,23 +261,16 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 1000px; /* Wider for manga */
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 0;
 }
 
-.mangaReader img,
 .mangaReader :global(img) {
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 0 auto;
-}
-
-.mangaReader p {
-  margin: 0;
-  padding: 0;
-  line-height: 0;
+  box-shadow: 0 10px 30px var(--reader-shadow);
+  margin-bottom: 2px;
 }
 
 /* Navigation */
@@ -183,30 +278,72 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: var(--reader-max-width);
+  max-width: 800px;
+  width: 100%;
   margin: 0 auto;
-  padding: var(--spacing-lg) var(--spacing-md) var(--spacing-3xl);
-  gap: var(--spacing-md);
+  padding: 2rem 1.5rem 6rem;
+  gap: 1rem;
+}
+
+.chapterNav :global(.btn) {
+  height: 3.5rem;
+  padding: 0 1.5rem;
+  border-radius: 1.25rem;
+  font-weight: 700;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.chapterNav :global(.btn-primary) {
+  background: var(--reader-accent);
+  color: #fff;
+  border: none;
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+}
+
+.chapterNav :global(.btn-primary:hover) {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 30px rgba(16, 185, 129, 0.3);
+}
+
+.chapterNav :global(.btn-outline),
+.chapterNav :global(.btn-ghost) {
+  background: var(--reader-bar-bg);
+  border: 1px solid var(--reader-border);
+  color: var(--reader-text);
+}
+
+.chapterNav :global(.btn-ghost) {
+  flex: 0 0 auto;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .topBar {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm);
-  }
-
-  .backLink {
-    max-width: 100%;
+    padding: 0.75rem 1rem;
   }
 
   .content {
-    padding: var(--spacing-lg) var(--spacing-sm) var(--spacing-2xl);
+    padding-top: 2rem;
+  }
+
+  .chapterHeading {
+    font-size: 1.75rem;
+    margin-bottom: 2rem;
   }
 
   .chapterNav {
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
+    padding-bottom: 4rem;
+  }
+
+  .chapterNav :global(.btn) {
+    width: 100%;
+    flex: none;
   }
 }

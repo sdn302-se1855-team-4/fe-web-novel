@@ -2,12 +2,21 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Filter, X, Grid, List as ListIcon, Tags, Globe, Activity, Layers, SortAsc, BookOpen, Link, Star } from "lucide-react";
+import Link from "next/link";
+import {
+  Search,
+  Filter,
+  Activity,
+  Layers,
+  SortAsc,
+  BookOpen,
+  Star,
+  Tags,
+  RotateCcw,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import StoryCard from "@/components/StoryCard";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -19,12 +28,12 @@ import {
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import StoryCard from "@/components/StoryCard";
 
 interface Story {
   id: string;
@@ -53,22 +62,20 @@ function StoriesContent() {
   const [search, setSearch] = useState<string>(searchParams.get("search") || "");
   const [debouncedSearch, setDebouncedSearch] = useState<string>(search);
   const [selectedGenres, setSelectedGenres] = useState<string[]>(
-    searchParams.get("genres")?.split(",") || (searchParams.get("genre") ? [searchParams.get("genre")!] : [])
+    searchParams.get("genres")?.split(",").filter(Boolean) ||
+    (searchParams.get("genre") ? [searchParams.get("genre") as string] : [])
   );
   const [selectedType, setSelectedType] = useState<string>(
-    searchParams.get("type") || "",
+    searchParams.get("type") || ""
   );
   const [selectedStatus, setSelectedStatus] = useState<string>(
-    searchParams.get("status") || "",
-  );
-  const [selectedCountry, setSelectedCountry] = useState<string>(
-    searchParams.get("country") || "",
+    searchParams.get("status") || ""
   );
   const [selectedChapters, setSelectedChapters] = useState<string>(
-    searchParams.get("chapters") || "0",
+    searchParams.get("chapters") || "0"
   );
   const [selectedSort, setSelectedSort] = useState<string>(
-    searchParams.get("sort") || "createdAt",
+    searchParams.get("sort") || ""
   );
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -88,36 +95,31 @@ function StoriesContent() {
   }, []);
 
   useEffect(() => {
-    const fetchStories = async () => {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (debouncedSearch) params.set("search", debouncedSearch);
-      if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
-      if (selectedType) params.set("type", selectedType);
-      if (selectedStatus) params.set("status", selectedStatus);
-      if (selectedCountry) params.set("country", selectedCountry);
-      if (selectedChapters !== "0") params.set("minChapters", selectedChapters);
-      if (selectedSort) params.set("sortBy", selectedSort);
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
+    if (selectedType) params.set("type", selectedType);
+    if (selectedStatus) params.set("status", selectedStatus);
+    if (selectedChapters !== "0") params.set("minChapters", selectedChapters);
+    if (selectedSort) params.set("sortBy", selectedSort);
+    params.set("page", String(page));
+    params.set("limit", "12");
 
-      params.set("page", String(page));
-      params.set("limit", "12");
-
-      apiFetch<{ data: Story[]; totalPages?: number } | Story[]>(
-        `/stories?${params.toString()}`,
-      )
-        .then((res) => {
-          if (Array.isArray(res)) {
-            setStories(res);
-          } else {
-            setStories(res.data || []);
-            if (res.totalPages) setTotalPages(res.totalPages);
-          }
-        })
-        .catch(() => setStories([]))
-        .finally(() => setLoading(false));
-    };
-    fetchStories();
-  }, [debouncedSearch, selectedGenres, selectedType, selectedStatus, selectedCountry, selectedChapters, selectedSort, page]);
+    apiFetch<{ data: Story[]; totalPages?: number } | Story[]>(
+      `/stories?${params.toString()}`
+    )
+      .then((res) => {
+        if (Array.isArray(res)) {
+          setStories(res);
+        } else {
+          setStories(res.data || []);
+          if (res.totalPages) setTotalPages(res.totalPages);
+        }
+      })
+      .catch(() => setStories([]))
+      .finally(() => setLoading(false));
+  }, [debouncedSearch, selectedGenres, selectedType, selectedStatus, selectedChapters, selectedSort, page]);
 
   const clearFilters = () => {
     setSearch("");
@@ -125,203 +127,250 @@ function StoriesContent() {
     setSelectedGenres([]);
     setSelectedType("");
     setSelectedStatus("");
-    setSelectedCountry("");
     setSelectedChapters("0");
     setSelectedSort("createdAt");
     setPage(1);
   };
 
   const selectedGenre = selectedGenres.length > 0 ? selectedGenres[0] : "";
-
-  const hasFilters = search || selectedGenres.length > 0 || selectedType || selectedStatus || selectedCountry || selectedChapters !== "0";
+  const hasFilters =
+    search ||
+    selectedGenres.length > 0 ||
+    selectedType ||
+    selectedStatus ||
+    selectedChapters !== "0";
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-      },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
   };
-
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1 },
   };
 
+  /* shared class strings */
+  const triggerCls =
+    "h-9 min-w-[140px] bg-surface-elevated border-border-brand text-text-primary text-sm rounded-md focus:ring-1 focus:ring-emerald-500/50 transition-all hover:border-emerald-500/40";
+  const contentCls =
+    "bg-surface-elevated border-border-brand rounded-md shadow-xl";
+  const itemCls =
+    "py-1.5 text-sm cursor-pointer focus:bg-emerald-500 focus:text-white";
+  const labelCls =
+    "hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-text-muted uppercase tracking-widest whitespace-nowrap";
+
   return (
     <div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden">
-      {/* Background decoration */}
+      {/* decorative blobs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#10b981]/5 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px]" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 relative z-10">
+        {/* ── PAGE HEADER ── */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12"
+          className="mb-8"
         >
-          <div>
-            <h1 className="text-4xl md:text-5xl font-black text-text-primary mb-2 tracking-tight pt-12">
-              Danh sách <span className="text-emerald-500">truyện</span>
-            </h1>
-            <p className="text-text-muted max-w-lg font-medium">
-              Khám phá hàng ngàn bộ truyện hấp dẫn, đa dạng thể loại từ khắp nơi trên thế giới.
-            </p>
-          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-text-primary mb-2 tracking-tight pt-12">
+            Danh sách <span className="text-emerald-500">truyện</span>
+          </h1>
+          <p className="text-text-muted font-medium">
+            Khám phá hàng ngàn bộ truyện hấp dẫn, đa dạng thể loại.
+          </p>
         </motion.div>
 
+        {/* ── FILTER TOOLBAR ── */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-surface-brand backdrop-blur-sm border border-border-brand rounded-2xl p-8 mb-12 shadow-sm"
+          transition={{ delay: 0.08 }}
+          className="mb-8 space-y-3"
         >
-          <div className="space-y-6">
-            <div className="px-1">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-6">
-                {/* Thể loại */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest flex items-center gap-2 px-1">
-                    <Tags size={14} className="text-emerald-500" />
-                    Thể loại
-                  </label>
-                  <Select value={selectedGenre || ""} onValueChange={(val: string | null) => { setSelectedGenres(val === "" ? [] : (val ? [val] : [])); setPage(1); }}>
-                    <SelectTrigger className="w-full h-10 bg-surface-elevated border-border-brand text-text-primary rounded-md focus:ring-1 focus:ring-emerald-500/50 text-sm transition-all duration-200">
-                      <SelectValue placeholder="" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-surface-elevated border-border-brand rounded-xl shadow-lg">
-                      <SelectItem value="" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Tất cả</SelectItem>
-                      {genres.map(g => (
-                        <SelectItem key={g.id} value={g.id} className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">{g.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {/* Quốc gia */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest flex items-center gap-2 px-1">
-                    <Globe size={14} className="text-emerald-500" />
-                    Quốc gia
-                  </label>
-                  <Select value={selectedCountry || ""} onValueChange={(val: string | null) => { setSelectedCountry(val || ""); setPage(1); }}>
-                    <SelectTrigger className="w-full h-10 bg-surface-elevated border-border-brand text-text-primary rounded-md focus:ring-1 focus:ring-emerald-500/50 text-sm transition-all duration-200">
-                      <SelectValue placeholder="" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-surface-elevated border-border-brand rounded-xl shadow-lg">
-                      <SelectItem value="all" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Tất cả</SelectItem>
-                      <SelectItem value="vn" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Việt Nam</SelectItem>
-                      <SelectItem value="cn" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Trung Quốc</SelectItem>
-                      <SelectItem value="kr" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Hàn Quốc</SelectItem>
-                      <SelectItem value="jp" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Nhật Bản</SelectItem>
-                      <SelectItem value="us" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Mỹ</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          {/* Search bar */}
+          <div className="relative">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+            />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Tìm kiếm tên truyện, tác giả..."
+              className="w-full h-10 pl-9 pr-4 bg-surface-brand border border-border-brand text-text-primary text-sm rounded-md placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/40 transition-all"
+            />
+          </div>
 
-                {/* Tình trạng */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest flex items-center gap-2 px-1">
-                    <Activity size={14} className="text-emerald-500" />
-                    Tình Trạng
-                  </label>
-                  <Select value={selectedStatus || ""} onValueChange={(val: string | null) => { setSelectedStatus(val || ""); setPage(1); }}>
-                    <SelectTrigger className="w-full h-10 bg-surface-elevated border-border-brand text-text-primary rounded-md focus:ring-1 focus:ring-emerald-500/50 text-sm transition-all duration-200">
-                      <SelectValue placeholder="" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-surface-elevated border-border-brand rounded-xl shadow-lg">
-                      <SelectItem value="all" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Tất cả</SelectItem>
-                      <SelectItem value="ONGOING" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Đang ra</SelectItem>
-                      <SelectItem value="COMPLETED" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Hoàn thành</SelectItem>
-                      <SelectItem value="HIATUS" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Tạm dừng</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          {/* Filter panel */}
+          <div className="bg-surface-brand border border-border-brand rounded-md overflow-hidden">
+            {/* Panel header */}
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border-brand bg-surface-elevated/30">
+              <span className="flex items-center gap-2 text-[11px] font-bold text-text-muted uppercase tracking-widest">
+                <Filter size={12} className="text-emerald-500" />
+                Bộ lọc nhanh
+              </span>
+              {hasFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-1.5 text-[11px] text-rose-400 hover:text-rose-300 transition-colors font-bold uppercase tracking-wider"
+                >
+                  <RotateCcw size={11} />
+                  Đặt lại
+                </button>
+              )}
+            </div>
 
-                {/* Số lượng chương */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest flex items-center gap-2 px-1">
-                    <Layers size={14} className="text-emerald-500" />
-                    Số lượng chương
-                  </label>
-                  <Select value={selectedChapters === "0" ? "" : selectedChapters} onValueChange={(val: string | null) => { setSelectedChapters(val || "0"); setPage(1); }}>
-                    <SelectTrigger className="w-full h-10 bg-surface-elevated border-border-brand text-text-primary rounded-md focus:ring-1 focus:ring-emerald-500/50 text-sm transition-all duration-200">
-                      <SelectValue placeholder="" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-surface-elevated border-border-brand rounded-xl shadow-lg">
-                      <SelectItem value="0" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">{">"} 0</SelectItem>
-                      <SelectItem value="50" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">{">"} 50</SelectItem>
-                      <SelectItem value="100" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">{">"} 100</SelectItem>
-                      <SelectItem value="200" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">{">"} 200</SelectItem>
-                      <SelectItem value="500" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">{">"} 500</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            {/* Selects row */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3">
+              {/* Thể loại */}
+              <div className="flex items-center gap-2">
+                <span className={labelCls}>
+                  <Tags size={11} className="text-emerald-500" />
+                  Thể loại
+                </span>
+                <Select
+                  value={selectedGenre || ""}
+                  onValueChange={(val) => {
+                    setSelectedGenres(val ? [val] : []);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className={triggerCls}>
+                    <SelectValue placeholder="Tất cả">
+                      {selectedGenre
+                        ? (genres.find((g) => g.id === selectedGenre)?.name ?? "Tất cả")
+                        : "Tất cả"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className={contentCls}>
+                    <SelectItem value="" className={itemCls}>Tất cả</SelectItem>
+                    {genres.map((g) => (
+                      <SelectItem key={g.id} value={g.id} className={itemCls}>
+                        {g.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                {/* Sắp xếp */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest flex items-center gap-2 px-1">
-                    <SortAsc size={14} className="text-emerald-500" />
-                    Sắp xếp
-                  </label>
-                  <Select value={selectedSort === "createdAt" ? "" : selectedSort} onValueChange={(val: string | null) => { setSelectedSort(val || "createdAt"); setPage(1); }}>
-                    <SelectTrigger className="w-full h-10 bg-surface-elevated border-border-brand text-text-primary rounded-md focus:ring-1 focus:ring-emerald-500/50 text-sm transition-all duration-200">
-                      <SelectValue placeholder="" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-surface-elevated border-border-brand rounded-xl shadow-lg">
-                      <SelectItem value="createdAt" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Ngày đăng giảm dần</SelectItem>
-                      <SelectItem value="viewCount" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Lượt xem nhiều nhất</SelectItem>
-                      <SelectItem value="rating" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Đánh giá cao nhất</SelectItem>
-                      <SelectItem value="updatedAt" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Mới cập nhật</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="hidden sm:block w-px h-4 bg-border-brand" />
 
-                {/* Loại truyện */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest flex items-center gap-2 px-1">
-                    <BookOpen size={14} className="text-emerald-500" />
-                    Loại truyện
-                  </label>
-                  <Select value={selectedType || ""} onValueChange={(val: string | null) => { setSelectedType(val || ""); setPage(1); }}>
-                    <SelectTrigger className="w-full h-10 bg-surface-elevated border-border-brand text-text-primary rounded-md focus:ring-1 focus:ring-emerald-500/50 text-sm transition-all duration-200">
-                      <SelectValue placeholder="" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-surface-elevated border-border-brand rounded-xl shadow-lg">
-                      <SelectItem value="all" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Tất cả</SelectItem>
-                      <SelectItem value="NOVEL" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Novel</SelectItem>
-                      <SelectItem value="MANGA" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Manga</SelectItem>
-                      <SelectItem value="COMIC" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Comic</SelectItem>
-                      <SelectItem value="LIGHTNOVEL" className="py-1.5 focus:bg-blue-600 focus:text-white cursor-pointer">Light Novel</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Tình trạng */}
+              <div className="flex items-center gap-2">
+                <span className={labelCls}>
+                  <Activity size={11} className="text-emerald-500" />
+                  Tình trạng
+                </span>
+                <Select
+                  value={selectedStatus || ""}
+                  onValueChange={(val) => {
+                    setSelectedStatus(val || "");
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className={triggerCls}>
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent className={contentCls}>
+                    <SelectItem value="" className={itemCls}>Tất cả</SelectItem>
+                    <SelectItem value="Đang ra" className={itemCls}>Đang ra</SelectItem>
+                    <SelectItem value="Hoàn thành" className={itemCls}>Hoàn thành</SelectItem>
+                    <SelectItem value="Tạm dừng" className={itemCls}>Tạm dừng</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="hidden sm:block w-px h-4 bg-border-brand" />
+
+              {/* Loại truyện */}
+              <div className="flex items-center gap-2">
+                <span className={labelCls}>
+                  <BookOpen size={11} className="text-emerald-500" />
+                  Loại
+                </span>
+                <Select
+                  value={selectedType || ""}
+                  onValueChange={(val) => {
+                    setSelectedType(val || "");
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className={triggerCls}>
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent className={contentCls}>
+                    <SelectItem value="" className={itemCls}>Tất cả</SelectItem>
+                    <SelectItem value="Novel" className={itemCls}>Novel</SelectItem>
+                    <SelectItem value="Manga" className={itemCls}>Manga</SelectItem>
+                    <SelectItem value="Comic" className={itemCls}>Comic</SelectItem>
+                    <SelectItem value="Light Novel" className={itemCls}>Light Novel</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="hidden sm:block w-px h-4 bg-border-brand" />
+
+              {/* Số chương */}
+              <div className="flex items-center gap-2">
+                <span className={labelCls}>
+                  <Layers size={11} className="text-emerald-500" />
+                  Chương
+                </span>
+                <Select
+                  value={selectedChapters === "0" ? "" : selectedChapters}
+                  onValueChange={(val) => {
+                    setSelectedChapters(val || "0");
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className={triggerCls}>
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent className={contentCls}>
+                    <SelectItem value="" className={itemCls}>Tất cả</SelectItem>
+                    <SelectItem value="50" className={itemCls}>&gt; 50 chương</SelectItem>
+                    <SelectItem value="100" className={itemCls}>&gt; 100 chương</SelectItem>
+                    <SelectItem value="200" className={itemCls}>&gt; 200 chương</SelectItem>
+                    <SelectItem value="500" className={itemCls}>&gt; 500 chương</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="hidden sm:block w-px h-4 bg-border-brand" />
+
+              {/* Sắp xếp */}
+              <div className="flex items-center gap-2">
+                <span className={labelCls}>
+                  <SortAsc size={11} className="text-emerald-500" />
+                  Sắp xếp
+                </span>
+                <Select
+                  value={selectedSort || ""}
+                  onValueChange={(val) => {
+                    setSelectedSort(val || "");
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className={triggerCls}>
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent className={contentCls}>
+                    <SelectItem value="" className={itemCls}>Tất cả</SelectItem>
+                    <SelectItem value="Mới nhất" className={itemCls}>Mới nhất</SelectItem>
+                    <SelectItem value="Xem nhiều nhất" className={itemCls}>Xem nhiều nhất</SelectItem>
+                    <SelectItem value="Đánh giá cao" className={itemCls}>Đánh giá cao</SelectItem>
+                    <SelectItem value="Mới cập nhật" className={itemCls}>Mới cập nhật</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-
-            {/* Submit & Reset Buttons */}
-            <div className="flex justify-center flex-wrap gap-4 pt-6">
-              <Button
-                className="btn btn-primary h-10 px-10 rounded-xl shadow-sm uppercase text-xs tracking-widest"
-                onClick={() => setPage(1)}
-              >
-                Tìm kiếm
-              </Button>
-              <Button
-                variant="outline"
-                className="btn btn-outline h-10 px-10 border-border-brand rounded-xl uppercase text-xs tracking-widest hover:border-rose-500 hover:text-rose-500"
-                onClick={clearFilters}
-              >
-                Mặc định
-              </Button>
-            </div>
           </div>
         </motion.div>
 
-        {/* Story Grid - List Style Reverted */}
+        {/* ── STORY LIST ── */}
         <AnimatePresence mode="wait">
           {loading ? (
             <motion.div
@@ -329,18 +378,17 @@ function StoriesContent() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="space-y-4"
+              className="space-y-3"
             >
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex gap-6 animate-pulse">
-                  <div className="hidden md:block w-8 shrink-0" />
-                  <div className="w-24 md:w-32 aspect-[2/3] shrink-0 bg-white/5 rounded-xl" />
-                  <div className="flex-1 space-y-4 py-2">
-                    <div className="h-6 bg-white/5 rounded w-1/3" />
-                    <div className="space-y-2">
-                      <div className="h-3 bg-white/5 rounded w-full" />
-                      <div className="h-3 bg-white/5 rounded w-2/3" />
-                    </div>
+              {[...Array(12)].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-surface-brand/50 border border-border-brand/50 rounded-2xl overflow-hidden aspect-[2/3.5] animate-pulse"
+                >
+                  <div className="w-full aspect-[2/3] bg-surface-elevated/80" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-4 bg-surface-elevated rounded w-3/4 mx-auto" />
+                    <div className="h-3 bg-surface-elevated rounded w-1/2 mx-auto" />
                   </div>
                 </div>
               ))}
@@ -351,106 +399,66 @@ function StoriesContent() {
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="space-y-4"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-4 gap-y-10"
             >
-              {stories.map((story, index) => (
+              {stories.map((story) => (
                 <motion.div key={story.id} variants={itemVariants}>
-                  <Link href={`/stories/${story.id}`}>
-                    <div className="group bg-surface-brand border border-border-brand p-4 rounded-2xl flex gap-6 hover:border-emerald-500/30 transition-all hover:shadow-lg">
-                      {/* Rank Number */}
-                      <div className="hidden md:flex items-center justify-center w-8 shrink-0">
-                        <span className={cn(
-                          "text-2xl font-black italic",
-                          index < 3 ? "text-emerald-500" : "text-text-muted"
-                        )}>
-                          {String(index + 1).padStart(2, '0')}
-                        </span>
-                      </div>
-
-                      {/* Cover */}
-                      <div className="w-24 md:w-32 aspect-[2/3] shrink-0 overflow-hidden rounded-xl border border-white/10">
-                        <img
-                          src={story.coverImage || "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop"}
-                          alt={story.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0 py-1">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <h3 className="text-xl font-bold text-text-primary group-hover:text-emerald-500 transition-colors line-clamp-1">
-                              {story.title}
-                            </h3>
-                            <p className="text-sm font-medium text-emerald-500/80 mt-1">
-                              {story.author?.name || "Ẩn danh"}
-                            </p>
-                          </div>
-                          <div className="hidden sm:flex items-center gap-1 text-amber-500 font-bold">
-                            <Star size={14} fill="currentColor" />
-                            <span>{story.rating?.toFixed(1) || "5.0"}</span>
-                          </div>
-                        </div>
-
-                        {/* Description */}
-                        <p className="text-sm text-text-muted mt-3 line-clamp-2 md:line-clamp-3 hidden sm:block">
-                          {story.title} - Một tác phẩm hấp dẫn. Khám phá ngay hành trình đầy kịch tính của các nhân vật...
-                        </p>
-
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-4 text-[13px] font-bold uppercase tracking-wider text-text-muted">
-                          <span className="flex items-center gap-1.5 text-blue-400">
-                            <Filter size={14} />
-                            {story.type}
-                          </span>
-                          <span className="flex items-center gap-1.5">
-                            <BookOpen size={14} />
-                            {story._count?.chapters || 0} Chương
-                          </span>
-                          <span className={cn(
-                            "px-2 py-0.5 rounded text-[10px]",
-                            story.status === 'COMPLETED' ? "bg-emerald-500/10 text-emerald-500" : "bg-blue-500/10 text-blue-500"
-                          )}>
-                            {story.status === 'COMPLETED' ? 'Hoàn thành' : 'Đang ra'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
+                  <StoryCard story={story} />
                 </motion.div>
               ))}
             </motion.div>
           ) : (
             <div className="py-24 flex flex-col items-center text-center">
               <Search size={48} className="text-text-muted mb-6" />
-              <h3 className="text-xl font-bold text-text-primary mb-2">Không tìm thấy truyện</h3>
-              <p className="text-text-muted max-w-xs mb-8">Hãy thử thay đổi tiêu chí lọc hoặc xóa bộ lọc để xem tất cả truyện.</p>
-              <Button onClick={clearFilters} variant="outline" className="btn btn-outline border-border-brand h-10 px-8 rounded-full text-text-muted hover:text-text-primary transition-colors">Xóa bộ lọc</Button>
+              <h3 className="text-xl font-bold text-text-primary mb-2">
+                Không tìm thấy truyện
+              </h3>
+              <p className="text-text-muted max-w-xs mb-8">
+                Hãy thử thay đổi tiêu chí lọc hoặc xóa bộ lọc để xem tất cả truyện.
+              </p>
+              <Button
+                onClick={clearFilters}
+                variant="outline"
+                className="border-border-brand h-9 px-8 rounded-md text-text-muted hover:text-text-primary transition-colors text-sm"
+              >
+                Xóa bộ lọc
+              </Button>
             </div>
           )}
         </AnimatePresence>
 
-        {/* Pagination Reverted */}
+        {/* ── PAGINATION ── */}
         {totalPages > 1 && !loading && (
-          <div className="mt-20">
+          <div className="mt-16">
             <Pagination>
-              <PaginationContent className="bg-surface-brand backdrop-blur-md border border-border-brand p-1 rounded-2xl gap-1">
+              <PaginationContent className="bg-surface-brand border border-border-brand p-1 rounded-md gap-1">
                 <PaginationItem>
-                  <PaginationPrevious 
-                    href="#" 
-                    onClick={(e) => { e.preventDefault(); if(page > 1) setPage(page-1); }}
-                    className={cn("text-text-muted hover:text-text-primary border-transparent", page <= 1 && "pointer-events-none opacity-20")}
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (page > 1) setPage(page - 1);
+                    }}
+                    className={cn(
+                      "text-text-muted hover:text-text-primary border-transparent rounded-md",
+                      page <= 1 && "pointer-events-none opacity-20"
+                    )}
                   />
                 </PaginationItem>
                 {Array.from({ length: totalPages }).map((_, i) => (
                   <PaginationItem key={i}>
-                    <PaginationLink 
-                      href="#" 
+                    <PaginationLink
+                      href="#"
                       isActive={page === i + 1}
-                      onClick={(e) => { e.preventDefault(); setPage(i+1); }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage(i + 1);
+                      }}
                       className={cn(
-                        "w-10 h-10 rounded-xl transition-all",
-                        page === i+1 ? "bg-emerald-500 text-white border-emerald-500" : "text-text-muted hover:text-text-primary border-transparent hover:bg-surface-elevated"
+                        "w-9 h-9 rounded-md transition-all text-sm",
+                        page === i + 1
+                          ? "bg-emerald-500 text-white border-emerald-500"
+                          : "text-text-muted hover:text-text-primary border-transparent hover:bg-surface-elevated"
                       )}
                     >
                       {i + 1}
@@ -458,10 +466,16 @@ function StoriesContent() {
                   </PaginationItem>
                 ))}
                 <PaginationItem>
-                  <PaginationNext 
-                    href="#" 
-                    onClick={(e) => { e.preventDefault(); if(page < totalPages) setPage(page+1); }}
-                    className={cn("text-text-muted hover:text-text-primary border-transparent", page >= totalPages && "pointer-events-none opacity-20")}
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (page < totalPages) setPage(page + 1);
+                    }}
+                    className={cn(
+                      "text-text-muted hover:text-text-primary border-transparent rounded-md",
+                      page >= totalPages && "pointer-events-none opacity-20"
+                    )}
                   />
                 </PaginationItem>
               </PaginationContent>
@@ -475,7 +489,13 @@ function StoriesContent() {
 
 export default function StoriesPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#020617] flex items-center justify-center text-white font-bold">Đang tải...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#020617] flex items-center justify-center text-white font-bold">
+          Đang tải...
+        </div>
+      }
+    >
       <StoriesContent />
     </Suspense>
   );

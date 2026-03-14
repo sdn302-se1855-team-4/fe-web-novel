@@ -118,6 +118,7 @@ export default function StoryDetailPage() {
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewContent, setNewReviewContent] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -135,13 +136,13 @@ export default function StoryDetailPage() {
             : (commentsData as { data: Comment[] }).data || [],
         );
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
 
     // Fetch reviews
     apiFetch<{ data: Review[] }>(`/reviews/story/${storyId}`)
       .then((res) => setReviews(res.data || []))
-      .catch(() => {});
+      .catch(() => { });
 
     // Check bookmark status
     if (isLoggedIn()) {
@@ -151,7 +152,7 @@ export default function StoryDetailPage() {
             res.isBookmarked || (res as unknown as boolean) === true,
           ),
         )
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [storyId]);
 
@@ -242,6 +243,8 @@ export default function StoryDetailPage() {
       setReviews((prev) => [review, ...prev]);
       setNewReviewContent("");
       setNewReviewRating(5);
+      setShowReviewDialog(false);
+      showToast("Gửi đánh giá thành công!", "success");
     } catch (err) {
       showToast(
         (err as Error).message || "Bạn đã đánh giá bộ truyện này rồi.",
@@ -273,7 +276,7 @@ export default function StoryDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg-brand pt-24 pb-20">
+      <div className="min-h-screen bg-bg-brand pt-16 pb-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row gap-8">
             <div className="w-full md:w-72 aspect-[2/3] bg-surface-elevated rounded-2xl animate-pulse" />
@@ -293,8 +296,8 @@ export default function StoryDetailPage() {
       <div className="min-h-screen bg-bg-brand flex items-center justify-center text-text-primary">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Không tìm thấy truyện</h2>
-          <Button onClick={() => router.push("/stories")} variant="outline" className="border-border-brand hover:bg-surface-elevated text-text-primary">
-            Quay lại danh sách
+          <Button onClick={() => router.push("/")} variant="outline" className="border-border-brand hover:bg-surface-elevated text-text-primary">
+            Quay lại trang chủ
           </Button>
         </div>
       </div>
@@ -304,9 +307,9 @@ export default function StoryDetailPage() {
   return (
     <div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden -mt-[var(--navbar-height)]">
       {/* Immersive Background Header */}
-      <div className="relative h-[25vh] md:h-[30vh] w-full overflow-hidden">
+      <div className="relative h-[20vh] md:h-[25vh] w-full overflow-hidden">
         {story.coverImage && (
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-3xl opacity-20 transition-opacity duration-1000"
             style={{ backgroundImage: `url(${story.coverImage})` }}
           />
@@ -314,22 +317,22 @@ export default function StoryDetailPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-bg-brand/0 via-bg-brand/80 to-bg-brand" />
       </div>
 
-      <div className="container max-w-7xl mx-auto px-6 -mt-24 md:-mt-32 relative z-10">
+      <div className="container max-w-7xl mx-auto px-6 -mt-20 md:-mt-28 relative z-10">
         <div className="mb-6">
-          <button 
-            onClick={() => router.back()}
+          <button
+            onClick={() => router.push("/")}
             className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-bold text-xs group"
           >
             <div className="p-1.5 rounded-lg bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
               <ChevronLeft size={14} />
             </div>
-            Quay lại
+            Quay lại trang chủ
           </button>
         </div>
 
         <div className="flex flex-col md:flex-row gap-8 md:gap-12">
           {/* Left Sidebar - Cover Image */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             className="w-full md:w-56 lg:w-64 shrink-0"
@@ -352,16 +355,16 @@ export default function StoryDetailPage() {
             </div>
 
             <div className="mt-6 space-y-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowDonate(true)}
                 className="w-full h-10 border-rose-500/20 bg-surface-elevated text-rose-500 hover:bg-rose-500/10 transition-all rounded-lg gap-1.5 font-bold cursor-pointer text-xs"
               >
                 <Heart size={14} fill="currentColor" />
                 Ủng hộ tác giả
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full h-10 border-border-brand bg-surface-elevated text-text-primary hover:bg-surface-brand transition-all rounded-lg gap-1.5 font-bold cursor-pointer text-xs"
               >
                 <Share2 size={14} />
@@ -383,12 +386,12 @@ export default function StoryDetailPage() {
                   {story.status && (
                     <Badge className={cn(
                       "px-3 py-1 rounded-full text-xs font-bold tracking-wider",
-                      story.status === "COMPLETED" ? "bg-blue-500/20 text-blue-400 border-blue-500/30" : 
-                      story.status === "ONGOING" ? "bg-[#10b981]/20 text-[#10b981] border-[#10b981]/30" : 
-                      "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
+                      story.status === "COMPLETED" ? "bg-blue-500/20 text-blue-400 border-blue-500/30" :
+                        story.status === "ONGOING" ? "bg-[#10b981]/20 text-[#10b981] border-[#10b981]/30" :
+                          "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
                     )}>
-                      {story.status === "ONGOING" ? "ĐANG RA" : 
-                       story.status === "COMPLETED" ? "HOÀN THÀNH" : "TẠM DỪNG"}
+                      {story.status === "ONGOING" ? "ĐANG RA" :
+                        story.status === "COMPLETED" ? "HOÀN THÀNH" : "TẠM DỪNG"}
                     </Badge>
                   )}
                   {story.type && (
@@ -438,9 +441,9 @@ export default function StoryDetailPage() {
               {story.genres && story.genres.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-2">
                   {story.genres.map((g) => (
-                    <Badge 
-                      key={g.id} 
-                      variant="secondary" 
+                    <Badge
+                      key={g.id}
+                      variant="secondary"
                       className="bg-white/5 hover:bg-[#10b981]/20 hover:text-[#10b981] text-slate-300 border-white/5 transition-all cursor-pointer rounded-lg px-3 py-1.5"
                     >
                       {g.name}
@@ -463,7 +466,7 @@ export default function StoryDetailPage() {
 
               <div className="pt-2 flex flex-wrap gap-2">
                 {chapters.length > 0 && (
-                  <Button 
+                  <Button
                     onClick={() => router.push(`/stories/${story.id}/chapters/${chapters[0]?.chapterNumber || 1}`)}
                     className="h-10 px-6 bg-[#8ac94e] hover:bg-[#7ab343] text-white font-black rounded-lg gap-2 shadow-md transition-all hover:scale-105 active:scale-95 text-xs border-none"
                   >
@@ -471,28 +474,22 @@ export default function StoryDetailPage() {
                     Đọc từ đầu
                   </Button>
                 )}
-                
-                <Button 
+
+                <Button
                   onClick={handleBookmark}
                   className={cn(
                     "h-10 px-6 font-black rounded-lg gap-2 shadow-md transition-all hover:scale-105 active:scale-95 text-xs border-none",
-                    bookmarked 
-                      ? "bg-primary-brand text-slate-950" 
+                    bookmarked
+                      ? "bg-primary-brand text-slate-950"
                       : "bg-[#ff3b5c] hover:bg-[#e63250] text-white"
                   )}
                 >
                   {bookmarked ? <BookmarkCheck size={16} /> : "Theo dõi"}
                 </Button>
 
-                <Button 
-                  className="h-10 px-6 bg-[#b11ae1] hover:bg-[#9d17c8] text-white font-black rounded-lg gap-2 shadow-md transition-all hover:scale-105 active:scale-95 text-xs border-none"
-                >
-                  <ThumbsUp size={16} fill="currentColor" />
-                  Thích
-                </Button>
-
-                <Button 
-                  variant="outline" 
+                <Button
+                  onClick={() => setShowReviewDialog(true)}
+                  variant="outline"
                   className="h-10 px-4 border-border-brand bg-surface-elevated text-text-primary hover:bg-surface-brand font-bold rounded-lg gap-2 text-xs"
                 >
                   <MessageCircle size={16} />
@@ -510,230 +507,192 @@ export default function StoryDetailPage() {
             >
               <Tabs defaultValue="chapters" value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="bg-surface-elevated p-1 h-auto rounded-xl border border-border-brand backdrop-blur-xl mb-6 flex-wrap justify-start">
-                  <TabsTrigger 
-                    value="chapters" 
+                  <TabsTrigger
+                    value="chapters"
                     className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-primary-brand data-[state=active]:text-slate-950 text-text-muted font-black transition-all gap-1.5"
                   >
                     <BookOpen size={14} />
                     CHƯƠNG ({chapters.length})
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="comments" 
-                    className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-primary-brand data-[state=active]:text-slate-950 text-text-muted font-black transition-all gap-1.5"
-                  >
-                    <MessageCircle size={14} />
-                    BÌNH LUẬN ({comments.length})
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="reviews" 
-                    className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-primary-brand data-[state=active]:text-slate-950 text-text-muted font-black transition-all gap-1.5"
-                  >
-                    <Star size={14} />
-                    PHẢN HỒI ({reviews.length})
-                  </TabsTrigger>
                 </TabsList>
 
                 {/* Chapters Content */}
                 <TabsContent value="chapters" className="mt-0 outline-none">
-                  <div className="bg-surface-brand border border-border-brand rounded-3xl overflow-hidden divide-y divide-border-brand backdrop-blur-md shadow-2xl">
+                  <div className="space-y-3">
                     {chapters.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border-brand">
-                        {chapters.map((ch) => (
+                      chapters.map((ch, idx) => (
+                        <motion.div
+                          key={ch.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.05 * Math.min(idx, 15) }}
+                        >
                           <Link
-                            key={ch.id}
                             href={`/stories/${story.id}/chapters/${ch.chapterNumber}`}
-                            className="flex items-center justify-between p-4 bg-surface-brand hover:bg-surface-elevated hover:pl-6 transition-all group"
+                            className="group block relative p-5 bg-surface-brand/40 border border-border-brand/50 rounded-2xl hover:bg-surface-elevated hover:border-primary-brand/30 transition-all duration-300 backdrop-blur-sm overflow-hidden"
                           >
-                            <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-8 h-8 rounded-lg bg-surface-elevated border border-border-brand flex items-center justify-center font-black text-[10px] text-text-muted group-hover:bg-primary-brand group-hover:text-white transition-all shadow-sm">
-                                  {ch.chapterNumber}
+                            <div className="flex items-center gap-6">
+                              {/* Chapter Number Badge */}
+                              <div className="w-14 h-14 shrink-0 rounded-2xl bg-surface-elevated border border-border-brand flex flex-col items-center justify-center group-hover:bg-primary-brand group-hover:border-primary-brand transition-all duration-300 shadow-sm relative overflow-hidden">
+                                <span className="text-[10px] font-black text-text-muted uppercase tracking-tighter group-hover:text-slate-900 leading-none mb-1">CHƯƠNG</span>
+                                <span className="text-xl font-black text-text-primary group-hover:text-slate-950 leading-none">{ch.chapterNumber}</span>
+                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+
+                              {/* Title and Info section */}
+                              <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                  <h4 className="text-base md:text-lg font-black text-text-primary group-hover:text-primary-brand transition-colors truncate">
+                                    {ch.title}
+                                  </h4>
+                                  <div className="flex items-center gap-4 text-xs font-bold text-text-muted">
+                                    <div className="flex items-center gap-1.5">
+                                      <Clock size={14} className="text-secondary-brand" />
+                                      <span>Cập nhật: {ch.createdAt ? new Intl.DateTimeFormat("vi").format(new Date(ch.createdAt)) : "Vừa xong"}</span>
+                                    </div>
+                                    <div className="hidden sm:flex items-center gap-1.5">
+                                      <Eye size={14} className="text-primary-brand" />
+                                      <span>Mới</span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="truncate">
-                                  <p className="text-text-primary font-bold text-sm truncate group-hover:text-primary-brand transition-colors">{ch.title}</p>
-                                  <p className="text-[10px] text-text-muted mt-0.5">Cập nhật: {ch.createdAt ? new Intl.DateTimeFormat("vi").format(new Date(ch.createdAt)) : "Hôm nay"}</p>
+
+                                {/* Right Actions/Badges */}
+                                <div className="flex items-center gap-4 shrink-0">
+                                  {ch.isPremium && (
+                                    <Badge className="bg-accent-brand/20 text-accent-brand border border-accent-brand/20 gap-1 px-3 py-1 font-black text-[10px]">
+                                      <Crown size={12} fill="currentColor" />
+                                      PREMIUM
+                                    </Badge>
+                                  )}
+                                  <div className="flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+                                    <span className="text-[10px] font-black text-primary-brand opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest hidden sm:block">ĐỌC NGAY</span>
+                                    <div className="w-10 h-10 rounded-full border border-border-brand flex items-center justify-center group-hover:border-primary-brand group-hover:bg-primary-brand transition-all">
+                                      <ChevronRight size={18} className="text-text-muted group-hover:text-slate-950" />
+                                    </div>
+                                  </div>
                                 </div>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0 ml-4">
-                              {ch.isPremium && <Crown size={12} className="text-accent-brand" />}
-                              <ChevronRight size={14} className="text-text-muted group-hover:text-primary-brand transition-colors" />
-                            </div>
+
+                            {/* Visual Glow Effect on Hover */}
+                            <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-primary-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                           </Link>
-                        ))}
-                      </div>
+                        </motion.div>
+                      ))
                     ) : (
-                      <div className="py-24 text-center">
-                        <p className="text-slate-500 font-medium">Chưa có chương nào được đăng tải.</p>
+                      <div className="py-32 text-center bg-surface-brand/40 border-2 border-dashed border-border-brand rounded-3xl">
+                        <BookOpen size={48} className="mx-auto mb-4 text-text-muted opacity-20" />
+                        <h5 className="text-xl font-black text-text-muted">Chưa có chương nào</h5>
+                        <p className="text-text-muted/60 font-bold mt-2">Dường như tác giả đang tích cực chuẩn bị nội dung mới!</p>
                       </div>
                     )}
                   </div>
                 </TabsContent>
+              </Tabs>
+            </motion.div>
 
-                {/* Comments Content */}
-                <TabsContent value="comments" className="mt-0 outline-none">
-                  <div className="space-y-8">
-                    {/* Comment Form */}
-                    <div className="bg-surface-elevated border border-border-brand p-6 rounded-3xl backdrop-blur-xl space-y-4 shadow-xl">
-                       <h4 className="text-xl font-black text-text-primary">Viết bình luận</h4>
-                       <textarea 
-                         rows={4}
-                         placeholder="Bạn nghĩ gì về bộ truyện này?"
-                         className="w-full bg-surface-brand border border-border-brand rounded-2xl p-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-brand/50 transition-all resize-none shadow-inner"
-                         value={newComment}
-                         onChange={(e) => setNewComment(e.target.value)}
-                       />
-                       <div className="flex justify-end">
-                         <Button 
-                           onClick={handleComment} 
-                           disabled={commentLoading || !newComment.trim()}
-                           className="bg-primary-brand hover:bg-primary-light text-white font-black rounded-xl px-10 h-12 shadow-lg shadow-primary-glow"
-                         >
-                           GỬI BÌNH LUẬN
-                         </Button>
-                       </div>
-                    </div>
+            {/* Community & Reviews Feed */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mt-16 space-y-8"
+              id="reviews-section"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-black text-text-primary flex items-center gap-3">
+                  <div className="w-2 h-6 bg-primary-brand rounded-full shadow-lg shadow-primary-glow" />
+                  Cộng đồng & Đánh giá
+                  <span className="text-sm font-bold text-text-muted bg-surface-elevated px-3 py-1 rounded-full border border-border-brand ml-2">
+                    {reviews.length + comments.length}
+                  </span>
+                </h3>
+                <Button
+                  onClick={() => setShowReviewDialog(true)}
+                  variant="ghost"
+                  className="text-primary-brand hover:text-primary-light font-bold gap-2"
+                >
+                  <MessageCircle size={18} />
+                  Viết đánh giá
+                </Button>
+              </div>
 
-                    {/* Comments List */}
-                    <div className="space-y-6">
-                      {rootComments.length > 0 ? rootComments.map((comment) => (
-                        <div key={comment.id} className="group">
-                           <div className="bg-surface-brand border border-border-brand p-6 rounded-3xl group-hover:bg-surface-elevated transition-all shadow-md">
-                              <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-lg shadow-lg">
-                                    {(comment.user?.name || "A")[0].toUpperCase()}
+              <div className="space-y-6">
+                {[...reviews.map(r => ({ ...r, type: 'review' })), ...rootComments.map(c => ({ ...c, type: 'comment' }))]
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map((item: any) => (
+                    <div key={item.id} className="group">
+                      <div className="bg-surface-brand border border-border-brand p-6 rounded-3xl group-hover:bg-surface-elevated transition-all shadow-md">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-lg shadow-lg">
+                              {(item.user?.name || "A")[0].toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-black text-text-primary">{item.user?.name || "Người dùng"}</p>
+                                {item.type === 'review' && (
+                                  <div className="flex gap-0.5">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star key={i} size={10} className={i < item.rating ? "text-accent-brand" : "text-border-brand"} fill={i < item.rating ? "currentColor" : "none"} />
+                                    ))}
                                   </div>
-                                  <div>
-                                    <p className="font-black text-text-primary">{comment.user?.name || "Người dùng ẩn danh"}</p>
-                                    <p className="text-xs text-text-muted font-medium">{new Intl.DateTimeFormat("vi").format(new Date(comment.createdAt))}</p>
-                                  </div>
-                                </div>
-                                <Button variant="ghost" size="sm" className="text-text-muted hover:text-primary-brand font-bold" onClick={() => setReplyTo(comment.id)}>
-                                  Trả lời
-                                </Button>
+                                )}
                               </div>
-                              <p className="text-text-secondary leading-relaxed pl-15 italic">
-                                {comment.content}
-                              </p>
-                           </div>
-
-                           {/* Replies Container */}
-                           <div className="pl-12 mt-3 space-y-3">
-                              {childComments.filter(c => c.parentId === comment.id).map(reply => (
-                                <div key={reply.id} className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl">
-                                   <div className="flex items-center gap-2 mb-2">
-                                      <p className="font-bold text-sm text-[#10b981]">{reply.user?.name || "Ẩn danh"}</p>
-                                      <p className="text-[10px] text-slate-600 tracking-tighter uppercase font-bold">• {new Intl.DateTimeFormat("vi").format(new Date(reply.createdAt))}</p>
-                                   </div>
-                                   <p className="text-slate-400 text-sm">{reply.content}</p>
-                                </div>
-                              ))}
-
-                              {replyTo === comment.id && (
-                                <div className="bg-white/[0.05] border border-[#10b981]/20 p-4 rounded-2xl flex flex-col gap-3">
-                                   <textarea 
-                                     autoFocus
-                                     placeholder={`Trả lời ${comment.user?.name}...`}
-                                     className="w-full bg-transparent border-none text-white text-sm focus:ring-0 resize-none"
-                                     value={newComment}
-                                     onChange={(e) => setNewComment(e.target.value)}
-                                   />
-                                   <div className="flex justify-end gap-2">
-                                      <Button variant="ghost" size="sm" className="text-slate-400" onClick={() => setReplyTo(null)}>Hủy</Button>
-                                      <Button size="sm" className="bg-[#10b981] text-[#020617] font-bold" onClick={handleComment}>Gửi</Button>
-                                   </div>
-                                </div>
-                              )}
-                           </div>
+                              <p className="text-xs text-text-muted font-medium">{new Intl.DateTimeFormat("vi").format(new Date(item.createdAt))}</p>
+                            </div>
+                          </div>
+                          {item.type === 'comment' && (
+                            <Button variant="ghost" size="sm" className="text-text-muted hover:text-primary-brand font-bold" onClick={() => setReplyTo(item.id)}>
+                              Trả lời
+                            </Button>
+                          )}
                         </div>
-                      )) : (
-                        <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
-                           <MessageCircle size={40} className="mx-auto mb-4 text-slate-700 opacity-30" />
-                           <p className="text-slate-500 font-medium tracking-tight">Trở thành người đầu tiên thảo luận về bộ truyện này!</p>
+                        <p className="text-text-secondary leading-relaxed pl-15 italic">
+                          {item.content}
+                        </p>
+                      </div>
+
+                      {item.type === 'comment' && (
+                        <div className="pl-12 mt-3 space-y-3">
+                          {childComments.filter(c => c.parentId === item.id).map(reply => (
+                            <div key={reply.id} className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl">
+                              <div className="flex items-center gap-2 mb-2">
+                                <p className="font-bold text-sm text-[#10b981]">{reply.user?.name || "Ẩn danh"}</p>
+                                <p className="text-[10px] text-slate-600 tracking-tighter uppercase font-bold">• {new Intl.DateTimeFormat("vi").format(new Date(reply.createdAt))}</p>
+                              </div>
+                              <p className="text-slate-400 text-sm">{reply.content}</p>
+                            </div>
+                          ))}
+
+                          {replyTo === item.id && (
+                            <div className="bg-white/[0.05] border border-[#10b981]/20 p-4 rounded-2xl flex flex-col gap-3">
+                              <textarea
+                                autoFocus
+                                placeholder={`Trả lời ${item.user?.name}...`}
+                                className="w-full bg-transparent border-none text-white text-sm focus:ring-0 resize-none"
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="sm" className="text-slate-400" onClick={() => setReplyTo(null)}>Hủy</Button>
+                                <Button size="sm" className="bg-[#10b981] text-[#020617] font-bold" onClick={handleComment}>Gửi</Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
-                  </div>
-                </TabsContent>
+                  ))}
 
-                 {/* Reviews Content */}
-                <TabsContent value="reviews" className="mt-0 outline-none">
-                  <div className="space-y-8">
-                     <div className="bg-surface-elevated border border-border-brand p-8 rounded-3xl backdrop-blur-xl shadow-2xl">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-                           <div className="space-y-4">
-                              <h4 className="text-2xl font-black text-text-primary">Xếp hạng của bạn</h4>
-                              <p className="text-text-muted font-medium">Chia sẻ cảm nhận của bạn để cộng đồng cùng biết nhé!</p>
-                              <div className="flex items-center gap-2">
-                                 {[1, 2, 3, 4, 5].map((star) => (
-                                   <motion.button
-                                     key={star}
-                                     whileHover={{ scale: 1.2 }}
-                                     whileTap={{ scale: 0.9 }}
-                                     onClick={() => setNewReviewRating(star)}
-                                     className="p-1 focus:outline-none"
-                                   >
-                                     <Star
-                                       size={36}
-                                       className={cn(
-                                         "transition-all duration-300",
-                                         star <= newReviewRating ? "text-accent-brand drop-shadow-glow" : "text-border-brand"
-                                       )}
-                                       fill={star <= newReviewRating ? "currentColor" : "none"}
-                                     />
-                                   </motion.button>
-                                 ))}
-                              </div>
-                           </div>
-                            <div className="flex-1 space-y-4">
-                              <textarea 
-                                placeholder="Viết cảm nhận chi tiết hơn về truyện (tùy chọn)..."
-                                className="w-full bg-surface-brand border border-border-brand rounded-2xl p-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-brand/50 transition-all resize-none min-h-[100px] shadow-inner"
-                                value={newReviewContent}
-                                onChange={(e) => setNewReviewContent(e.target.value)}
-                              />
-                              <Button 
-                                onClick={handleReview} 
-                                disabled={reviewLoading}
-                                className="w-full bg-primary-brand hover:bg-primary-light text-white font-black rounded-xl h-14 shadow-lg shadow-primary-glow"
-                              >
-                                {reviewLoading ? "ĐANG GỬI..." : "GỬI ĐÁNH GIÁ"}
-                              </Button>
-                           </div>
-                        </div>
-                     </div>
-
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {reviews.length > 0 ? reviews.map((review) => (
-                          <div key={review.id} className="bg-surface-brand border border-border-brand p-6 rounded-3xl hover:bg-surface-elevated transition-all shadow-md">
-                             <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                   <div className="w-10 h-10 rounded-xl bg-surface-elevated flex items-center justify-center text-text-muted font-bold border border-border-brand">
-                                      {(review.user?.name || "U")[0]}
-                                   </div>
-                                   <div>
-                                      <p className="font-black text-text-primary text-sm">{review.user?.name || "Người dùng"}</p>
-                                      <div className="flex gap-0.5">
-                                         {[...Array(5)].map((_, i) => (
-                                           <Star key={i} size={10} className={i < review.rating ? "text-accent-brand" : "text-border-brand"} fill={i < review.rating ? "currentColor" : "none"} />
-                                         ))}
-                                      </div>
-                                   </div>
-                                </div>
-                                <span className="text-[10px] text-text-muted font-black tracking-widest uppercase">{new Intl.DateTimeFormat("vi").format(new Date(review.createdAt))}</span>
-                             </div>
-                             {review.content && (
-                               <p className="text-text-secondary text-sm leading-relaxed italic">"{review.content}"</p>
-                             )}
-                          </div>
-                        )) : (
-                          <div className="col-span-full py-20 text-center text-slate-700">
-                             Chưa có đánh giá chi tiết nào.
-                          </div>
-                        )}
-                     </div>
+                {reviews.length === 0 && rootComments.length === 0 && (
+                  <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                    <MessageCircle size={40} className="mx-auto mb-4 text-slate-700 opacity-30" />
+                    <p className="text-slate-500 font-medium tracking-tight">Trở thành người đầu tiên đánh giá & thảo luận về bộ truyện này!</p>
                   </div>
-                </TabsContent>
-              </Tabs>
+                )}
+              </div>
             </motion.div>
           </div>
         </div>
@@ -743,65 +702,121 @@ export default function StoryDetailPage() {
       <Dialog open={showDonate} onOpenChange={setShowDonate}>
         <DialogContent className="bg-surface-brand/95 backdrop-blur-3xl border-border-brand text-text-primary rounded-[2rem] max-w-md w-[95%] shadow-2xl">
           <DialogHeader className="items-center text-center pb-4">
-             <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mb-4 border border-rose-500/20">
-                <Heart size={40} className="text-rose-500 animate-pulse" fill="currentColor" />
-             </div>
-             <DialogTitle className="text-2xl font-black tracking-tight text-text-primary">Ủng Hộ Truyện</DialogTitle>
-             <DialogDescription className="text-text-muted font-bold">
-               Tiếp sức để tác giả có thêm động lực ra chương mới nhé!
-             </DialogDescription>
+            <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mb-4 border border-rose-500/20">
+              <Heart size={40} className="text-rose-500 animate-pulse" fill="currentColor" />
+            </div>
+            <DialogTitle className="text-2xl font-black tracking-tight text-text-primary">Ủng Hộ Truyện</DialogTitle>
+            <DialogDescription className="text-text-muted font-bold">
+              Tiếp sức để tác giả có thêm động lực ra chương mới nhé!
+            </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-6 py-4">
             <div className="space-y-3">
-               <label className="text-xs font-black text-text-muted uppercase tracking-widest pl-1">Chọn số xu</label>
-               <div className="grid grid-cols-3 gap-3">
-                  {[100, 500, 1000, 5000, 10000].map(amt => (
-                    <button 
-                      key={amt}
-                      onClick={() => setDonateAmount(amt)}
-                      className={cn(
-                        "py-3 rounded-xl border-2 font-black transition-all",
-                        donateAmount === amt 
-                          ? "bg-primary-brand border-primary-brand text-white shadow-lg shadow-primary-glow" 
-                          : "bg-surface-elevated border-border-brand text-text-secondary hover:border-primary-brand/30"
-                      )}
-                    >
-                      {amt}
-                    </button>
-                  ))}
-                  <div className="relative">
-                    <input 
-                      type="number"
-                      placeholder="Số khác"
-                      className="w-full h-full bg-surface-elevated border-2 border-border-brand rounded-xl px-3 text-center text-sm font-black focus:outline-none focus:ring-1 focus:ring-primary-brand appearance-none text-text-primary"
-                      onChange={(e) => setDonateAmount(Number(e.target.value))}
-                    />
-                  </div>
-               </div>
+              <label className="text-xs font-black text-text-muted uppercase tracking-widest pl-1">Chọn số xu</label>
+              <div className="grid grid-cols-3 gap-3">
+                {[100, 500, 1000, 5000, 10000].map(amt => (
+                  <button
+                    key={amt}
+                    onClick={() => setDonateAmount(amt)}
+                    className={cn(
+                      "py-3 rounded-xl border-2 font-black transition-all",
+                      donateAmount === amt
+                        ? "bg-primary-brand border-primary-brand text-white shadow-lg shadow-primary-glow"
+                        : "bg-surface-elevated border-border-brand text-text-secondary hover:border-primary-brand/30"
+                    )}
+                  >
+                    {amt}
+                  </button>
+                ))}
+                <div className="relative">
+                  <input
+                    type="number"
+                    placeholder="Số khác"
+                    className="w-full h-full bg-surface-elevated border-2 border-border-brand rounded-xl px-3 text-center text-sm font-black focus:outline-none focus:ring-1 focus:ring-primary-brand appearance-none text-text-primary"
+                    onChange={(e) => setDonateAmount(Number(e.target.value))}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="space-y-3">
-               <label className="text-xs font-black text-text-muted uppercase tracking-widest pl-1">Lời nhắn động viên</label>
-               <textarea 
-                  rows={3} 
-                  placeholder="Viết lời nhắn gửi đến tác giả..."
-                  className="w-full bg-surface-elevated border border-border-brand rounded-2xl p-4 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary-brand transition-all resize-none text-sm shadow-inner"
-                  value={donateMessage}
-                  onChange={(e) => setDonateMessage(e.target.value)}
-               />
+              <label className="text-xs font-black text-text-muted uppercase tracking-widest pl-1">Lời nhắn động viên</label>
+              <textarea
+                rows={3}
+                placeholder="Viết lời nhắn gửi đến tác giả..."
+                className="w-full bg-surface-elevated border border-border-brand rounded-2xl p-4 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary-brand transition-all resize-none text-sm shadow-inner"
+                value={donateMessage}
+                onChange={(e) => setDonateMessage(e.target.value)}
+              />
             </div>
           </div>
 
           <DialogFooter className="sm:justify-center pt-2">
-             <Button 
-               onClick={handleDonate} 
-               disabled={donateLoading || donateAmount <= 0}
-               className="w-full h-14 bg-rose-500 hover:bg-rose-600 text-white font-black text-lg rounded-2xl shadow-[0_10px_25px_rgba(244,63,94,0.3)] transition-all hover:scale-[1.02] active:scale-95"
-             >
-               {donateLoading ? "ĐANG XỬ LÝ..." : `ỦNG HỘ ${donateAmount} XU`}
-             </Button>
+            <Button
+              onClick={handleDonate}
+              disabled={donateLoading || donateAmount <= 0}
+              className="w-full h-14 bg-rose-500 hover:bg-rose-600 text-white font-black text-lg rounded-2xl shadow-[0_10px_25px_rgba(244,63,94,0.3)] transition-all hover:scale-[1.02] active:scale-95"
+            >
+              {donateLoading ? "ĐANG XỬ LÝ..." : `ỦNG HỘ ${donateAmount} XU`}
+            </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Review & Comment Dialog */}
+      <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+        <DialogContent className="bg-surface-brand border-border-brand text-text-primary rounded-[2rem] max-w-xl w-[95%] shadow-2xl p-0 overflow-hidden">
+          <div className="p-8 space-y-6">
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-text-primary">Đánh giá & Bình luận</h3>
+              <p className="text-text-muted font-medium">Chia sẻ cảm nhận của bạn về bộ truyện này</p>
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-xs font-black text-text-muted uppercase tracking-widest pl-1">Xếp hạng của bạn</label>
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <motion.button
+                    key={star}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setNewReviewRating(star)}
+                    className="p-1 focus:outline-none"
+                  >
+                    <Star
+                      size={32}
+                      className={cn(
+                        "transition-all duration-300",
+                        star <= newReviewRating ? "text-accent-brand drop-shadow-glow" : "text-border-brand"
+                      )}
+                      fill={star <= newReviewRating ? "currentColor" : "none"}
+                    />
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-xs font-black text-text-muted uppercase tracking-widest pl-1">Cảm nhận của bạn</label>
+              <textarea
+                placeholder="Bộ truyện này có gì hấp dẫn bạn? (tùy chọn)..."
+                className="w-full bg-surface-elevated border-2 border-border-brand rounded-2xl p-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-brand/30 transition-all resize-none min-h-[150px] shadow-inner"
+                value={newReviewContent}
+                onChange={(e) => setNewReviewContent(e.target.value)}
+              />
+            </div>
+
+            <div className="pt-2">
+              <Button
+                onClick={handleReview}
+                disabled={reviewLoading}
+                className="w-full h-14 bg-primary-brand hover:bg-primary-light text-white font-black text-lg rounded-2xl shadow-lg shadow-primary-glow"
+              >
+                {reviewLoading ? "ĐANG GỬI..." : "GỬI ĐÁNH GIÁ & BÌNH LUẬN"}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
