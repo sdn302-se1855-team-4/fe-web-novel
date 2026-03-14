@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Library, BookOpen } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import StoryCard from "@/components/StoryCard";
@@ -82,6 +83,15 @@ export default function LibraryPage() {
   const [stories, setStories] = useState<StoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  };
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
+  };
+
   useEffect(() => {
     if (!isLoggedIn()) {
       router.push("/login");
@@ -96,63 +106,77 @@ export default function LibraryPage() {
   }, [router]);
 
   return (
-    <div className="page-wrapper">
-      <div className="container">
-        <div className={styles.header}>
-          <h1 className="section-title">
-            <Library size={24} /> Thư viện của tôi
-          </h1>
-          <p className="text-secondary">Các truyện bạn đã lưu để đọc</p>
-        </div>
+    <div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden min-h-screen">
+      {/* decorative blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#10b981]/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px]" />
+      </div>
 
-        {loading ? (
-          <div className="grid-stories">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  borderRadius: "var(--radius-lg)",
-                  overflow: "hidden",
-                  border: "1px solid var(--color-border)",
-                }}
-              >
-                <div className="skeleton" style={{ aspectRatio: "3/4" }} />
+      <div className="max-w-7xl mx-auto px-4 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-4xl md:text-5xl font-black text-text-primary mb-2 tracking-tight pt-12">
+            Thư viện <span className="text-emerald-500">của tôi</span>
+          </h1>
+          <p className="text-text-muted font-medium">Các truyện bạn đã lưu để đọc</p>
+        </motion.div>
+
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-4 gap-y-10"
+            >
+              {[...Array(12)].map((_, i) => (
                 <div
-                  style={{
-                    padding: "var(--spacing-md)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "var(--spacing-sm)",
-                  }}
+                  key={i}
+                  className="bg-surface-brand/50 border border-border-brand/50 rounded-2xl overflow-hidden aspect-[2/3.5] animate-pulse"
                 >
-                  <div
-                    className="skeleton"
-                    style={{ height: 16, width: "80%" }}
-                  />
-                  <div
-                    className="skeleton"
-                    style={{ height: 12, width: "50%" }}
-                  />
+                  <div className="w-full aspect-[2/3] bg-surface-elevated/80" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-4 bg-surface-elevated rounded w-3/4 mx-auto" />
+                    <div className="h-3 bg-surface-elevated rounded w-1/2 mx-auto" />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : stories.length > 0 ? (
-          <div className="grid-stories">
-            {stories.map((story) => (
-              <StoryCard key={story.id} story={story} />
-            ))}
-          </div>
+              ))}
+            </motion.div>
+          ) : stories.length > 0 ? (
+            <motion.div
+              key="list"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-4 gap-y-10"
+            >
+              {stories.map((story) => (
+                <motion.div key={story.id} variants={itemVariants}>
+                  <StoryCard story={story} />
+                </motion.div>
+              ))}
+            </motion.div>
         ) : (
-          <div className={styles.empty}>
-            <BookOpen size={48} />
-            <h3>Thư viện trống</h3>
-            <p>
-              Hãy duyệt truyện và bấm &quot;Lưu truyện&quot; để thêm vào thư
-              viện.
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className={styles.empty}
+          >
+            <BookOpen size={48} className="text-text-muted mb-6" />
+            <h3 className="text-xl font-bold text-text-primary mb-2">Thư viện trống</h3>
+            <p className="max-w-xs mb-8">
+              Hãy duyệt truyện và bấm &quot;Lưu truyện&quot; để thêm vào thư viện.
             </p>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
     </div>
   );
