@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen,
   Sun,
-  Moon,
   Menu,
   X,
   Library,
@@ -77,7 +76,6 @@ export default function Navbar() {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchParams = useSearchParams();
 
   const rankTabs = [
     { key: "day", label: "Top Ngày" },
@@ -111,18 +109,28 @@ export default function Navbar() {
   useEffect(() => {
     const handleProfileUpdate = (e: any) => {
       if (e.detail) {
-        setUserProfile(prev => ({ 
-          ...prev, 
-          ...e.detail,
-          id: prev?.id || e.detail.id,
-          username: prev?.username || e.detail.username
-        } as UserProfile));
+        setUserProfile(
+          (prev) =>
+            ({
+              ...prev,
+              ...e.detail,
+              id: prev?.id || e.detail.id,
+              username: prev?.username || e.detail.username,
+            }) as UserProfile,
+        );
       } else {
         fetchUserProfile();
       }
     };
-    window.addEventListener('user-profile-updated', handleProfileUpdate as EventListener);
-    return () => window.removeEventListener('user-profile-updated', handleProfileUpdate as EventListener);
+    window.addEventListener(
+      "user-profile-updated",
+      handleProfileUpdate as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "user-profile-updated",
+        handleProfileUpdate as EventListener,
+      );
   }, []);
 
   useEffect(() => {
@@ -142,7 +150,9 @@ export default function Navbar() {
       setIsSearching(true);
       setShowSuggestions(true);
       try {
-        const res = await apiFetch<{ data: SearchSuggestion[] }>(`/stories?search=${encodeURIComponent(searchQuery)}&limit=5`);
+        const res = await apiFetch<{ data: SearchSuggestion[] }>(
+          `/stories?search=${encodeURIComponent(searchQuery)}&limit=5`,
+        );
         setSuggestions(res.data || []);
       } catch (err) {
         setSuggestions([]);
@@ -259,7 +269,7 @@ export default function Navbar() {
               className="p-2 rounded-full bg-surface-elevated text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all shadow-inner border border-emerald-500/20"
               title="Chế độ tối/sáng"
             >
-                {theme === 'dark' ? <Lightbulb size={16} /> : <Sun size={16} />}
+              {theme === "dark" ? <Lightbulb size={16} /> : <Sun size={16} />}
             </button>
           </div>
 
@@ -271,15 +281,20 @@ export default function Navbar() {
                 placeholder="Bạn muốn tìm truyện gì..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
+                onFocus={() =>
+                  searchQuery.length >= 2 && setShowSuggestions(true)
+                }
               />
-              <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-brand">
+              <button
+                type="submit"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-brand"
+              >
                 <Search size={18} strokeWidth={2.5} />
               </button>
             </form>
 
             <AnimatePresence>
-              {showSuggestions && (searchQuery.length >= 2) && (
+              {showSuggestions && searchQuery.length >= 2 && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -289,7 +304,11 @@ export default function Navbar() {
                   <div className="p-2">
                     {isSearching ? (
                       <div className="p-4 flex items-center justify-center gap-2 text-text-muted text-xs">
-                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-4 h-4 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full" />
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 1 }}
+                          className="w-4 h-4 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full"
+                        />
                         Đang tìm kiếm...
                       </div>
                     ) : suggestions.length > 0 ? (
@@ -303,10 +322,16 @@ export default function Navbar() {
                           >
                             <div className="w-10 h-14 rounded-md overflow-hidden bg-surface-elevated shrink-0 border border-border-brand/50">
                               <img
-                                src={story.coverImage || "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop"}
+                                src={
+                                  story.coverImage ||
+                                  "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop"
+                                }
                                 alt={story.title}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                onError={(e) => (e.currentTarget.src = "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop")}
+                                onError={(e) =>
+                                  (e.currentTarget.src =
+                                    "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop")
+                                }
                               />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -314,7 +339,9 @@ export default function Navbar() {
                                 {story.title}
                               </h4>
                               <p className="text-[10px] text-text-muted truncate">
-                                {story.author?.displayName || story.author?.username || "Ẩn danh"}
+                                {story.author?.displayName ||
+                                  story.author?.username ||
+                                  "Ẩn danh"}
                               </p>
                               {story.genres && story.genres.length > 0 && (
                                 <span className="text-[9px] text-emerald-500/80 font-medium">
@@ -324,7 +351,7 @@ export default function Navbar() {
                             </div>
                           </Link>
                         ))}
-                        <Link 
+                        <Link
                           href={`/stories?search=${encodeURIComponent(searchQuery)}`}
                           className="block text-center py-2 text-[11px] font-bold text-emerald-500 hover:bg-emerald-500/5 transition-colors border-t border-border-brand/50 mt-1"
                           onClick={() => setShowSuggestions(false)}
@@ -345,7 +372,6 @@ export default function Navbar() {
 
           {/* Right Actions */}
           <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0 lg:flex-1">
-
             {loggedIn && (
               <button className="p-2 text-rose-500 bg-rose-500/5 hover:bg-rose-500/10 rounded-full transition-all">
                 <Bell size={20} />
@@ -360,7 +386,11 @@ export default function Navbar() {
                 >
                   <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 overflow-hidden">
                     {userProfile?.avatar ? (
-                      <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      <img
+                        src={userProfile.avatar}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <UserIcon size={14} />
                     )}
@@ -368,7 +398,13 @@ export default function Navbar() {
                   <span className="text-xs font-bold text-text-primary hidden sm:block">
                     {userProfile?.displayName || userProfile?.username || "Me"}
                   </span>
-                  <ChevronDown size={12} className={cn("text-text-muted transition-transform", userMenuOpen && "rotate-180")} />
+                  <ChevronDown
+                    size={12}
+                    className={cn(
+                      "text-text-muted transition-transform",
+                      userMenuOpen && "rotate-180",
+                    )}
+                  />
                 </button>
                 <AnimatePresence>
                   {userMenuOpen && (
@@ -390,7 +426,10 @@ export default function Navbar() {
                         </Link>
                       ))}
                       <div className="border-t border-border-brand my-1" />
-                      <button className="w-full text-left px-4 py-2 text-sm text-rose-500 hover:bg-rose-500/5 flex items-center gap-3" onClick={handleLogout}>
+                      <button
+                        className="w-full text-left px-4 py-2 text-sm text-rose-500 hover:bg-rose-500/5 flex items-center gap-3"
+                        onClick={handleLogout}
+                      >
                         <LogOut size={16} />
                         Đăng xuất
                       </button>
@@ -400,10 +439,16 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/register" className="px-4 py-2 text-xs font-bold text-white bg-secondary-brand hover:brightness-110 rounded-lg transition-all shadow-md">
+                <Link
+                  href="/register"
+                  className="px-4 py-2 text-xs font-bold text-white bg-secondary-brand hover:brightness-110 rounded-lg transition-all shadow-md"
+                >
                   Đăng ký
                 </Link>
-                <Link href="/login" className="px-4 py-2 text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-400 rounded-lg transition-all shadow-md">
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-400 rounded-lg transition-all shadow-md"
+                >
                   Đăng nhập
                 </Link>
               </div>
@@ -426,7 +471,7 @@ export default function Navbar() {
             className={cn(
               "text-sm font-bold transition-all uppercase tracking-tight font-sans",
               "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
-              pathname === "/" && "underline decoration-2 underline-offset-4"
+              pathname === "/" && "underline decoration-2 underline-offset-4",
             )}
           >
             Trang chủ
@@ -438,7 +483,7 @@ export default function Navbar() {
               className={cn(
                 "flex items-center gap-1.5 text-sm font-bold transition-all uppercase tracking-tight font-sans",
                 "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
-                genreOpen && "underline decoration-2 underline-offset-4"
+                genreOpen && "underline decoration-2 underline-offset-4",
               )}
               onClick={() => {
                 setGenreOpen((p) => !p);
@@ -446,7 +491,13 @@ export default function Navbar() {
               }}
             >
               Thể Loại
-              <ChevronDown size={14} className={cn("transition-transform", genreOpen && "rotate-180")} />
+              <ChevronDown
+                size={14}
+                className={cn(
+                  "transition-transform",
+                  genreOpen && "rotate-180",
+                )}
+              />
             </button>
           </div>
 
@@ -456,7 +507,8 @@ export default function Navbar() {
               className={cn(
                 "flex items-center gap-1.5 text-sm font-bold transition-all uppercase tracking-tight font-sans",
                 "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
-                (pathname.startsWith("/rankings") || rankOpen) && "underline decoration-2 underline-offset-4"
+                (pathname.startsWith("/rankings") || rankOpen) &&
+                  "underline decoration-2 underline-offset-4",
               )}
               onClick={() => {
                 setRankOpen((p) => !p);
@@ -464,12 +516,15 @@ export default function Navbar() {
               }}
             >
               Xếp hạng
-              <ChevronDown size={14} className={cn("transition-transform", rankOpen && "rotate-180")} />
+              <ChevronDown
+                size={14}
+                className={cn("transition-transform", rankOpen && "rotate-180")}
+              />
             </button>
-            
+
             <AnimatePresence>
               {rankOpen && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -482,8 +537,8 @@ export default function Navbar() {
                       className={cn(
                         "flex items-center justify-center py-3 text-sm font-bold transition-all rounded-xl my-0.5",
                         pathname === `/rankings/${tab.key}`
-                          ? "text-emerald-500 bg-emerald-500/5" 
-                          : "text-text-secondary hover:text-emerald-500 hover:bg-surface-elevated"
+                          ? "text-emerald-500 bg-emerald-500/5"
+                          : "text-text-secondary hover:text-emerald-500 hover:bg-surface-elevated",
                       )}
                       onClick={() => setRankOpen(false)}
                     >
@@ -503,7 +558,8 @@ export default function Navbar() {
               className={cn(
                 "hidden sm:block text-sm font-bold transition-all uppercase tracking-tight font-sans",
                 "text-white/90 hover:text-white dark:text-text-secondary dark:hover:text-emerald-500",
-                pathname === link.href && "text-white underline decoration-2 underline-offset-4"
+                pathname === link.href &&
+                  "text-white underline decoration-2 underline-offset-4",
               )}
             >
               {link.label}
@@ -515,7 +571,7 @@ export default function Navbar() {
       {/* Thể Loại Mega Menu */}
       <AnimatePresence>
         {genreOpen && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -523,17 +579,17 @@ export default function Navbar() {
           >
             <div className="max-w-7xl mx-auto px-6 py-8">
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-x-4 gap-y-3">
-                <Link 
-                  href="/stories" 
+                <Link
+                  href="/stories"
                   className="text-[13px] font-medium text-text-muted hover:text-emerald-500 transition-colors py-1"
                   onClick={() => setGenreOpen(false)}
                 >
                   Tất cả
                 </Link>
-                {genres.map(g => (
-                  <Link 
-                    key={g.id} 
-                    href={`/stories?genre=${g.id}`} 
+                {genres.map((g) => (
+                  <Link
+                    key={g.id}
+                    href={`/stories?genre=${g.id}`}
                     className="text-[13px] font-medium text-text-muted hover:text-emerald-500 transition-colors py-1 truncate"
                     onClick={() => setGenreOpen(false)}
                   >
@@ -549,7 +605,7 @@ export default function Navbar() {
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -557,8 +613,16 @@ export default function Navbar() {
           >
             <div className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-108px)]">
               <div className="space-y-1">
-                <span className="block text-[10px] font-bold text-text-muted uppercase tracking-widest px-4 mb-2">Điều hướng</span>
-                <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-surface-elevated hover:text-emerald-500 transition-all text-lg font-medium">Trang chủ</Link>
+                <span className="block text-[10px] font-bold text-text-muted uppercase tracking-widest px-4 mb-2">
+                  Điều hướng
+                </span>
+                <Link
+                  href="/"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-surface-elevated hover:text-emerald-500 transition-all text-lg font-medium"
+                >
+                  Trang chủ
+                </Link>
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
@@ -573,7 +637,9 @@ export default function Navbar() {
 
               {loggedIn && (
                 <div className="pt-4 space-y-1">
-                  <span className="block text-[10px] font-bold text-text-muted uppercase tracking-widest px-4 mb-2">Tài khoản</span>
+                  <span className="block text-[10px] font-bold text-text-muted uppercase tracking-widest px-4 mb-2">
+                    Tài khoản
+                  </span>
                   {userMenuItems.map((item) => (
                     <Link
                       key={item.href}
@@ -584,8 +650,8 @@ export default function Navbar() {
                       {item.label}
                     </Link>
                   ))}
-                  <button 
-                    className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all" 
+                  <button
+                    className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all"
                     onClick={handleLogout}
                   >
                     <LogOut size={18} />
