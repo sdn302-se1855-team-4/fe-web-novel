@@ -215,9 +215,20 @@ export default function WalletPage() {
 
   return (
     <div className={`container ${styles.page}`}>
-      <h1 className={styles.title}>
-        <Wallet size={24} /> Ví của tôi
-      </h1>
+      <div className="mb-6 flex items-center justify-between">
+        <button 
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-medium text-sm group"
+        >
+          <div className="p-1.5 rounded-full bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
+            <ChevronLeft size={16} />
+          </div>
+          Quay lại
+        </button>
+        <h1 className={`${styles.title} !mb-0`}>
+          <Wallet size={24} /> Ví của tôi
+        </h1>
+      </div>
 
       {/* Stats cards */}
       <div className={styles.statsRow}>

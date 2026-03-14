@@ -15,24 +15,24 @@
   --color-primary-dark: #059669;
   --color-primary-glow: rgba(16, 185, 129, 0.4);
 
-  --color-secondary-brand: #6366f1; /* Indigo for a spiritual/fantasy depth */
+  --color-secondary-brand: #6366f1;
 
-  --color-bg-brand: #020617;
-  --color-surface-brand: #0f172a;
-  --color-surface-elevated: #1e293b;
-  --color-border-brand: rgba(148, 163, 184, 0.1);
-  --color-border-bright: rgba(148, 163, 184, 0.2);
+  --color-bg-brand: var(--bg-brand);
+  --color-surface-brand: var(--surface-brand);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border-brand: var(--border-brand);
+  --color-border-bright: var(--border-bright);
 
   /* Glassmorphism */
-  --glass-bg: rgba(15, 23, 42, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: var(--glass-bg);
+  --glass-border: var(--glass-border);
   --glass-blur: blur(12px);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 
   /* Text */
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
 
   /* Accent */
   --color-accent-brand: #f59e0b;
@@ -44,25 +44,22 @@
   --color-error-brand: #ef4444;
   --color-premium-brand: #fcd34d;
 
-  /* Radius - Modern Rounded Tokens */
+  /* Radius */
   --radius-sm: 0.5rem;
   --radius-md: 1rem;
   --radius-lg: 1.5rem;
   --radius-xl: 2.25rem;
   --radius-full: 9999px;
 
-  /* Typography */
-  --font-heading: var(--font-heading), serif;
-  --font-body: var(--font-body), sans-serif;
-  --font-reader: var(--font-reader), "Merriweather", serif;
-  --font-mono: var(--font-mono), "JetBrains Mono", monospace;
+  /* Typography Overrides */
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-serif: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-heading: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-body: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-reader: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-  /* Transitions */
-  --transition-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
-
-  --navbar-height: 72px;
+  --navbar-height: 108px;
 
   /* Shadcn UI compatibility */
   --color-background: var(--background);
@@ -86,47 +83,169 @@
   --color-ring: var(--ring);
 }
 
-/* color-scheme is not a custom property - must be outside @theme */
 :root {
+  color-scheme: light;
+  --bg-brand: #f8fafc;
+  --surface-brand: #ffffff;
+  --surface-elevated: #f1f5f9;
+  --border-brand: rgba(0, 0, 0, 0.08);
+  --border-bright: rgba(0, 0, 0, 0.12);
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.625rem;
+
+  /* Font Overrides */
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-serif: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-heading: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-body: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-reader: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+[data-theme='dark'] {
   color-scheme: dark;
+  --bg-brand: #020617;
+  --surface-brand: #0f172a;
+  --surface-elevated: #1e293b;
+  --border-brand: rgba(255, 255, 255, 0.08);
+  --border-bright: rgba(255, 255, 255, 0.15);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --glass-bg: rgba(15, 23, 42, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.1);
+
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
 }
 
 @layer base {
-  :root {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --destructive-foreground: oklch(0.985 0 0);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --radius: 0.625rem;
-  }
-
   * {
     @apply border-border outline-ring/50;
+    font-family: var(--font-body);
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-[#020617] text-[#f8fafc] font-sans antialiased;
+    @apply bg-bg-brand text-text-primary antialiased;
+    font-family: var(--font-body);
     min-height: 100vh;
-    overflow-x: hidden;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    transition: background-color 0.4s ease, color 0.4s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif tracking-tight;
+    @apply tracking-tight text-text-primary;
+    font-family: var(--font-heading);
+    line-height: 1.25;
+    margin-bottom: 0.5em;
+  }
+
+  .input {
+    @apply w-full px-4 py-3 bg-surface-elevated border border-border-brand rounded-xl text-text-primary placeholder:text-text-muted transition-all duration-200 outline-none;
+    &:focus {
+      @apply border-emerald-500/50 ring-4 ring-emerald-500/10 bg-surface-brand;
+    }
+  }
+
+  .label {
+    @apply block text-sm font-semibold text-text-secondary mb-2 ml-1;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 hover:shadow-emerald-500/30;
+  }
+
+  .btn-outline {
+    @apply border border-border-brand bg-transparent text-text-secondary hover:bg-surface-elevated hover:text-text-primary hover:border-emerald-500/30;
+  }
+
+  .btn-ghost {
+    @apply text-text-muted hover:bg-surface-elevated hover:text-text-primary;
+  }
+
+  .btn-sm {
+    @apply px-4 py-2 text-sm;
+  }
+
+  .btn-xs {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  .section-title {
+    @apply text-2xl font-bold text-text-primary flex items-center gap-3 mb-8;
+  }
+
+  .page-wrapper {
+    @apply min-h-screen pt-24 pb-12 transition-colors duration-400;
+  }
+
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider;
+  }
+
+  .badge-primary {
+    @apply bg-emerald-500/10 text-emerald-500;
+  }
+
+  .badge-success {
+    @apply bg-emerald-500 text-white;
+  }
+
+  .badge-warning {
+    @apply bg-amber-500/10 text-amber-500;
   }
 }
 
@@ -143,9 +262,9 @@ html {
   background: #020617;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #334155;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #475569;
 }

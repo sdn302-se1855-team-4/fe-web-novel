@@ -1,147 +1,88 @@
+@reference "../globals.css";
+
 .pageTitle {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
+  @apply flex items-center gap-3 text-3xl font-black text-text-primary mb-10 tracking-tight italic uppercase;
   font-family: var(--font-heading);
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-xl);
 }
 
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
+  @apply flex flex-col gap-4;
 }
 
 .item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  background: var(--color-surface-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  text-decoration: none;
-  color: inherit;
-  transition:
-    background-color var(--transition-fast),
-    transform var(--transition-fast);
+  @apply flex items-center gap-6 p-5 bg-surface-brand border border-border-brand rounded-[2rem] no-underline text-inherit transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/5;
 }
 
 .item:hover {
-  background: var(--color-surface);
-  transform: translateX(4px);
+  @apply transform translate-x-2;
 }
 
 .cover {
-  width: 64px;
-  height: 86px;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
+  @apply w-20 h-28 object-cover rounded-2xl shadow-lg flex-shrink-0;
 }
 
 .info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  @apply flex-1 min-w-0 flex flex-col gap-2;
 }
 
 .titleRow {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
+  @apply flex items-center gap-3;
 }
 
 .title {
-  font-weight: 600;
-  font-size: 0.9375rem;
-  color: var(--color-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @apply font-bold text-lg text-text-primary truncate;
 }
 
 .typeBadge {
-  font-size: 0.625rem;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: var(--radius-sm);
-  background: var(--color-primary);
-  color: #fff;
-  text-transform: uppercase;
-  flex-shrink: 0;
+  @apply text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-500 text-white uppercase tracking-wider flex-shrink-0;
 }
 
 .chapterText {
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @apply text-sm font-medium text-text-secondary truncate;
 }
 
 .metaRow {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
+  @apply flex items-center gap-4;
 }
 
 .author {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
+  @apply text-xs font-bold text-emerald-500/70;
 }
 
 .time {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
+  @apply text-xs font-medium text-text-muted;
 }
 
 .progressBar {
-  height: 4px;
-  background: var(--color-surface);
-  border-radius: 2px;
-  overflow: hidden;
-  margin-top: 4px;
+  @apply h-1.5 bg-surface-elevated rounded-full overflow-hidden mt-3 max-w-[200px];
 }
 
 .progressFill {
-  height: 100%;
-  background: var(--color-primary);
-  border-radius: 2px;
-  transition: width 0.3s ease;
+  @apply h-full bg-emerald-500 rounded-full transition-all duration-500;
 }
 
 .arrow {
-  color: var(--color-text-muted);
-  flex-shrink: 0;
+  @apply text-text-muted transition-colors duration-300;
+}
+
+.item:hover .arrow {
+  @apply text-emerald-500;
 }
 
 .empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-3xl) 0;
-  color: var(--color-text-muted);
-  text-align: center;
+  @apply flex flex-col items-center gap-6 py-24 text-text-muted text-center;
 }
 
 @media (max-width: 768px) {
   .pageTitle {
-    font-size: 1.375rem;
+    @apply text-2xl;
   }
 
   .cover {
-    width: 48px;
-    height: 64px;
+    @apply w-16 h-24;
   }
 
   .item {
-    padding: var(--spacing-sm);
+    @apply gap-4 p-4;
   }
 }

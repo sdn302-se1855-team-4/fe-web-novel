@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Clock, BookOpen, ChevronRight } from "lucide-react";
+import { Clock, BookOpen, ChevronRight, ChevronLeft } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import styles from "./history.module.css";
@@ -68,9 +68,21 @@ export default function HistoryPage() {
   return (
     <div className="page-wrapper">
       <div className="container">
-        <h1 className={styles.pageTitle}>
-          <Clock size={24} /> Lịch sử đọc
-        </h1>
+        <div className="mb-8">
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-medium text-sm group mb-6"
+          >
+            <div className="p-1.5 rounded-full bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
+              <ChevronLeft size={16} />
+            </div>
+            Quay lại
+          </button>
+          
+          <h1 className={`${styles.pageTitle} !mb-0`}>
+            <Clock size={32} className="text-emerald-500" /> Lịch sử đọc
+          </h1>
+        </div>
 
         {loading ? (
           <div className={styles.list}>

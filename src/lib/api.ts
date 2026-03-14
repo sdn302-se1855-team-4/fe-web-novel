@@ -84,64 +84,78 @@ export async function apiFetch<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...fetchOptions,
-    headers,
-  });
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...fetchOptions,
+      headers,
+    });
 
-  // If 401 and we have a refresh token, try to refresh and retry
-  if (res.status === 401) {
-    const refreshed = await refreshAccessToken();
+    // If 401 and we have a refresh token, try to refresh and retry
+    if (res.status === 401) {
+      const refreshed = await refreshAccessToken();
 
-    if (refreshed) {
-      // Retry the original request with the new token
-      const newToken = getAccessToken();
-      if (newToken) {
-        headers["Authorization"] = `Bearer ${newToken}`;
+      if (refreshed) {
+        // Retry the original request with the new token
+        const newToken = getAccessToken();
+        if (newToken) {
+          headers["Authorization"] = `Bearer ${newToken}`;
+        }
+
+        const retryRes = await fetch(`${API_BASE}${path}`, {
+          ...fetchOptions,
+          headers,
+        });
+
+        if (!retryRes.ok) {
+          const errorBody = await retryRes.json().catch(() => ({
+            message: retryRes.statusText,
+            statusCode: retryRes.status,
+          }));
+          throw new ApiRequestError(
+            parseErrorMessage(errorBody) || "API Error",
+            retryRes.status,
+          );
+        }
+
+        const json = await retryRes.json();
+        return json.data !== undefined ? json.data : json;
       }
 
-      const retryRes = await fetch(`${API_BASE}${path}`, {
-        ...fetchOptions,
-        headers,
-      });
-
-      if (!retryRes.ok) {
-        const errorBody = await retryRes.json().catch(() => ({
-          message: retryRes.statusText,
-          statusCode: retryRes.status,
-        }));
-        throw new ApiRequestError(
-          parseErrorMessage(errorBody) || "API Error",
-          retryRes.status,
-        );
+      // Refresh failed — clear tokens and redirect to login
+      removeTokens();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
       }
-
-      const json = await retryRes.json();
-      return json.data !== undefined ? json.data : json;
+      throw new ApiRequestError("Phiên đăng nhập đã hết hạn", 401);
     }
 
-    // Refresh failed — clear tokens and redirect to login
-    removeTokens();
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({
+        message: res.statusText,
+        statusCode: res.status,
+      }));
+      throw new ApiRequestError(
+        parseErrorMessage(errorBody) || "API Error",
+        res.status,
+      );
     }
-    throw new ApiRequestError("Phiên đăng nhập đã hết hạn", 401);
-  }
 
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({
-      message: res.statusText,
-      statusCode: res.status,
-    }));
-    throw new ApiRequestError(
-      parseErrorMessage(errorBody) || "API Error",
-      res.status,
-    );
+    const json = await res.json();
+    // Backend wraps responses in { data, message, statusCode }
+    return json.data !== undefined ? json.data : json;
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error;
+    
+    // Handle network errors (Failed to fetch)
+    const isNetworkError = error instanceof TypeError || (error instanceof Error && error.message.includes("fetch"));
+    if (isNetworkError) {
+      throw new ApiRequestError(
+        "Không thể kết nối tới máy chủ. Vui lòng kiểm tra lại kết nối hoặc đảm bảo Backend đã hoạt động.",
+        0
+      );
+    }
+    throw error;
   }
-
-  const json = await res.json();
-  // Backend wraps responses in { data, message, statusCode }
-  return json.data !== undefined ? json.data : json;
 }
 
 function parseErrorMessage(errorBody: Record<string, unknown>): string {

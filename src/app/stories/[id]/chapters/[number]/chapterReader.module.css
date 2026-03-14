@@ -90,7 +90,7 @@
 }
 
 .chapterText {
-  font-family: var(--font-reader, "Georgia", serif);
+  font-family: var(--font-reader);
   line-height: var(--reader-line-height);
   word-break: break-word;
 }

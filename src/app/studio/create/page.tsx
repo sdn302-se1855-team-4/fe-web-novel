@@ -2,9 +2,10 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, BookOpen, RefreshCw } from "lucide-react";
+import { Plus, BookOpen, RefreshCw, ChevronLeft } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
 interface Genre {
   id: string;
@@ -89,158 +90,155 @@ export default function CreateStoryPage() {
   };
 
   return (
-    <div className="page-wrapper">
-      <div className="container" style={{ maxWidth: 640 }}>
-        <h1 className="section-title">
-          <Plus size={24} /> Tạo truyện mới
-        </h1>
+    <div className="pb-12" style={{ maxWidth: 720, margin: "0 auto" }}>
+      <div className="mb-8">
+        <button 
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-bold text-sm group"
+        >
+          <div className="p-2 rounded-xl bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
+            <ChevronLeft size={18} />
+          </div>
+          Quay lại
+        </button>
+      </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-lg">
+      <h1 className="section-title text-4xl italic tracking-tighter uppercase font-black">
+        <Plus size={32} className="text-emerald-500" /> Tạo truyện mới
+      </h1>
+
+      <div className="p-8 bg-surface-brand border border-border-brand rounded-[2.5rem] shadow-2xl shadow-emerald-500/5">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {error && (
             <div
-              style={{
-                background: "hsl(0,80%,95%)",
-                color: "var(--color-error)",
-                padding: "var(--spacing-sm) var(--spacing-md)",
-                borderRadius: "var(--radius-md)",
-                fontSize: "0.875rem",
-              }}
+              className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-sm font-bold text-center animate-in fade-in slide-in-from-top-2"
             >
               {error}
             </div>
           )}
 
-          <div className="form-group">
-            <label htmlFor="title" className="label">
-              Tiêu đề truyện *
-            </label>
-            <input
-              id="title"
-              className="input"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              placeholder="Nhập tiêu đề truyện"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description" className="label">
-              Mô tả
-            </label>
-            <textarea
-              id="description"
-              className="input textarea"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Mô tả nội dung truyện..."
-              rows={4}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="type" className="label">
-              Loại truyện
-            </label>
-            <select
-              id="type"
-              className="input"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-            >
-              <option value="NOVEL">Novel</option>
-              <option value="MANGA">Manga</option>
-              <option value="COMIC">Comic</option>
-              <option value="LIGHTNOVEL">Light Novel</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label
-              htmlFor="coverImage"
-              className="label"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <span>Link ảnh bìa</span>
-              <button
-                type="button"
-                className="btn btn-xs btn-ghost"
-                onClick={handleRandomCover}
-                style={{ fontSize: "0.7rem", color: "var(--color-primary)" }}
-              >
-                <RefreshCw size={12} /> Ngẫu nhiên
-              </button>
-            </label>
-            <div style={{ display: "flex", gap: "var(--spacing-sm)" }}>
+          <div className="grid grid-cols-1 gap-8">
+            <div className="space-y-2">
+              <label htmlFor="title" className="label">
+                Tiêu đề truyện <span className="text-rose-500 font-black">*</span>
+              </label>
               <input
-                id="coverImage"
-                className="input"
-                style={{ flex: 1 }}
-                value={coverImage}
-                onChange={(e) => setCoverImage(e.target.value)}
-                placeholder="https://..."
-                type="url"
+                id="title"
+                className="input h-14"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                placeholder="VD: Hành Trình Của Kẻ Vô Thân"
               />
-              {coverImage && (
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "var(--radius-sm)",
-                    overflow: "hidden",
-                    border: "1px solid var(--color-border)",
-                    flexShrink: 0,
-                  }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={coverImage}
-                    alt="Preview"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                </div>
-              )}
             </div>
-          </div>
 
-          {genres.length > 0 && (
-            <div className="form-group">
-              <label className="label">Thể loại (tối đa 5)</label>
-              <div className="flex gap-sm" style={{ flexWrap: "wrap" }}>
-                {genres.map((g) => (
+            <div className="space-y-2">
+              <label htmlFor="description" className="label">
+                Mô tả cốt truyện
+              </label>
+              <textarea
+                id="description"
+                className="input min-h-[160px] py-4 resize-none"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Viết vài dòng giới thiệu về tác phẩm của bạn..."
+                rows={4}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label htmlFor="type" className="label">
+                  Định dạng tác phẩm
+                </label>
+                <select
+                  id="type"
+                  className="input h-14 appearance-none"
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                >
+                  <option value="NOVEL">Novel</option>
+                  <option value="MANGA">Manga</option>
+                  <option value="COMIC">Comic</option>
+                  <option value="LIGHTNOVEL">Light Novel</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="coverImage"
+                  className="label flex justify-between items-center"
+                >
+                  <span>Ảnh bìa tác phẩm</span>
                   <button
-                    key={g.id}
                     type="button"
-                    className={`btn btn-sm ${selectedGenres.includes(g.id) ? "btn-primary" : "btn-outline"}`}
-                    onClick={() => toggleGenre(g.id)}
+                    className="text-[10px] font-black uppercase text-emerald-500 hover:text-emerald-400 flex items-center gap-1 transition-colors"
+                    onClick={handleRandomCover}
                   >
-                    {g.name}
+                    <RefreshCw size={12} /> Lấy ảnh ngẫu nhiên
                   </button>
-                ))}
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    id="coverImage"
+                    className="input h-14 flex-1"
+                    value={coverImage}
+                    onChange={(e) => setCoverImage(e.target.value)}
+                    placeholder="Dán link ảnh tại đây (https://...)"
+                    type="url"
+                  />
+                  {coverImage && (
+                    <div className="w-14 h-14 rounded-xl overflow-hidden border border-border-brand bg-surface-elevated shrink-0 shadow-lg shadow-black/5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={coverImage}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          )}
+
+            {genres.length > 0 && (
+              <div className="space-y-4">
+                <label className="label">Thể loại</label>
+                <div className="flex flex-wrap gap-3">
+                  {genres.map((g) => {
+                    const isActive = selectedGenres.includes(g.id);
+                    return (
+                      <button
+                        key={g.id}
+                        type="button"
+                        className={cn(
+                          "px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-300 transform active:scale-95 border-2",
+                          isActive 
+                            ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
+                            : "bg-surface-elevated border-border-brand text-text-muted hover:border-emerald-500/30 hover:text-emerald-500"
+                        )}
+                        onClick={() => toggleGenre(g.id)}
+                      >
+                        {g.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
 
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary w-full h-16 text-xl uppercase tracking-widest font-black italic mt-10"
             disabled={loading}
-            style={{ marginTop: "var(--spacing-md)" }}
           >
             {loading ? (
-              "Đang tạo..."
+              <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
             ) : (
-              <>
-                <BookOpen size={18} /> Tạo truyện
-              </>
+              <div className="flex items-center gap-3">
+                <BookOpen size={24} /> Khởi tạo tác phẩm
+              </div>
             )}
           </button>
         </form>

@@ -4,33 +4,51 @@
 
 .profileHeader {
   display: flex;
+  flex-direction: column;
   gap: var(--spacing-xl);
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
   margin-bottom: var(--spacing-2xl);
-  padding: var(--spacing-xl);
-  background: var(--color-surface-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  padding: var(--spacing-3xl) var(--spacing-xl);
+  background: var(--surface-brand);
+  border: 1px solid var(--border-brand);
+  border-radius: var(--radius-3xl);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.profileHeader::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to right, transparent, var(--color-primary-brand), transparent);
 }
 
 .avatarWrap {
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .avatar {
-  width: 96px;
-  height: 96px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid var(--color-primary);
+  border: 6px solid var(--surface-elevated);
+  box-shadow: 0 0 25px var(--color-primary-glow);
 }
 
 .avatarFallback {
-  width: 96px;
-  height: 96px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
-  background: var(--color-surface);
-  border: 3px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  border: 4px solid var(--border-brand);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -38,71 +56,96 @@
 }
 
 .headerInfo {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
+  max-width: 600px;
+  z-index: 1;
 }
 
 .nameRow {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: var(--spacing-sm);
-  margin-bottom: 2px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .name {
   font-family: var(--font-heading);
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .roleBadge {
-  font-size: 0.6875rem;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  background: var(--color-primary);
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-brand);
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .username {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  margin-bottom: var(--spacing-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-primary-brand);
+  margin-bottom: var(--spacing-md);
 }
 
 .bio {
-  font-size: 0.9375rem;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  margin-bottom: var(--spacing-md);
+  font-size: 1.125rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xl);
+  font-style: italic;
 }
 
 .statsRow {
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-md);
+  background: var(--surface-elevated);
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--border-brand);
 }
 
 .stat {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 4px;
-  font-size: 0.8125rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
+  min-width: 100px;
+}
+
+.statValue {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
 }
 
 .followBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
+  margin-top: var(--spacing-md);
+  padding: 0.75rem 2.5rem;
+  border-radius: var(--radius-full);
 }
 
 /* Stories */
 .storiesSection {
-  margin-top: var(--spacing-xl);
+  margin-top: var(--spacing-2xl);
 }
 
 .sectionTitle {
@@ -110,9 +153,11 @@
   align-items: center;
   gap: var(--spacing-sm);
   font-family: var(--font-heading);
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: var(--spacing-lg);
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--border-brand);
 }
 
 .empty {
@@ -122,20 +167,4 @@
   gap: var(--spacing-md);
   padding: var(--spacing-3xl) 0;
   color: var(--color-text-muted);
-}
-
-@media (max-width: 640px) {
-  .profileHeader {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .nameRow {
-    justify-content: center;
-  }
-
-  .statsRow {
-    justify-content: center;
-  }
 }
