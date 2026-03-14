@@ -3,7 +3,8 @@
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, LogIn, ArrowLeft, BookOpen } from "lucide-react";
+import { Mail, Lock, LogIn, ArrowLeft } from "lucide-react";
+import Logo from "@/components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { setTokens } from "@/lib/auth";
@@ -71,15 +72,8 @@ export default function LoginPage() {
           <span className="text-sm font-medium">Quay lại trang chủ</span>
         </Link>
 
-        {/* Brand Header */}
-        <div className="flex items-center gap-3 mb-10">
-          <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 shadow-xl shadow-emerald-500/5">
-            <BookOpen size={32} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-text-primary tracking-tight">BestNovelVN</h2>
-            <p className="text-emerald-500/60 text-xs font-bold uppercase tracking-widest mt-0.5">Premium Portal</p>
-          </div>
+        <div className="mb-10">
+          <Logo iconSize={32} textSize="2xl" showTagline />
         </div>
 
         <Card className="bg-surface-brand border-border-brand backdrop-blur-2xl shadow-2xl rounded-3xl overflow-hidden p-2">

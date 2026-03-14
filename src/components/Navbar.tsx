@@ -21,6 +21,7 @@ import {
   Lightbulb,
   Gift,
 } from "lucide-react";
+import Logo from "./Logo";
 import { useTheme } from "./ThemeProvider";
 import { isLoggedIn, removeTokens, getUserRole } from "@/lib/auth";
 import { useState, useEffect, useRef, FormEvent } from "react";
@@ -255,13 +256,8 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between w-full gap-4 lg:gap-8">
           {/* Logo & Theme */}
           <div className="flex items-center gap-3 shrink-0 lg:flex-1">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-all">
-                <BookOpen size={20} />
-              </div>
-              <span className="text-lg font-bold text-text-primary group-hover:text-emerald-500 transition-colors">
-                BestNovelVN
-              </span>
+            <Link href="/" className="shrink-0 group">
+              <Logo showTagline />
             </Link>
 
             <button
@@ -299,7 +295,7 @@ export default function Navbar() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-surface-brand border border-border-brand rounded-xl shadow-2xl overflow-hidden z-[100]"
+                  className="absolute top-full left-0 right-0 mt-2 bg-surface-brand border border-border-brand rounded-xl shadow-2xl overflow-hidden z-100"
                 >
                   <div className="p-2">
                     {isSearching ? (

@@ -95,7 +95,7 @@ export default function RegisterPage() {
               Gia nhập cộng đồng
             </CardTitle>
             <CardDescription className="text-text-muted text-base max-w-sm mx-auto">
-              Bắt đầu hành trình đọc và viết những câu chuyện tuyệt vời nhất tại BestNovelVN.
+              Bắt đầu hành trình đọc và viết những câu chuyện tuyệt vời nhất tại ChapterOne.
             </CardDescription>
           </CardHeader>
 
