@@ -264,63 +264,76 @@ export default function ChapterReaderPage() {
       >
         <Link
           href={`/stories/${storyId}`}
-          className="flex items-center gap-3 font-bold text-sm transition-transform hover:-translate-x-1 max-w-[45%]"
+          className="flex items-center gap-2 font-bold text-sm transition-transform hover:-translate-x-1 w-auto max-w-[30%] sm:max-w-[45%]"
         >
-          <ChevronLeft size={20} className={currentTheme.accent} />
-          <span className="truncate tracking-tight">
+          <ChevronLeft
+            size={20}
+            className={cn(currentTheme.accent, "shrink-0")}
+          />
+          <span className="truncate tracking-tight hidden xs:block">
             {chapter.story?.title || "Trở lại"}
           </span>
         </Link>
 
         <div className="flex items-center gap-1.5 sm:gap-3">
-          <div className="flex items-center bg-black/5 dark:bg-white/5 rounded-xl p-0.5">
+          <div className="flex items-center bg-black/5 dark:bg-white/5 rounded-xl p-0.5 scale-90 sm:scale-100">
             <button
               className={cn(
-                "p-2 rounded-lg transition-all active:scale-90",
+                "p-1.5 sm:p-2 rounded-lg transition-all active:scale-90",
                 currentTheme.btn,
               )}
               onClick={() => changeFontSize(-2)}
               aria-label="Giảm chữ"
             >
-              <Minus size={16} />
+              <Minus size={14} className="sm:w-4 sm:h-4" />
             </button>
-            <span className="w-12 text-center text-[10px] font-black opacity-60">
-              {fontSize}PX
+            <span className="w-8 sm:w-12 text-center text-[9px] sm:text-[10px] font-black opacity-60">
+              {fontSize}
+              <span className="hidden sm:inline">PX</span>
             </span>
             <button
               className={cn(
-                "p-2 rounded-lg transition-all active:scale-90",
+                "p-1.5 sm:p-2 rounded-lg transition-all active:scale-90",
                 currentTheme.btn,
               )}
               onClick={() => changeFontSize(2)}
               aria-label="Tăng chữ"
             >
-              <Plus size={16} />
+              <Plus size={14} className="sm:w-4 sm:h-4" />
             </button>
           </div>
 
           <button
             className={cn(
-              "p-2 rounded-xl transition-all active:scale-90 border",
+              "p-1.5 sm:p-2 rounded-xl transition-all active:scale-90 border flex items-center justify-center scale-90 sm:scale-100",
               currentTheme.btn,
             )}
             onClick={cycleTheme}
             aria-label="Đổi nền"
           >
-            {readerTheme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
+            {readerTheme === "dark" ? (
+              <Moon size={16} className="sm:w-[18px] sm:h-[18px]" />
+            ) : (
+              <Sun size={16} className="sm:w-[18px] sm:h-[18px]" />
+            )}
           </button>
 
-          <div className={cn("w-px h-6 mx-1", currentTheme.border)} />
+          <div
+            className={cn(
+              "w-px h-5 sm:h-6 mx-0.5 sm:mx-1",
+              currentTheme.border,
+            )}
+          />
 
           <button
             className={cn(
-              "p-2 rounded-xl transition-all active:scale-90 border hover:bg-red-500! hover:text-white! hover:border-red-500!",
+              "p-1.5 sm:p-2 rounded-xl transition-all active:scale-90 border flex items-center justify-center scale-90 sm:scale-100",
               currentTheme.btn,
             )}
             onClick={() => router.push(`/stories/${storyId}`)}
             title="Thoát"
           >
-            <X size={20} />
+            <X size={18} className="sm:w-5 sm:h-5" />
           </button>
         </div>
       </motion.div>
@@ -336,8 +349,13 @@ export default function ChapterReaderPage() {
           className="max-w-[800px] mx-auto w-full px-4 sm:px-8 pt-24 pb-32"
           style={{ fontSize: `${fontSize}px` }}
         >
-          <header className="mb-12 text-center">
-            <h1 className="text-3xl sm:text-4xl font-extrabold mb-4 leading-tight tracking-tight">
+          <header className="mb-8 sm:mb-12 text-center">
+            <h1
+              className={cn(
+                "text-2xl sm:text-4xl font-extrabold mb-4 leading-tight tracking-tight",
+                currentTheme.text,
+              )}
+            >
               Chương {chapter.chapterNumber}: {chapter.title}
             </h1>
             {chapter.isPremium && (
@@ -348,31 +366,31 @@ export default function ChapterReaderPage() {
           </header>
 
           {/* Inline Navigation Bar */}
-          <div className="flex items-center justify-center gap-3 mb-12">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-12 w-full">
             <button
               className={cn(
-                "w-11 h-11 flex items-center justify-center rounded-2xl border transition-all active:scale-90 disabled:opacity-30",
+                "w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl sm:rounded-2xl border transition-all active:scale-90 disabled:opacity-30 shrink-0",
                 currentTheme.btn,
               )}
               disabled={chapterNumber <= 1}
               onClick={() => navigateChapter(chapterNumber - 1)}
             >
-              <ChevronLeft size={22} />
+              <ChevronLeft size={20} className="sm:w-[22px] sm:h-[22px]" />
             </button>
 
-            <div className="flex-1 max-w-[340px]">
+            <div className="flex-1 min-w-0 max-w-[400px]">
               <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogTrigger
                   className={cn(
-                    "w-full h-11 px-4 rounded-2xl border font-bold text-sm flex items-center justify-between gap-3 group transition-all",
+                    "w-full h-9 sm:h-11 px-2.5 sm:px-4 rounded-xl sm:rounded-2xl border font-bold text-[11px] sm:text-sm flex items-center justify-between gap-1.5 sm:gap-3 group transition-all",
                     currentTheme.bar,
                     currentTheme.border,
                     "hover:border-emerald-500/50",
                   )}
                 >
-                  <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="flex items-center gap-1.5 sm:gap-3 overflow-hidden min-w-0">
                     <List
-                      size={18}
+                      size={15}
                       className="text-emerald-500 shrink-0 group-hover:scale-110 transition-transform"
                     />
                     <span className="truncate opacity-90">
@@ -382,8 +400,8 @@ export default function ChapterReaderPage() {
                     </span>
                   </div>
                   <ChevronRight
-                    size={16}
-                    className="opacity-40 group-hover:translate-x-0.5 transition-transform"
+                    size={14}
+                    className="opacity-40 group-hover:translate-x-0.5 transition-transform shrink-0"
                   />
                 </DialogTrigger>
                 <DialogContent
@@ -391,6 +409,7 @@ export default function ChapterReaderPage() {
                   className={cn(
                     "max-w-[450px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl",
                     currentTheme.bar,
+                    currentTheme.text,
                   )}
                 >
                   <DialogHeader className="sr-only">
@@ -472,13 +491,13 @@ export default function ChapterReaderPage() {
 
             <button
               className={cn(
-                "w-11 h-11 flex items-center justify-center rounded-2xl border transition-all active:scale-90 disabled:opacity-30",
+                "w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl sm:rounded-2xl border transition-all active:scale-90 disabled:opacity-30 shrink-0",
                 currentTheme.btn,
               )}
               disabled={chapterNumber >= totalChapters}
               onClick={() => navigateChapter(chapterNumber + 1)}
             >
-              <ChevronRight size={22} />
+              <ChevronRight size={20} className="sm:w-[22px] sm:h-[22px]" />
             </button>
           </div>
 
@@ -493,7 +512,9 @@ export default function ChapterReaderPage() {
               <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center border-4 border-amber-500/20">
                 <Lock size={48} className="text-amber-500" />
               </div>
-              <h2 className="text-2xl font-black">Mở khóa nội dung Premium</h2>
+              <h2 className={cn("text-2xl font-black", currentTheme.text)}>
+                Mở khóa nội dung Premium
+              </h2>
               <p className="text-lg opacity-80">
                 Chương này cần{" "}
                 <span className="font-bold text-amber-500">
@@ -533,10 +554,11 @@ export default function ChapterReaderPage() {
           ) : (
             <div
               className={cn(
-                "font-serif leading-[2] sm:leading-[2.2] wrap-break-word space-y-8",
+                "font-serif leading-[1.8] sm:leading-[2.2] wrap-break-word space-y-6 sm:space-y-8 select-text",
+                "content-renderer [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:mx-auto",
                 chapter.story?.type === "MANGA" ||
                   chapter.story?.type === "COMIC"
-                  ? "flex flex-col items-center gap-1"
+                  ? "flex flex-col items-center gap-1 sm:gap-2"
                   : "",
               )}
               dangerouslySetInnerHTML={{ __html: chapter.content || "" }}
@@ -546,67 +568,73 @@ export default function ChapterReaderPage() {
       </AnimatePresence>
 
       <footer className="max-w-[800px] mx-auto w-full px-4 sm:px-8 pb-32">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
           <button
             className={cn(
-              "w-full sm:flex-1 h-14 flex items-center justify-center gap-2 rounded-2xl border font-bold transition-all active:scale-95 disabled:opacity-30",
+              "w-full sm:flex-1 h-12 sm:h-14 flex items-center justify-center gap-2 rounded-2xl border font-bold transition-all active:scale-95 disabled:opacity-30",
               currentTheme.btn,
             )}
             disabled={chapterNumber <= 1}
             onClick={() => navigateChapter(chapterNumber - 1)}
           >
             <ChevronLeft size={20} />
-            <span>Chương trước</span>
+            <span className="text-sm sm:text-base">Chương trước</span>
           </button>
 
           <div className="w-full sm:w-[340px]">
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
               <DialogTrigger
                 className={cn(
-                  "w-full h-14 px-6 rounded-2xl border font-bold text-base flex items-center justify-between gap-3 group transition-all",
+                  "w-full h-12 sm:h-14 px-4 sm:px-6 rounded-2xl border font-bold text-sm sm:text-base flex items-center justify-between gap-3 group transition-all",
                   currentTheme.bar,
                   currentTheme.border,
                   "hover:border-emerald-500/50",
                 )}
               >
-                <div className="flex items-center gap-4 overflow-hidden">
+                <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
                   <List
-                    size={22}
+                    size={20}
                     className="text-emerald-500 shrink-0 group-hover:rotate-12 transition-transform"
                   />
-                  <span className="truncate opacity-90">
+                  <span className="truncate opacity-90 text-sm sm:text-base">
                     {chapter
                       ? `Chương ${chapter.chapterNumber}: ${chapter.title}`
                       : "Chọn chương..."}
                   </span>
                 </div>
                 <ChevronRight
-                  size={20}
-                  className="opacity-40 group-hover:translate-x-1 transition-transform"
+                  size={18}
+                  className="opacity-40 group-hover:translate-x-1 transition-transform shrink-0"
                 />
               </DialogTrigger>
               <DialogContent
                 showCloseButton={false}
                 className={cn(
-                  "max-w-[450px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl",
+                  "max-w-[95vw] sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl",
                   currentTheme.bar,
+                  currentTheme.text,
                 )}
               >
                 <DialogHeader className="sr-only">
                   <DialogTitle>Danh sách chương</DialogTitle>
                 </DialogHeader>
 
-                <div className={cn("p-5 pb-4 border-b", currentTheme.border)}>
+                <div
+                  className={cn(
+                    "p-4 sm:p-5 pb-4 border-b",
+                    currentTheme.border,
+                  )}
+                >
                   <div className="relative group">
                     <Search
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 transition-transform group-focus-within:scale-110"
-                      size={22}
+                      size={20}
                     />
                     <input
                       type="text"
                       placeholder="Tìm số chương hoặc tên..."
                       className={cn(
-                        "w-full h-12 pl-12 pr-4 rounded-xl border bg-transparent outline-none focus:ring-2 ring-emerald-500/25 font-semibold transition-all text-base",
+                        "w-full h-11 pl-12 pr-4 rounded-xl border bg-transparent outline-none focus:ring-2 ring-emerald-500/25 font-semibold transition-all text-sm sm:text-base",
                         currentTheme.border,
                         currentTheme.text,
                       )}
@@ -617,14 +645,14 @@ export default function ChapterReaderPage() {
                   </div>
                 </div>
 
-                <div className="max-h-[60vh] overflow-y-auto p-3 no-scrollbar space-y-1">
+                <div className="max-h-[60vh] overflow-y-auto p-2 sm:p-3 no-scrollbar space-y-1">
                   {filteredChapters.length > 0 ? (
                     filteredChapters.map((ch) => (
                       <button
                         key={ch.id}
                         onClick={() => handleSelectChapter(ch.chapterNumber)}
                         className={cn(
-                          "w-full px-5 py-4 rounded-2xl flex items-center justify-between group transition-all text-left",
+                          "w-full px-4 sm:px-5 py-3 sm:py-4 rounded-2xl flex items-center justify-between group transition-all text-left",
                           ch.chapterNumber === chapterNumber
                             ? "bg-emerald-500/15 text-emerald-500"
                             : cn(
@@ -633,10 +661,10 @@ export default function ChapterReaderPage() {
                               ),
                         )}
                       >
-                        <div className="flex items-center gap-5 overflow-hidden">
+                        <div className="flex items-center gap-4 sm:gap-5 overflow-hidden">
                           <span
                             className={cn(
-                              "font-bold shrink-0 min-w-[35px] text-xl",
+                              "font-bold shrink-0 min-w-[30px] sm:min-w-[35px] text-lg sm:text-xl",
                               ch.chapterNumber === chapterNumber
                                 ? "text-emerald-500"
                                 : "opacity-30",
@@ -644,13 +672,13 @@ export default function ChapterReaderPage() {
                           >
                             {ch.chapterNumber}
                           </span>
-                          <span className="truncate font-semibold tracking-tight opacity-95 text-base">
+                          <span className="truncate font-semibold tracking-tight opacity-95 text-sm sm:text-base">
                             {ch.title}
                           </span>
                         </div>
                         {ch.chapterNumber === chapterNumber && (
                           <Check
-                            size={20}
+                            size={18}
                             strokeWidth={3}
                             className="text-emerald-500 animate-in fade-in zoom-in duration-300"
                           />
@@ -671,13 +699,13 @@ export default function ChapterReaderPage() {
 
           <button
             className={cn(
-              "w-full sm:flex-1 h-14 flex items-center justify-center gap-2 rounded-2xl border font-bold transition-all active:scale-95 disabled:opacity-30",
+              "w-full sm:flex-1 h-12 sm:h-14 flex items-center justify-center gap-2 rounded-2xl border font-bold transition-all active:scale-95 disabled:opacity-30",
               currentTheme.btn,
             )}
             disabled={chapterNumber >= totalChapters}
             onClick={() => navigateChapter(chapterNumber + 1)}
           >
-            <span>Chương sau</span>
+            <span className="text-sm sm:text-base">Chương sau</span>
             <ChevronRight size={20} />
           </button>
         </div>
