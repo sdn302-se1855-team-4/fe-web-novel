@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { BarChart3, TrendingUp, Users, BookOpen, Coins, ChevronLeft } from "lucide-react";
-import Link from "next/link";
 import { isLoggedIn } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 interface AnalyticsData {
   totalViews: number;
@@ -36,9 +36,6 @@ export default function AnalyticsDashboardPage() {
       return;
     }
 
-    // In a real app we'd have a specific /studio/analytics endpoint.
-    // Here we aggregate from my stories and wallet if necessary, or just mock some fields if missing,
-    // assuming we fetch my stories to sum the views.
     Promise.all([
       apiFetch<AnalyticsStory[] | { data: AnalyticsStory[] }>("/stories/my").catch(() => []),
       apiFetch<{ totalEarned: number }>("/wallet").catch(() => null)
@@ -53,10 +50,7 @@ export default function AnalyticsDashboardPage() {
           0,
         );
         
-        // Use real wallet earnings, default to 0
         const actualEarnings = walletRes ? walletRes.totalEarned : 0;
-        
-        // Still mock followers for now since we don't have a simple /me endpoint with followers count
         const mockFollowers = Math.floor(totalViews * 0.15);
 
         setData({
@@ -75,22 +69,25 @@ export default function AnalyticsDashboardPage() {
 
   if (loading) {
     return (
-      <div className="page-wrapper container">
-        <h1 className="section-title">Thống kê & Doanh thu</h1>
-        <div
-          className="skeleton"
-          style={{ height: "200px", marginBottom: "2rem" }}
-        />
+      <div className="min-h-screen pt-4">
+        <div className="mb-8">
+          <div className="w-24 h-6 skeleton rounded-lg" />
+        </div>
+        <div className="w-64 h-10 skeleton rounded-lg mb-12" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          {[1, 2, 3].map(i => <div key={i} className="h-32 skeleton rounded-[2rem]" />)}
+        </div>
+        <div className="h-[400px] skeleton rounded-[2.5rem]" />
       </div>
     );
   }
 
   if (!data) return null;
 
-  const maxViews = Math.max(...data.stories.map((s) => s.viewCount || 0), 10); // Minimum 10 to avoid div by zero
+  const maxViews = Math.max(...data.stories.map((s) => s.viewCount || 0), 10);
 
   return (
-    <div className="pb-12">
+    <div className="min-h-screen pb-12">
       <div className="mb-8">
         <button 
           onClick={() => router.back()}
@@ -103,198 +100,139 @@ export default function AnalyticsDashboardPage() {
         </button>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2rem",
-        }}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12"
       >
-        <h1 className="section-title" style={{ margin: 0 }}>
-          <BarChart3 size={28} style={{ marginRight: "0.5rem" }} /> Thống kê Tác
-          giả
+        <h1 className="flex items-center gap-4 text-3xl font-black text-text-primary italic uppercase tracking-tighter">
+          <BarChart3 size={32} className="text-emerald-500" /> Thống kê Tác giả
         </h1>
-      </div>
+      </motion.div>
 
       {/* Stats Cards */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: "1rem",
-          marginBottom: "2rem",
-        }}
-      >
-        <div
-          className="card"
-          style={{
-            padding: "1.5rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-          }}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <motion.div
+           initial={{ opacity: 0, scale: 0.9 }}
+           animate={{ opacity: 1, scale: 1 }}
+           transition={{ delay: 0.1 }}
+           className="p-6 sm:p-8 bg-surface-brand border border-border-brand rounded-[2rem] flex items-center gap-6 group hover:bg-surface-elevated transition-colors shadow-lg shadow-black/5"
         >
-          <div
-            style={{
-              padding: "1rem",
-              background: "rgba(37, 99, 235, 0.1)",
-              color: "#2563eb",
-              borderRadius: "var(--radius-lg)",
-            }}
-          >
-            <TrendingUp size={28} />
+          <div className="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <TrendingUp size={32} />
           </div>
           <div>
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.875rem",
-                color: "var(--color-text-muted)",
-              }}
-            >
-              Tổng lượt đọc
-            </p>
-            <h2 style={{ margin: 0, fontSize: "1.75rem" }}>
-              {data.totalViews.toLocaleString()}
+            <p className="text-xs font-black text-text-muted uppercase tracking-widest mb-1">Tổng lượt đọc</p>
+            <h2 className="text-3xl font-black text-text-primary italic tracking-tight">
+              {Intl.NumberFormat("vi").format(data.totalViews)}
             </h2>
           </div>
-        </div>
-        <div
-          className="card"
-          style={{
-            padding: "1.5rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-          }}
+        </motion.div>
+
+        <motion.div
+           initial={{ opacity: 0, scale: 0.9 }}
+           animate={{ opacity: 1, scale: 1 }}
+           transition={{ delay: 0.2 }}
+           className="p-6 sm:p-8 bg-surface-brand border border-border-brand rounded-[2rem] flex items-center gap-6 group hover:bg-surface-elevated transition-colors shadow-lg shadow-black/5"
         >
-          <div
-            style={{
-              padding: "1rem",
-              background: "rgba(16, 185, 129, 0.1)",
-              color: "#10b981",
-              borderRadius: "var(--radius-lg)",
-            }}
-          >
-            <Users size={28} />
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <Users size={32} />
           </div>
           <div>
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.875rem",
-                color: "var(--color-text-muted)",
-              }}
-            >
-              Người theo dõi (Ước tính)
-            </p>
-            <h2 style={{ margin: 0, fontSize: "1.75rem" }}>
-              {data.totalFollowers.toLocaleString()}
+            <p className="text-xs font-black text-text-muted uppercase tracking-widest mb-1">Người theo dõi</p>
+            <h2 className="text-3xl font-black text-text-primary italic tracking-tight">
+              {Intl.NumberFormat("vi").format(data.totalFollowers)}
             </h2>
           </div>
-        </div>
-        <div
-          className="card"
-          style={{
-            padding: "1.5rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-          }}
+        </motion.div>
+
+        <motion.div
+           initial={{ opacity: 0, scale: 0.9 }}
+           animate={{ opacity: 1, scale: 1 }}
+           transition={{ delay: 0.3 }}
+           className="p-6 sm:p-8 bg-surface-brand border border-border-brand rounded-[2rem] flex items-center gap-6 group hover:bg-surface-elevated transition-colors shadow-lg shadow-black/5 sm:col-span-2 lg:col-span-1"
         >
-          <div
-            style={{
-              padding: "1rem",
-              background: "rgba(245, 158, 11, 0.1)",
-              color: "#f59e0b",
-              borderRadius: "var(--radius-lg)",
-            }}
-          >
-            <Coins size={28} />
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <Coins size={32} />
           </div>
           <div>
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.875rem",
-                color: "var(--color-text-muted)",
-              }}
-            >
-              Doanh thu dự kiến
-            </p>
-            <h2 style={{ margin: 0, fontSize: "1.75rem" }}>
-              {data.totalEarnings.toLocaleString()} Xu
+            <p className="text-xs font-black text-text-muted uppercase tracking-widest mb-1">Doanh thu dự kiến</p>
+            <h2 className="text-3xl font-black text-text-primary italic tracking-tight flex items-center gap-2">
+              {Intl.NumberFormat("vi").format(data.totalEarnings)} <span className="text-sm not-italic font-bold text-text-muted uppercase tracking-widest">Xu</span>
             </h2>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Performance Chart */}
-      <h2 className="section-title" style={{ fontSize: "1.5rem" }}>
-        Hiệu suất truyện
-      </h2>
-      <div className="card" style={{ padding: "2rem" }}>
-        {data.stories.length === 0 ? (
-          <p style={{ textAlign: "center", color: "var(--color-text-muted)" }}>
-            Bạn chưa có truyện nào để thống kê.
-          </p>
-        ) : (
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}
-          >
-            {data.stories.slice(0, 5).map((story) => {
-              const percentage = ((story.viewCount || 0) / maxViews) * 100;
-              return (
-                <div key={story.id}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: "0.5rem",
-                    }}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <h2 className="text-2xl font-black text-text-primary uppercase tracking-tight italic mb-6 flex items-center gap-3">
+           <div className="w-2 h-8 bg-emerald-500 rounded-full" />
+           Hiệu suất tác phẩm
+        </h2>
+        <div className="bg-surface-brand border border-border-brand rounded-[2.5rem] p-8 sm:p-12 shadow-2xl shadow-black/5 overflow-hidden relative">
+          {/* Decorative gradients */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 blur-[100px] pointer-events-none" />
+
+          {data.stories.length === 0 ? (
+            <div className="py-20 text-center flex flex-col items-center gap-4">
+               <BookOpen size={48} className="text-text-muted opacity-20" />
+               <p className="text-text-muted font-bold text-lg">Bạn chưa có truyện nào để thống kê.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-10">
+              {data.stories.slice(0, 5).map((story, idx) => {
+                const percentage = ((story.viewCount || 0) / maxViews) * 100;
+                return (
+                  <motion.div 
+                    key={story.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 + idx * 0.1 }}
+                    className="relative"
                   >
-                    <strong
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      <BookOpen size={16} /> {story.title}
-                    </strong>
-                    <span style={{ fontWeight: 600, display: "flex", gap: "1rem" }}>
-                      <span>{(story.viewCount || 0).toLocaleString()} lượt đọc</span>
-                      <span style={{ color: "var(--color-primary)" }}>
-                        {(story.totalEarnings || 0).toLocaleString()} xu
-                      </span>
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "12px",
-                      background: "var(--color-surface)",
-                      borderRadius: "99px",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: "100%",
-                        width: `${percentage}%`,
-                        background: "var(--color-primary)",
-                        borderRadius: "99px",
-                        transition: "width 1s ease-out",
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                      <div className="flex items-center gap-3 group cursor-pointer">
+                        <div className="w-10 h-10 rounded-xl bg-surface-elevated flex items-center justify-center text-emerald-500 border border-border-brand transition-colors group-hover:border-emerald-500/30">
+                          <BookOpen size={20} />
+                        </div>
+                        <span className="text-lg font-black text-text-primary group-hover:text-emerald-500 transition-colors uppercase tracking-tight truncate max-w-[200px] sm:max-w-md">
+                          {story.title}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-6 self-end sm:self-auto">
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs font-black text-text-muted uppercase tracking-widest">Lượt đọc</span>
+                          <span className="text-xl font-black text-text-primary">{Intl.NumberFormat("vi").format(story.viewCount || 0)}</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs font-black text-text-muted uppercase tracking-widest">Doanh thu</span>
+                          <span className="text-xl font-black text-emerald-500">{Intl.NumberFormat("vi").format(story.totalEarnings || 0)} xu</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="w-full h-3 bg-surface-elevated/50 rounded-full overflow-hidden border border-border-brand/30">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 1.5, ease: "circOut", delay: 0.8 + idx * 0.1 }}
+                        className="h-full bg-linear-to-r from-emerald-600 to-emerald-400 rounded-full relative"
+                      >
+                         <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -468,109 +468,114 @@ export default function Navbar() {
       </div>
 
       {/* Nav Row - Links Centered - Hidden on Mobile */}
-      <nav className="hidden md:flex bg-emerald-500 h-[44px] items-center shadow-md dark:bg-surface-elevated border-b border-emerald-400/20 dark:border-border-brand transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-center gap-8 w-full">
-          <Link
-            href="/"
-            className={cn(
-              "text-[12px] sm:text-sm font-bold transition-all uppercase tracking-tight font-sans whitespace-nowrap",
-              "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
-              pathname === "/" && "underline decoration-2 underline-offset-4",
-            )}
-          >
-            Trang chủ
-          </Link>
-
-          {/* Thể Loại Dropdown */}
-          <div className="relative" ref={genreRef}>
-            <button
-              className={cn(
-                "flex items-center gap-1.5 text-[13px] sm:text-sm font-bold transition-all uppercase tracking-tight font-sans whitespace-nowrap",
-                "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
-                genreOpen && "underline decoration-2 underline-offset-4",
-              )}
-              onClick={() => {
-                setGenreOpen((p) => !p);
-                setRankOpen(false);
-              }}
-            >
-              Thể Loại
-              <ChevronDown
-                size={14}
-                className={cn(
-                  "transition-transform",
-                  genreOpen && "rotate-180",
-                )}
-              />
-            </button>
-          </div>
-
-          {/* Xếp Hạng Dropdown */}
-          <div className="relative" ref={rankRef}>
-            <button
-              className={cn(
-                "flex items-center gap-1.5 text-[13px] sm:text-sm font-bold transition-all uppercase tracking-tight font-sans whitespace-nowrap",
-                "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
-                (pathname.startsWith("/rankings") || rankOpen) &&
-                  "underline decoration-2 underline-offset-4",
-              )}
-              onClick={() => {
-                setRankOpen((p) => !p);
-                setGenreOpen(false);
-              }}
-            >
-              Xếp hạng
-              <ChevronDown
-                size={14}
-                className={cn("transition-transform", rankOpen && "rotate-180")}
-              />
-            </button>
-
-            <AnimatePresence>
-              {rankOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-48 bg-surface-brand border border-border-brand rounded-2xl shadow-2xl overflow-hidden py-2 z-50 px-1"
-                >
-                  {rankTabs.map((tab) => (
-                    <Link
-                      key={tab.key}
-                      href={`/rankings/${tab.key}`}
-                      className={cn(
-                        "flex items-center justify-center py-3 text-sm font-bold transition-all rounded-xl my-0.5",
-                        pathname === `/rankings/${tab.key}`
-                          ? "text-emerald-500 bg-emerald-500/5"
-                          : "text-text-secondary hover:text-emerald-500 hover:bg-surface-elevated",
-                      )}
-                      onClick={() => setRankOpen(false)}
-                    >
-                      {tab.label}
-                    </Link>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {navLinks.map((link) => (
+      <div className="hidden md:block">
+        <nav className="bg-emerald-500 h-[44px] flex items-center shadow-md dark:bg-surface-elevated border-b border-emerald-400/20 dark:border-border-brand px-6">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-8 w-full">
             <Link
-              key={link.href}
-              href={link.href}
-              target={link.external ? "_blank" : undefined}
+              href="/"
               className={cn(
-                "hidden sm:block text-sm font-bold transition-all uppercase tracking-tight font-sans",
-                "text-white/90 hover:text-white dark:text-text-secondary dark:hover:text-emerald-500",
-                pathname === link.href &&
-                  "text-white underline decoration-2 underline-offset-4",
+                "text-[12px] sm:text-sm font-bold transition-all uppercase tracking-tight font-sans whitespace-nowrap",
+                "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
+                pathname === "/" && "underline decoration-2 underline-offset-4",
               )}
             >
-              {link.label}
+              Trang chủ
             </Link>
-          ))}
-        </div>
-      </nav>
+
+            {/* Thể Loại Dropdown */}
+            <div className="relative" ref={genreRef}>
+              <button
+                className={cn(
+                  "flex items-center gap-1.5 text-[13px] sm:text-sm font-bold transition-all uppercase tracking-tight font-sans whitespace-nowrap",
+                  "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
+                  genreOpen && "underline decoration-2 underline-offset-4",
+                )}
+                onClick={() => {
+                  setGenreOpen((p) => !p);
+                  setRankOpen(false);
+                }}
+              >
+                Thể Loại
+                <ChevronDown
+                  size={14}
+                  className={cn(
+                    "transition-transform",
+                    genreOpen && "rotate-180",
+                  )}
+                />
+              </button>
+            </div>
+
+            {/* Xếp Hạng Dropdown */}
+            <div className="relative" ref={rankRef}>
+              <button
+                className={cn(
+                  "flex items-center gap-1.5 text-[13px] sm:text-sm font-bold transition-all uppercase tracking-tight font-sans whitespace-nowrap",
+                  "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
+                  (pathname.startsWith("/rankings") || rankOpen) &&
+                    "underline decoration-2 underline-offset-4",
+                )}
+                onClick={() => {
+                  setRankOpen((p) => !p);
+                  setGenreOpen(false);
+                }}
+              >
+                Xếp hạng
+                <ChevronDown
+                  size={14}
+                  className={cn(
+                    "transition-transform",
+                    rankOpen && "rotate-180",
+                  )}
+                />
+              </button>
+
+              <AnimatePresence>
+                {rankOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-48 bg-surface-brand border border-border-brand rounded-2xl shadow-2xl overflow-hidden py-2 z-50 px-1"
+                  >
+                    {rankTabs.map((tab) => (
+                      <Link
+                        key={tab.key}
+                        href={`/rankings/${tab.key}`}
+                        className={cn(
+                          "flex items-center justify-center py-3 text-sm font-bold transition-all rounded-xl my-0.5",
+                          pathname === `/rankings/${tab.key}`
+                            ? "text-emerald-500 bg-emerald-500/5"
+                            : "text-text-secondary hover:text-emerald-500 hover:bg-surface-elevated",
+                        )}
+                        onClick={() => setRankOpen(false)}
+                      >
+                        {tab.label}
+                      </Link>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                target={link.external ? "_blank" : undefined}
+                className={cn(
+                  "hidden sm:block text-sm font-bold transition-all uppercase tracking-tight font-sans",
+                  "text-white/90 hover:text-white dark:text-text-secondary dark:hover:text-emerald-500",
+                  pathname === link.href &&
+                    "text-white underline decoration-2 underline-offset-4",
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      </div>
 
       {/* Thể Loại Mega Menu */}
       <AnimatePresence>

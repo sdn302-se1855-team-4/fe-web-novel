@@ -2,13 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { XCircle } from "lucide-react";
-import styles from "../wallet.module.css";
 
 export default function DepositCancelPage() {
   const router = useRouter();
 
   return (
-    <div className={`container ${styles.page}`}>
+    <div className="container py-8">
       <div
         style={{
           maxWidth: 480,

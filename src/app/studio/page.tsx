@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Pen, Plus, BookOpen, Eye, Edit, Trash2, ChevronLeft } from "lucide-react";
+import { Pen, Plus, BookOpen, Eye, Edit, Trash2, ChevronLeft, LayoutDashboard } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
-import styles from "./studio.module.css";
 
 interface Story {
   id: string;
@@ -72,8 +71,8 @@ export default function StudioPage() {
   };
 
   return (
-    <>
-      <div className="mb-6">
+    <div className="min-h-screen">
+      <div className="mb-8">
         <button 
           onClick={() => router.back()}
           className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-medium text-sm group"
@@ -85,69 +84,56 @@ export default function StudioPage() {
         </button>
       </div>
 
-      <div className={styles.header}>
-        <h1 className="section-title">
-          <Pen size={24} /> Writer Studio
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 flex-wrap">
+        <h1 className="flex items-center gap-3 text-3xl font-black text-text-primary italic uppercase tracking-tight">
+          <Pen size={32} className="text-emerald-500" /> Writer Studio
         </h1>
-        <div style={{ display: "flex", gap: "1rem" }}>
-          <Link href="/studio/analytics" className="btn btn-outline">
-            <BookOpen size={18} /> Thống kê & Doanh thu
+        <div className="flex flex-wrap gap-3">
+          <Link href="/studio/analytics" className="btn btn-outline border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/5 group gap-2">
+            <LayoutDashboard size={18} /> Thống kê & Doanh thu
           </Link>
-          <Link href="/studio/create" className="btn btn-primary">
-            <Plus size={18} /> Tạo truyện mới
+          <Link href="/studio/create" className="btn btn-primary shadow-lg shadow-emerald-500/20 group gap-2">
+            <Plus size={18} className="group-hover:rotate-90 transition-transform" /> Tạo truyện mới
           </Link>
         </div>
       </div>
 
       {loading ? (
-        <div className={styles.list}>
+        <div className="flex flex-col gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className={styles.storyRow}>
+            <div key={i} className="flex flex-col md:flex-row md:items-center gap-6 p-6 bg-surface-brand border border-border-brand/40 rounded-[1.5rem] md:rounded-[2.5rem]">
               <div
-                className="skeleton"
-                style={{
-                  width: 60,
-                  height: 80,
-                  borderRadius: "var(--radius-md)",
-                }}
+                className="skeleton shrink-0 w-16 h-20 rounded-2xl"
               />
-              <div
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "var(--spacing-sm)",
-                }}
-              >
-                <div
-                  className="skeleton"
-                  style={{ height: 20, width: "50%" }}
-                />
-                <div
-                  className="skeleton"
-                  style={{ height: 14, width: "30%" }}
-                />
+              <div className="flex-1 space-y-3">
+                <div className="skeleton h-6 w-[40%]" />
+                <div className="skeleton h-4 w-[20%]" />
               </div>
             </div>
           ))}
         </div>
       ) : stories.length > 0 ? (
-        <div className={styles.list}>
+        <div className="flex flex-col gap-4">
           {stories.map((story) => (
-            <div key={story.id} className={styles.storyRow}>
-              <div className={styles.storyCover}>
+            <div key={story.id} className="group flex flex-col md:flex-row md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[1.5rem] md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
+              <div className="w-16 h-20 rounded-2xl overflow-hidden bg-surface-elevated flex items-center justify-center text-text-muted shadow-sm shrink-0 border border-border-brand/30">
                 {story.coverImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={story.coverImage} alt={story.title} />
+                  <img src={story.coverImage} alt={story.title} className="w-full h-full object-cover" />
                 ) : (
-                  <BookOpen size={24} />
+                  <BookOpen size={24} className="opacity-20" />
                 )}
               </div>
-              <div className={styles.storyInfo}>
-                <h3 className={styles.storyTitle}>{story.title}</h3>
-                <div className={styles.storyMeta}>
+              <div className="flex-1 min-w-0 flex flex-col gap-2">
+                <h3 className="text-lg font-bold text-text-primary truncate transition-colors group-hover:text-emerald-500">{story.title}</h3>
+                <div className="flex items-center gap-4 flex-wrap text-sm font-medium">
                   <span
-                    className={`badge ${story.status === "COMPLETED" ? "badge-success" : story.status === "ONGOING" ? "badge-primary" : "badge-warning"}`}
+                    className={`px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      story.status === "COMPLETED" 
+                        ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
+                        : story.status === "ONGOING" 
+                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
+                        : "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}
                   >
                     {story.status === "ONGOING"
                       ? "Đang ra"
@@ -155,45 +141,48 @@ export default function StudioPage() {
                         ? "Hoàn thành"
                         : "Tạm dừng"}
                   </span>
-                  <span className="text-sm text-muted">
-                    <Eye size={14} /> {story.viewCount || 0}
+                  <span className="flex items-center gap-1.5 text-text-muted">
+                    <Eye size={14} className="text-emerald-500/70" /> {Intl.NumberFormat("vi", { notation: "compact" }).format(story.viewCount || 0)}
                   </span>
-                  <span className="text-sm text-muted">
-                    <BookOpen size={14} /> {story._count?.chapters || 0}{" "}
-                    chương
+                  <span className="flex items-center gap-1.5 text-text-muted">
+                    <BookOpen size={14} className="text-blue-500/70" /> {story._count?.chapters || 0} chương
                   </span>
                 </div>
               </div>
-              <div className={styles.storyActions}>
+              <div className="flex items-center gap-3 shrink-0 pt-4 md:pt-0 border-t md:border-t-0 border-border-brand/40 justify-end md:justify-start">
                 <Link
                   href={`/studio/${story.id}/chapters/create`}
-                  className="btn btn-outline btn-sm"
+                  className="btn btn-outline btn-sm border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 px-4 rounded-xl"
                 >
-                  <Plus size={14} /> Thêm chương
+                  <Plus size={14} /> <span className="hidden sm:inline">Thêm chương</span>
                 </Link>
                 <Link
                   href={`/studio/${story.id}`}
-                  className="btn btn-outline btn-sm"
+                  className="btn btn-outline btn-sm border-border-brand hover:border-blue-500/40 hover:bg-blue-500/5 px-4 rounded-xl"
                 >
-                  <Edit size={14} /> Chỉnh sửa
+                  <Edit size={14} /> <span className="hidden sm:inline">Chỉnh sửa</span>
                 </Link>
                 <button
-                  className="btn-icon"
+                  className="p-2.5 rounded-xl text-text-muted hover:text-rose-500 hover:bg-rose-500/10 transition-all active:scale-95"
                   onClick={() => confirmDelete(story.id, story.title)}
                   aria-label="Xóa truyện"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={18} />
                 </button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className={styles.empty}>
-          <Pen size={48} />
-          <h3>Chưa có truyện nào</h3>
-          <p>Bắt đầu sáng tác truyện đầu tiên của bạn!</p>
-          <Link href="/studio/create" className="btn btn-primary">
+        <div className="flex flex-col items-center gap-6 py-24 text-text-muted text-center max-w-md mx-auto">
+          <div className="w-24 h-24 rounded-full bg-surface-elevated flex items-center justify-center">
+            <Pen size={48} className="opacity-20 text-emerald-500" />
+          </div>
+          <div>
+            <h3 className="text-2xl font-black text-text-primary tracking-tight uppercase">Chưa có truyện nào</h3>
+            <p className="mt-2 font-medium">Bắt đầu hành trình sáng tác bộ truyện tuyệt vời đầu tiên của bạn ngay hôm nay!</p>
+          </div>
+          <Link href="/studio/create" className="btn btn-primary px-10 rounded-2xl">
             <Plus size={18} /> Tạo truyện mới
           </Link>
         </div>
@@ -209,6 +198,6 @@ export default function StudioPage() {
         onConfirm={executeDelete}
         onCancel={() => setDeleteModal({ open: false, storyId: "", title: "" })}
       />
-    </>
+    </div>
   );
 }
