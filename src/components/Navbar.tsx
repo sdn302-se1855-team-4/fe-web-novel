@@ -254,19 +254,23 @@ export default function Navbar() {
       {/* Top Bar - Search & Auth */}
       <div className="bg-surface-brand border-b border-border-brand/50 h-[64px] flex items-center shadow-sm">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between w-full gap-4 lg:gap-8">
-          {/* Logo & Theme */}
-          <div className="flex items-center gap-3 shrink-0 lg:flex-1">
+          {/* Logo & Theme Toggle */}
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <Link href="/" className="shrink-0 group">
-              <Logo showTagline={false} className="sm:hidden" iconSize={24} />
-              <Logo showTagline={true} className="hidden sm:flex" iconSize={24} />
+              <Logo showTagline={false} className="sm:hidden" iconSize={26} />
+              <Logo
+                showTagline={true}
+                className="hidden sm:flex"
+                iconSize={28}
+              />
             </Link>
 
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-full bg-surface-elevated text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all shadow-inner border border-emerald-500/20 shrink-0"
-              title="Chế độ tối/sáng"
+              className="p-2 sm:p-2.5 rounded-full bg-surface-elevated text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-500/10 shrink-0"
+              aria-label="Toggle Theme"
             >
-              {theme === "dark" ? <Lightbulb size={16} /> : <Sun size={16} />}
+              {theme === "dark" ? <Lightbulb size={18} /> : <Sun size={18} />}
             </button>
           </div>
 
@@ -368,19 +372,10 @@ export default function Navbar() {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center justify-end gap-1.5 sm:gap-2 lg:gap-4 shrink-0 lg:flex-1">
-            {/* Mobile Search Button */}
-            <button 
-              className="p-2 md:hidden text-text-muted hover:text-emerald-500 transition-all"
-              onClick={() => {
-                setMobileOpen(true);
-                // We could add a separate search bar in mobile menu or show an overlay
-              }}
-            >
-              <Search size={22} />
-            </button>
+          <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+            {/* Desktop search is hidden on mobile, button shows instead */}
             {loggedIn && (
-              <button className="p-2 text-rose-500 bg-rose-500/5 hover:bg-rose-500/10 rounded-full transition-all hidden xs:flex">
+              <button className="p-2 text-rose-500 bg-rose-500/5 hover:bg-rose-500/10 rounded-full transition-all hidden sm:flex">
                 <Bell size={20} />
               </button>
             )}
@@ -388,10 +383,10 @@ export default function Navbar() {
             {loggedIn ? (
               <div className="relative" ref={userMenuRef}>
                 <button
-                  className="flex items-center gap-2 p-1 sm:px-3 sm:py-1.5 rounded-lg bg-surface-elevated border border-border-brand hover:border-emerald-500/50 transition-all"
+                  className="flex items-center gap-2 p-1 sm:px-3 sm:py-1.5 rounded-xl bg-surface-elevated border border-border-brand hover:border-emerald-500/50 transition-all"
                   onClick={() => setUserMenuOpen((p) => !p)}
                 >
-                  <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 overflow-hidden shrink-0">
+                  <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 overflow-hidden shrink-0 border border-emerald-500/10">
                     {userProfile?.avatar ? (
                       <img
                         src={userProfile.avatar}
@@ -402,7 +397,7 @@ export default function Navbar() {
                       <UserIcon size={14} />
                     )}
                   </div>
-                  <span className="text-xs font-bold text-text-primary hidden lg:block max-w-[80px] truncate">
+                  <span className="text-xs font-bold text-text-primary hidden md:block max-w-[80px] truncate">
                     {userProfile?.displayName || userProfile?.username || "Me"}
                   </span>
                   <ChevronDown
@@ -416,25 +411,25 @@ export default function Navbar() {
                 <AnimatePresence>
                   {userMenuOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-full right-0 mt-2 w-48 bg-surface-brand border border-border-brand rounded-xl shadow-xl overflow-hidden py-1 z-50"
+                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                      className="absolute top-full right-0 mt-3 w-52 bg-surface-brand border border-border-brand rounded-2xl shadow-2xl overflow-hidden py-1.5 z-100"
                     >
                       {userMenuItems.map((item) => (
                         <Link
                           key={item.href}
                           href={item.href}
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-elevated hover:text-emerald-500"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-text-secondary hover:bg-surface-elevated hover:text-emerald-500 transition-colors"
                           onClick={() => setUserMenuOpen(false)}
                         >
                           {item.icon}
                           {item.label}
                         </Link>
                       ))}
-                      <div className="border-t border-border-brand my-1" />
+                      <div className="border-t border-border-brand/50 my-1.5 mx-2" />
                       <button
-                        className="w-full text-left px-4 py-2 text-sm text-rose-500 hover:bg-rose-500/5 flex items-center gap-3"
+                        className="w-full text-left px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-500/5 flex items-center gap-3 transition-colors"
                         onClick={handleLogout}
                       >
                         <LogOut size={16} />
@@ -445,34 +440,36 @@ export default function Navbar() {
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/register"
-                  className="px-4 py-2 text-xs font-bold text-white bg-secondary-brand hover:brightness-110 rounded-lg transition-all shadow-md"
-                >
-                  Đăng ký
-                </Link>
+              <div className="flex items-center gap-1.5 sm:gap-3">
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-400 rounded-lg transition-all shadow-md"
+                  className="px-3 sm:px-5 py-2 text-[11px] sm:text-xs font-bold text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/5 rounded-xl transition-all"
                 >
                   Đăng nhập
                 </Link>
+                <Link
+                  href="/register"
+                  className="px-3 sm:px-5 py-2 text-[11px] sm:text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-400 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hidden xs:block"
+                >
+                  Đăng ký
+                </Link>
               </div>
             )}
+
             <button
-              className="p-2 md:hidden rounded-full text-text-muted hover:text-emerald-500 transition-all"
+              className="p-2 md:hidden rounded-xl text-text-muted hover:text-emerald-500 transition-all bg-surface-elevated border border-border-brand"
               onClick={() => setMobileOpen((prev) => !prev)}
+              aria-label="Toggle Menu"
             >
-              {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Nav Row - Links Centered */}
-      <nav className="bg-emerald-500 h-[38px] sm:h-[44px] flex items-center shadow-md dark:bg-surface-elevated border-b border-emerald-400/20 dark:border-border-brand transition-colors duration-300 overflow-x-auto no-scrollbar">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-start sm:justify-center gap-5 sm:gap-8 w-full min-w-max">
+      {/* Nav Row - Links Centered - Hidden on Mobile */}
+      <nav className="hidden md:flex bg-emerald-500 h-[44px] items-center shadow-md dark:bg-surface-elevated border-b border-emerald-400/20 dark:border-border-brand transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-center gap-8 w-full">
           <Link
             href="/"
             className={cn(
@@ -612,77 +609,242 @@ export default function Navbar() {
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="md:hidden fixed inset-0 top-[64px] z-40 bg-surface-brand/95 backdrop-blur-xl transition-all"
-          >
-            <div className="p-4 space-y-6 overflow-y-auto h-full">
-              {/* Search in Mobile Menu */}
-              <div className="relative group">
-                <form onSubmit={handleSearch} className="relative w-full">
-                  <input
-                    type="text"
-                    className="w-full pl-12 pr-4 py-3 bg-surface-elevated border border-border-brand rounded-2xl text-base text-text-primary placeholder:text-text-muted outline-none focus:ring-2 ring-emerald-500/20"
-                    placeholder="Tìm truyện, tác giả..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    autoFocus
-                  />
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" size={20} />
-                </form>
-              </div>
-
-              <div className="space-y-1">
-                <span className="block text-[10px] font-bold text-text-muted uppercase tracking-widest px-4 mb-2">
-                  Điều hướng
-                </span>
-                <Link
-                  href="/"
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen(false)}
+              className="md:hidden fixed inset-0 z-60 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="md:hidden fixed inset-y-0 right-0 w-[85%] max-w-[360px] z-70 bg-surface-brand shadow-2xl flex flex-col"
+            >
+              <div className="p-5 border-b border-border-brand flex items-center justify-between">
+                <Logo showTagline={false} iconSize={26} />
+                <button
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-surface-elevated hover:text-emerald-500 transition-all text-lg font-medium"
+                  className="p-2 rounded-xl bg-surface-elevated text-text-muted transition-all active:scale-95"
                 >
-                  Trang chủ
-                </Link>
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-surface-elevated hover:text-emerald-500 transition-all text-lg font-medium"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+                  <X size={20} />
+                </button>
               </div>
 
-              {loggedIn && (
-                <div className="pt-4 space-y-1">
-                  <span className="block text-[10px] font-bold text-text-muted uppercase tracking-widest px-4 mb-2">
-                    Tài khoản
+              <div className="flex-1 overflow-y-auto no-scrollbar p-5 space-y-8">
+                {/* Search in Mobile Menu */}
+                <div className="space-y-3">
+                  <span className="text-[11px] font-black uppercase tracking-widest text-emerald-500 px-1">
+                    Tìm kiếm truyện
                   </span>
-                  {userMenuItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-surface-elevated hover:text-emerald-500 transition-all"
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                  <button
-                    className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all"
-                    onClick={handleLogout}
-                  >
-                    <LogOut size={18} />
-                    Đăng xuất
-                  </button>
+                  <form onSubmit={handleSearch} className="relative group">
+                    <input
+                      type="text"
+                      className="w-full pl-12 pr-4 py-3 bg-surface-elevated border border-border-brand rounded-2xl text-base text-text-primary placeholder:text-text-muted outline-none focus:ring-2 ring-emerald-500/20 transition-all"
+                      placeholder="Tác giả, tên truyện..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <Search
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-emerald-500 transition-colors"
+                      size={20}
+                    />
+                  </form>
                 </div>
-              )}
-            </div>
-          </motion.div>
+
+                {/* Primary Nav */}
+                <div className="space-y-2">
+                  <span className="text-[11px] font-black uppercase tracking-widest text-emerald-500 px-1">
+                    Khám phá
+                  </span>
+                  <div className="grid grid-cols-1 gap-1">
+                    <Link
+                      href="/"
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all font-bold",
+                        pathname === "/"
+                          ? "bg-emerald-500/10 text-emerald-500 shadow-sm shadow-emerald-500/5"
+                          : "text-text-primary hover:bg-surface-elevated",
+                      )}
+                    >
+                      <div className="p-2 rounded-lg bg-emerald-500/10 shrink-0">
+                        <Logo iconSize={18} showTagline={false} />
+                      </div>
+                      Trang chủ
+                    </Link>
+
+                    {/* Genres Mobile Expandable */}
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => setGenreOpen(!genreOpen)}
+                        className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-text-primary hover:bg-surface-elevated font-bold transition-all"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
+                            <BookOpen size={18} />
+                          </div>
+                          Thể loại
+                        </div>
+                        <ChevronDown
+                          size={18}
+                          className={cn(
+                            "transition-transform",
+                            genreOpen && "rotate-180",
+                          )}
+                        />
+                      </button>
+                      <AnimatePresence>
+                        {genreOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden grid grid-cols-2 gap-2 px-2 py-2 bg-surface-elevated/50 rounded-2xl"
+                          >
+                            <Link
+                              href="/stories"
+                              className="text-sm font-medium p-3 rounded-xl hover:text-emerald-500 bg-surface-brand/50 text-center transition-colors"
+                              onClick={() => setMobileOpen(false)}
+                            >
+                              Tất cả
+                            </Link>
+                            {genres.slice(0, 15).map((g) => (
+                              <Link
+                                key={g.id}
+                                href={`/stories?genre=${g.id}`}
+                                className="text-sm font-medium p-3 rounded-xl hover:text-emerald-500 bg-surface-brand/50 text-center transition-colors truncate"
+                                onClick={() => setMobileOpen(false)}
+                              >
+                                {g.name}
+                              </Link>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Rankings Mobile */}
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => setRankOpen(!rankOpen)}
+                        className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-text-primary hover:bg-surface-elevated font-bold transition-all"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
+                            <Gift size={18} />
+                          </div>
+                          Xếp hạng
+                        </div>
+                        <ChevronDown
+                          size={18}
+                          className={cn(
+                            "transition-transform",
+                            rankOpen && "rotate-180",
+                          )}
+                        />
+                      </button>
+                      <AnimatePresence>
+                        {rankOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden space-y-1 px-2 py-2 bg-surface-elevated/50 rounded-2xl"
+                          >
+                            {rankTabs.map((tab) => (
+                              <Link
+                                key={tab.key}
+                                href={`/rankings/${tab.key}`}
+                                className="flex items-center gap-3 p-3 rounded-xl hover:text-emerald-500 font-medium transition-colors"
+                                onClick={() => setMobileOpen(false)}
+                              >
+                                {tab.label}
+                              </Link>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Regular Links */}
+                    {navLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-text-primary hover:bg-surface-elevated font-bold transition-all"
+                      >
+                        <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
+                          {link.label === "Lịch sử" ? (
+                            <Clock size={18} />
+                          ) : link.label === "Theo dõi" ? (
+                            <Library size={18} />
+                          ) : (
+                            <Search size={18} />
+                          )}
+                        </div>
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Account Section */}
+                <div className="space-y-3 pt-4 border-t border-border-brand/50">
+                  <span className="text-[11px] font-black uppercase tracking-widest text-emerald-500 px-1">
+                    Cá nhân
+                  </span>
+                  {loggedIn ? (
+                    <div className="space-y-1">
+                      {userMenuItems.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-text-secondary hover:text-emerald-500 transition-all font-medium"
+                        >
+                          <span className="p-2 rounded-lg bg-surface-elevated">
+                            {item.icon}
+                          </span>
+                          {item.label}
+                        </Link>
+                      ))}
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-500 hover:bg-rose-500/10 transition-all font-bold mt-2"
+                      >
+                        <span className="p-2 rounded-lg bg-rose-500/10">
+                          <LogOut size={18} />
+                        </span>
+                        Đăng xuất
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3 px-2">
+                      <Link
+                        href="/login"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-center p-4 rounded-2xl bg-surface-elevated border border-border-brand font-bold text-text-primary hover:border-emerald-500/50 transition-all"
+                      >
+                        Đăng nhập ngay
+                      </Link>
+                      <Link
+                        href="/register"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-center p-4 rounded-2xl bg-emerald-500 text-white font-black shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                      >
+                        Tạo tài khoản mới
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </header>
