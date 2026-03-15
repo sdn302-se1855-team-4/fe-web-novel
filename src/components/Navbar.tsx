@@ -257,19 +257,20 @@ export default function Navbar() {
           {/* Logo & Theme */}
           <div className="flex items-center gap-3 shrink-0 lg:flex-1">
             <Link href="/" className="shrink-0 group">
-              <Logo showTagline />
+              <Logo showTagline={false} className="sm:hidden" iconSize={24} />
+              <Logo showTagline={true} className="hidden sm:flex" iconSize={24} />
             </Link>
 
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-full bg-surface-elevated text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all shadow-inner border border-emerald-500/20"
+              className="p-2 rounded-full bg-surface-elevated text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all shadow-inner border border-emerald-500/20 shrink-0"
               title="Chế độ tối/sáng"
             >
               {theme === "dark" ? <Lightbulb size={16} /> : <Sun size={16} />}
             </button>
           </div>
 
-          <div className="flex-1 max-w-xl relative">
+          <div className="flex-1 max-w-xl relative hidden md:block">
             <form onSubmit={handleSearch} className="relative w-full">
               <input
                 type="text"
@@ -367,9 +368,19 @@ export default function Navbar() {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0 lg:flex-1">
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2 lg:gap-4 shrink-0 lg:flex-1">
+            {/* Mobile Search Button */}
+            <button 
+              className="p-2 md:hidden text-text-muted hover:text-emerald-500 transition-all"
+              onClick={() => {
+                setMobileOpen(true);
+                // We could add a separate search bar in mobile menu or show an overlay
+              }}
+            >
+              <Search size={22} />
+            </button>
             {loggedIn && (
-              <button className="p-2 text-rose-500 bg-rose-500/5 hover:bg-rose-500/10 rounded-full transition-all">
+              <button className="p-2 text-rose-500 bg-rose-500/5 hover:bg-rose-500/10 rounded-full transition-all hidden xs:flex">
                 <Bell size={20} />
               </button>
             )}
@@ -377,10 +388,10 @@ export default function Navbar() {
             {loggedIn ? (
               <div className="relative" ref={userMenuRef}>
                 <button
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-elevated border border-border-brand hover:border-emerald-500/50 transition-all"
+                  className="flex items-center gap-2 p-1 sm:px-3 sm:py-1.5 rounded-lg bg-surface-elevated border border-border-brand hover:border-emerald-500/50 transition-all"
                   onClick={() => setUserMenuOpen((p) => !p)}
                 >
-                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 overflow-hidden">
+                  <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 overflow-hidden shrink-0">
                     {userProfile?.avatar ? (
                       <img
                         src={userProfile.avatar}
@@ -391,13 +402,13 @@ export default function Navbar() {
                       <UserIcon size={14} />
                     )}
                   </div>
-                  <span className="text-xs font-bold text-text-primary hidden sm:block">
+                  <span className="text-xs font-bold text-text-primary hidden lg:block max-w-[80px] truncate">
                     {userProfile?.displayName || userProfile?.username || "Me"}
                   </span>
                   <ChevronDown
                     size={12}
                     className={cn(
-                      "text-text-muted transition-transform",
+                      "text-text-muted transition-transform hidden sm:block",
                       userMenuOpen && "rotate-180",
                     )}
                   />
@@ -460,12 +471,12 @@ export default function Navbar() {
       </div>
 
       {/* Nav Row - Links Centered */}
-      <nav className="bg-emerald-500 h-[44px] flex items-center shadow-md dark:bg-surface-elevated border-b border-emerald-400/20 dark:border-border-brand transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-4 lg:gap-8 w-full">
+      <nav className="bg-emerald-500 h-[38px] sm:h-[44px] flex items-center shadow-md dark:bg-surface-elevated border-b border-emerald-400/20 dark:border-border-brand transition-colors duration-300 overflow-x-auto no-scrollbar">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-start sm:justify-center gap-5 sm:gap-8 w-full min-w-max">
           <Link
             href="/"
             className={cn(
-              "text-sm font-bold transition-all uppercase tracking-tight font-sans",
+              "text-[12px] sm:text-sm font-bold transition-all uppercase tracking-tight font-sans whitespace-nowrap",
               "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
               pathname === "/" && "underline decoration-2 underline-offset-4",
             )}
@@ -477,7 +488,7 @@ export default function Navbar() {
           <div className="relative" ref={genreRef}>
             <button
               className={cn(
-                "flex items-center gap-1.5 text-sm font-bold transition-all uppercase tracking-tight font-sans",
+                "flex items-center gap-1.5 text-[13px] sm:text-sm font-bold transition-all uppercase tracking-tight font-sans whitespace-nowrap",
                 "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
                 genreOpen && "underline decoration-2 underline-offset-4",
               )}
@@ -501,7 +512,7 @@ export default function Navbar() {
           <div className="relative" ref={rankRef}>
             <button
               className={cn(
-                "flex items-center gap-1.5 text-sm font-bold transition-all uppercase tracking-tight font-sans",
+                "flex items-center gap-1.5 text-[13px] sm:text-sm font-bold transition-all uppercase tracking-tight font-sans whitespace-nowrap",
                 "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
                 (pathname.startsWith("/rankings") || rankOpen) &&
                   "underline decoration-2 underline-offset-4",
@@ -605,9 +616,24 @@ export default function Navbar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="md:hidden fixed inset-0 top-[108px] z-40 bg-surface-brand/95 backdrop-blur-xl transition-all"
+            className="md:hidden fixed inset-0 top-[64px] z-40 bg-surface-brand/95 backdrop-blur-xl transition-all"
           >
-            <div className="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-108px)]">
+            <div className="p-4 space-y-6 overflow-y-auto h-full">
+              {/* Search in Mobile Menu */}
+              <div className="relative group">
+                <form onSubmit={handleSearch} className="relative w-full">
+                  <input
+                    type="text"
+                    className="w-full pl-12 pr-4 py-3 bg-surface-elevated border border-border-brand rounded-2xl text-base text-text-primary placeholder:text-text-muted outline-none focus:ring-2 ring-emerald-500/20"
+                    placeholder="Tìm truyện, tác giả..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                  />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" size={20} />
+                </form>
+              </div>
+
               <div className="space-y-1">
                 <span className="block text-[10px] font-bold text-text-muted uppercase tracking-widest px-4 mb-2">
                   Điều hướng
