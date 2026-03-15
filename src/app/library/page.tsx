@@ -6,7 +6,6 @@ import { Library, BookOpen } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import StoryCard from "@/components/StoryCard";
-import styles from "./library.module.css";
 
 interface StoryItem {
   id: string;
@@ -64,7 +63,7 @@ function normalizeStories(raw: any): StoryItem[] {
               genre?: { id: string; name: string };
               id?: string;
               name?: string;
-            }) => (g.genre ? g.genre : g),
+              }) => (g.genre ? g.genre : g),
           )
         : undefined;
 
@@ -96,61 +95,53 @@ export default function LibraryPage() {
   }, [router]);
 
   return (
-    <div className="page-wrapper">
-      <div className="container">
-        <div className={styles.header}>
-          <h1 className="section-title">
-            <Library size={24} /> Thư viện của tôi
+    <div className="page-wrapper min-h-screen">
+      <div className="container py-8 sm:py-12">
+        <div className="mb-10 group">
+          <h1 className="flex items-center gap-3 text-3xl font-black text-text-primary italic uppercase tracking-tight group-hover:text-emerald-500 transition-colors">
+            <Library size={28} className="text-emerald-500" /> Thư viện của tôi
           </h1>
-          <p className="text-secondary">Các truyện bạn đã lưu để đọc</p>
+          <p className="text-text-muted mt-2 font-medium">Các truyện bạn đã lưu để đọc</p>
         </div>
 
         {loading ? (
-          <div className="grid-stories">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                style={{
-                  borderRadius: "var(--radius-lg)",
-                  overflow: "hidden",
-                  border: "1px solid var(--color-border)",
-                }}
+                className="rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden border border-border-brand bg-surface-brand shadow-sm"
               >
-                <div className="skeleton" style={{ aspectRatio: "3/4" }} />
-                <div
-                  style={{
-                    padding: "var(--spacing-md)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "var(--spacing-sm)",
-                  }}
-                >
-                  <div
-                    className="skeleton"
-                    style={{ height: 16, width: "80%" }}
-                  />
-                  <div
-                    className="skeleton"
-                    style={{ height: 12, width: "50%" }}
-                  />
+                <div className="skeleton aspect-3/4" />
+                <div className="p-4 flex flex-col gap-2">
+                  <div className="skeleton h-5 w-[80%]" />
+                  <div className="skeleton h-4 w-[50%]" />
                 </div>
               </div>
             ))}
           </div>
         ) : stories.length > 0 ? (
-          <div className="grid-stories">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
             {stories.map((story) => (
               <StoryCard key={story.id} story={story} />
             ))}
           </div>
         ) : (
-          <div className={styles.empty}>
-            <BookOpen size={48} />
-            <h3>Thư viện trống</h3>
-            <p>
-              Hãy duyệt truyện và bấm &quot;Lưu truyện&quot; để thêm vào thư
-              viện.
-            </p>
+          <div className="flex flex-col items-center justify-center gap-6 py-24 text-text-muted text-center max-w-md mx-auto">
+            <div className="w-24 h-24 rounded-full bg-surface-elevated flex items-center justify-center">
+              <BookOpen size={48} className="text-emerald-500/50" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-text-primary mb-2 uppercase tracking-tight">Thư viện trống</h3>
+              <p className="font-medium">
+                Hãy duyệt truyện và bấm &quot;Lưu truyện&quot; để thêm vào thư viện của bạn.
+              </p>
+            </div>
+            <button 
+              onClick={() => router.push("/stories")}
+              className="btn btn-primary px-8 mt-2"
+            >
+              Khám phá truyện ngay
+            </button>
           </div>
         )}
       </div>

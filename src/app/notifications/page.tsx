@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Check, CheckCheck } from "lucide-react";
+import { Bell, Check, CheckCheck, Inbox } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
-import styles from "./notifications.module.css";
 
 interface Notification {
   id: string;
@@ -71,50 +70,67 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className={`container ${styles.page}`}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>
-          <Bell size={24} /> Thông báo
+    <div className="container py-8 sm:py-12 min-h-screen">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 sm:mb-12">
+        <h1 className="flex items-center gap-3 text-3xl font-black text-text-primary italic uppercase tracking-tight">
+          <Bell size={32} className="text-emerald-500" /> Thông báo
           {unreadCount > 0 && (
-            <span className={styles.unreadBadge}>{unreadCount} chưa đọc</span>
+            <span className="ml-2 text-xs font-bold px-2.5 py-1 rounded-full bg-rose-500 text-white shadow-lg shadow-rose-500/20 animate-pulse capitalize tracking-normal italic-none">
+              {unreadCount} mới
+            </span>
           )}
         </h1>
         {unreadCount > 0 && (
-          <button className="btn btn-outline btn-sm" onClick={markAllRead}>
-            <CheckCheck size={16} /> Đọc tất cả
+          <button
+            className="btn btn-outline btn-sm sm:btn-md border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-500 flex items-center gap-2"
+            onClick={markAllRead}
+          >
+            <CheckCheck size={18} /> Đánh dấu đã đọc tất cả
           </button>
         )}
       </div>
 
       {loading ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="flex flex-col gap-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="skeleton" style={{ height: 64 }} />
+            <div key={i} className="skeleton h-20 rounded-2xl w-full" />
           ))}
         </div>
       ) : notifications.length === 0 ? (
-        <div className={styles.empty}>
-          <Bell size={48} />
-          <p>Chưa có thông báo nào</p>
+        <div className="flex flex-col items-center justify-center gap-6 py-24 text-text-muted text-center max-w-md mx-auto">
+          <div className="w-24 h-24 rounded-full bg-surface-elevated flex items-center justify-center">
+            <Inbox size={48} className="opacity-20 text-emerald-500" />
+          </div>
+          <p className="font-medium text-lg">Hộp thư của bạn đang trống</p>
         </div>
       ) : (
-        <div className={styles.list}>
+        <div className="flex flex-col gap-2 rounded-[1.5rem] sm:rounded-[2.5rem] border border-border-brand/60 bg-surface-brand shadow-sm overflow-hidden">
           {notifications.map((n) => (
             <div
               key={n.id}
-              className={`${styles.item} ${!n.isRead ? styles.unread : ""}`}
+              className={`flex items-start sm:items-center gap-4 p-5 transition-all duration-300 border-l-4 border-b border-border-brand/30 last:border-b-0 ${
+                n.isRead
+                  ? "bg-transparent border-l-transparent opacity-80"
+                  : "bg-emerald-500/5 border-l-emerald-500"
+              } hover:bg-surface-elevated`}
             >
-              <div className={styles.itemContent}>
-                <p className={styles.itemMsg}>{n.message}</p>
-                <span className={styles.itemTime}>{timeAgo(n.createdAt)}</span>
+              <div className="flex-1 min-w-0">
+                <p
+                  className={`text-sm sm:text-base leading-relaxed mb-1 ${n.isRead ? "text-text-secondary" : "font-semibold text-text-primary"}`}
+                >
+                  {n.message}
+                </p>
+                <span className="text-xs font-medium text-text-muted">
+                  {timeAgo(n.createdAt)}
+                </span>
               </div>
               {!n.isRead && (
                 <button
-                  className={`btn-icon ${styles.readBtn}`}
+                  className="p-2 rounded-xl text-text-muted hover:text-emerald-500 hover:bg-emerald-500/10 transition-all active:scale-95 shrink-0"
                   onClick={() => markAsRead(n.id)}
                   title="Đánh dấu đã đọc"
                 >
-                  <Check size={16} />
+                  <Check size={20} />
                 </button>
               )}
             </div>

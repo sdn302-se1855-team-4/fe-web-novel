@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle, Coins, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
-import styles from "../wallet.module.css";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -61,11 +60,7 @@ function SuccessContent() {
         <>
           <Loader2
             size={48}
-            style={{
-              color: "var(--color-primary)",
-              animation: "spin 1s linear infinite",
-              marginBottom: "1rem",
-            }}
+            className="text-emerald-500 animate-spin mb-4 mx-auto"
           />
           <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
             Đang xác minh thanh toán...
@@ -86,6 +81,7 @@ function SuccessContent() {
           <CheckCircle
             size={56}
             style={{ color: "#22c55e", marginBottom: "1rem" }}
+            className="mx-auto"
           />
           <h2 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
             Nạp xu thành công! 🎉
@@ -157,7 +153,7 @@ function SuccessContent() {
 
 export default function DepositSuccessPage() {
   return (
-    <div className={`container ${styles.page}`}>
+    <div className="container py-8">
       <div
         style={{
           maxWidth: 480,
@@ -175,11 +171,7 @@ export default function DepositSuccessPage() {
             <>
               <Loader2
                 size={48}
-                style={{
-                  color: "var(--color-primary)",
-                  animation: "spin 1s linear infinite",
-                  marginBottom: "1rem",
-                }}
+                className="text-emerald-500 animate-spin mb-4 mx-auto"
               />
               <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
                 Đang xác minh...
