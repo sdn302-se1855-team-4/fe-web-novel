@@ -204,8 +204,9 @@
   }
 
   /* iOS: prevent auto-zoom on input focus (requires font-size >= 16px) */
+  /* !important needed to override Tailwind utility classes (text-sm, etc.) */
   input, textarea, select {
-    font-size: max(16px, 1em);
+    font-size: max(16px, 1em) !important;
   }
 
   .input {
