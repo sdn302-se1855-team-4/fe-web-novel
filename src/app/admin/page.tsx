@@ -15,6 +15,7 @@ import {
   Eye,
   CheckCircle,
   AlertCircle,
+  DollarSign,
 } from "lucide-react";
 import {
   AreaChart,
@@ -117,6 +118,8 @@ export default function AdminDashboardPage() {
     });
   }, []);
 
+  const totalRevenue = monthlyData.reduce((sum, m) => sum + (m.revenue || 0), 0);
+
   const statCards = [
     {
       label: "Tổng người dùng",
@@ -152,15 +155,16 @@ export default function AdminDashboardPage() {
       iconColor: "text-amber-400",
     },
     {
-      label: "Chờ xử lý",
-      value: pendingStories.length + pendingWithdrawals.length,
-      icon: Clock,
-      trend: "Cần duyệt",
-      trendUp: false,
-      gradient: "from-rose-500 to-rose-600",
-      shadow: "shadow-rose-500/20",
-      iconBg: "bg-rose-500/10",
-      iconColor: "text-rose-400",
+      label: "Tổng doanh thu",
+      value: totalRevenue,
+      icon: DollarSign,
+      trend: `${(summary.revenueGrowth || 0) > 0 ? "+" : ""}${summary.revenueGrowth || 0}%`,
+      trendUp: (summary.revenueGrowth || 0) >= 0,
+      gradient: "from-violet-500 to-violet-600",
+      shadow: "shadow-violet-500/20",
+      iconBg: "bg-violet-500/10",
+      iconColor: "text-violet-400",
+      suffix: " xu",
     },
   ];
 
@@ -169,10 +173,10 @@ export default function AdminDashboardPage() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 rounded-xl bg-slate-800/50 animate-pulse" />
+            <div key={i} className="h-28 rounded-xl bg-surface-brand border border-border-brand animate-pulse" />
           ))}
         </div>
-        <div className="h-80 rounded-xl bg-slate-800/50 animate-pulse" />
+        <div className="h-80 rounded-xl bg-surface-brand border border-border-brand animate-pulse" />
       </div>
     );
   }
@@ -182,11 +186,11 @@ export default function AdminDashboardPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
             <TrendingUp size={24} className="text-emerald-400" />
             Dashboard
           </h1>
-          <p className="text-sm text-slate-400 mt-1">Tổng quan hệ thống Web Novel Platform</p>
+          <p className="text-sm text-text-muted mt-1">Tổng quan hệ thống Web Novel Platform</p>
         </div>
       </div>
 
@@ -195,12 +199,14 @@ export default function AdminDashboardPage() {
         {statCards.map((card) => (
           <div
             key={card.label}
-            className="relative overflow-hidden rounded-xl bg-slate-800/50 border border-slate-700/50 p-5 hover:border-slate-600/50 transition-all duration-300 group"
+            className="relative overflow-hidden rounded-xl bg-surface-brand border border-border-brand p-5 hover:border-emerald-500/30 transition-all duration-300 group shadow-sm hover:shadow-md"
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">{card.label}</p>
-                <p className="text-3xl font-extrabold text-white mt-2">{card.value.toLocaleString("vi")}</p>
+                <p className="text-xs font-medium text-text-secondary uppercase tracking-wider">{card.label}</p>
+                <p className="text-3xl font-extrabold text-text-primary mt-2">
+                  {card.value.toLocaleString("vi")}{(card as { suffix?: string }).suffix || ""}
+                </p>
                 <div className={`flex items-center gap-1 mt-2 text-xs font-semibold ${card.trendUp ? "text-emerald-400" : "text-amber-400"}`}>
                   {card.trendUp && <ArrowUpRight size={14} />}
                   {card.trend}
@@ -219,19 +225,19 @@ export default function AdminDashboardPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Area Chart - Growth */}
-        <div className="lg:col-span-2 rounded-xl bg-slate-800/50 border border-slate-700/50 p-5">
+        <div className="lg:col-span-2 rounded-xl bg-surface-brand border border-border-brand p-5 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-sm font-bold text-white">Tăng trưởng nền tảng</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Người dùng & truyện theo tháng</p>
+              <h3 className="text-sm font-bold text-text-primary">Tăng trưởng nền tảng</h3>
+              <p className="text-xs text-text-muted mt-0.5">Người dùng & truyện theo tháng</p>
             </div>
             <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400">
               6 tháng gần nhất
             </span>
           </div>
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={monthlyData}>
-              <defs>
+            <defs>
                 <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
@@ -241,17 +247,17 @@ export default function AdminDashboardPage() {
                   <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="name" stroke="#475569" fontSize={12} />
-              <YAxis stroke="#475569" fontSize={12} />
+              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border-brand" />
+              <XAxis dataKey="name" stroke="currentColor" className="text-text-muted" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis yAxisId="left" stroke="currentColor" className="text-text-muted" fontSize={12} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#1e293b",
-                  border: "1px solid #334155",
+                  backgroundColor: "var(--color-surface-elevated)",
+                  borderColor: "var(--color-border-brand)",
                   borderRadius: "0.75rem",
-                  fontSize: "0.8125rem",
+                  color: "var(--color-text-primary)",
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
                 }}
-                labelStyle={{ color: "#94a3b8" }}
               />
               <Area type="monotone" dataKey="users" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorUsers)" name="Người dùng" />
               <Area type="monotone" dataKey="stories" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorStories)" name="Truyện" />
@@ -259,20 +265,82 @@ export default function AdminDashboardPage() {
           </ResponsiveContainer>
         </div>
 
+        {/* Area Chart - Revenue */}
+        <div className="rounded-xl bg-surface-brand border border-border-brand p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-sm font-bold text-text-primary">Doanh thu</h3>
+              <p className="text-xs text-text-muted mt-0.5">Xu thu được theo tháng</p>
+            </div>
+            <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-violet-500/10 text-violet-500">
+              6 tháng gần nhất
+            </span>
+          </div>
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={monthlyData}>
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border-brand" />
+              <XAxis dataKey="name" stroke="currentColor" className="text-text-muted" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="currentColor" className="text-text-muted" fontSize={12} tickLine={false} axisLine={false} width={40} tickFormatter={(value) => value >= 1000 ? `${(value/1000).toFixed(1)}k` : value} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "var(--color-surface-elevated)",
+                  borderColor: "var(--color-border-brand)",
+                  borderRadius: "0.75rem",
+                  color: "var(--color-text-primary)",
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                }}
+              />
+              <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" name="Doanh thu (xu)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Second Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Bar Chart - Content Types */}
+        <div className="lg:col-span-2 rounded-xl bg-surface-brand border border-border-brand p-5 shadow-sm">
+          <h3 className="text-sm font-bold text-text-primary mb-5">Phân bố thể loại (Top 5)</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={contentData} layout="vertical" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border-brand" horizontal={false} />
+              <XAxis type="number" stroke="currentColor" className="text-text-muted" fontSize={10} tickLine={false} axisLine={false} />
+              <YAxis dataKey="name" type="category" stroke="currentColor" className="text-text-muted" fontSize={11} tickLine={false} axisLine={false} />
+              <Tooltip
+                cursor={{ fill: "var(--color-surface-elevated)" }}
+                contentStyle={{
+                  backgroundColor: "var(--color-surface-brand)",
+                  border: "1px solid var(--color-border-brand)",
+                  borderRadius: "0.75rem",
+                  fontSize: "0.8125rem",
+                  color: "var(--color-text-primary)"
+                }}
+              />
+              <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} name="Số truyện" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
         {/* Pie Chart - Roles */}
-        <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 p-5">
-          <h3 className="text-sm font-bold text-white mb-1">Phân bổ vai trò</h3>
-          <p className="text-xs text-slate-500 mb-4">Tỷ lệ người dùng theo vai trò</p>
-          <ResponsiveContainer width="100%" height={180}>
+        <div className="rounded-xl bg-surface-brand border border-border-brand p-5 shadow-sm flex flex-col">
+          <h3 className="text-sm font-bold text-text-primary mb-2">Cơ cấu người dùng</h3>
+          <ResponsiveContainer width="100%" className="flex-1 min-h-[200px]">
             <PieChart>
               <Pie
                 data={roleData}
                 cx="50%"
                 cy="50%"
-                innerRadius={50}
-                outerRadius={75}
-                paddingAngle={4}
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
                 dataKey="value"
+                stroke="none"
               >
                 {roleData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
@@ -280,17 +348,18 @@ export default function AdminDashboardPage() {
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#1e293b",
-                  border: "1px solid #334155",
+                  backgroundColor: "var(--color-surface-elevated)",
+                  border: "1px solid var(--color-border-brand)",
                   borderRadius: "0.75rem",
                   fontSize: "0.8125rem",
+                  color: "var(--color-text-primary)"
                 }}
               />
             </PieChart>
           </ResponsiveContainer>
-          <div className="flex justify-center gap-4 mt-2">
+          <div className="flex justify-center flex-wrap gap-4 mt-2">
             {roleData.map((item) => (
-              <div key={item.name} className="flex items-center gap-1.5 text-xs text-slate-400">
+              <div key={item.name} className="flex items-center gap-1.5 text-xs text-text-secondary">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                 {item.name}
               </div>
@@ -299,60 +368,34 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Bar Chart - Content Types */}
-      <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 p-5">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h3 className="text-sm font-bold text-white">Phân bổ nội dung</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Số lượng truyện theo loại</p>
-          </div>
-        </div>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={contentData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-            <XAxis dataKey="name" stroke="#475569" fontSize={12} />
-            <YAxis stroke="#475569" fontSize={12} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1e293b",
-                border: "1px solid #334155",
-                borderRadius: "0.75rem",
-                fontSize: "0.8125rem",
-              }}
-            />
-            <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} name="Số truyện" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
       {/* Pending Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Stories */}
-        <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <AlertCircle size={16} className="text-amber-400" />
+        <div className="rounded-xl bg-surface-brand border border-border-brand overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border-brand">
+            <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+              <AlertCircle size={16} className="text-amber-500" />
               Truyện chờ duyệt
             </h3>
-            <Link href="/admin/stories" className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer">
+            <Link href="/admin/stories" className="text-xs text-emerald-500 hover:text-emerald-600 flex items-center gap-1 cursor-pointer">
               Xem tất cả <ArrowRight size={12} />
             </Link>
           </div>
           {pendingStories.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-slate-500">
+            <div className="flex flex-col items-center justify-center py-10 text-text-muted">
               <CheckCircle size={28} className="mb-2 opacity-40" />
               <p className="text-sm">Không có truyện nào chờ duyệt</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-700/50">
+            <div className="divide-y divide-border-brand">
               {pendingStories.map((story) => (
-                <div key={story.id} className="flex items-center justify-between px-5 py-3 hover:bg-slate-700/20 transition-colors">
+                <div key={story.id} className="flex items-center justify-between px-5 py-3 hover:bg-surface-elevated transition-colors">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{story.title}</p>
-                    <p className="text-xs text-slate-500">{story.author?.displayName || story.author?.username}</p>
+                    <p className="text-sm font-medium text-text-primary truncate">{story.title}</p>
+                    <p className="text-xs text-text-muted">{story.author?.displayName || story.author?.username}</p>
                   </div>
-                  <Link href={`/stories/${story.id}`} className="p-2 rounded-lg hover:bg-slate-700/40 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0">
-                    <Eye size={16} />
+                  <Link href={`/stories/${story.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-500 border border-indigo-500/30 hover:bg-indigo-500/10 transition-all cursor-pointer shrink-0">
+                    <Eye size={13} /> Xem
                   </Link>
                 </div>
               ))}
@@ -361,32 +404,35 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Pending Withdrawals */}
-        <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Wallet size={16} className="text-indigo-400" />
+        <div className="rounded-xl bg-surface-brand border border-border-brand overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border-brand">
+            <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+              <Wallet size={16} className="text-indigo-500" />
               Rút tiền chờ duyệt
             </h3>
-            <Link href="/admin/withdrawals" className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer">
+            <Link href="/admin/withdrawals" className="text-xs text-emerald-500 hover:text-emerald-600 flex items-center gap-1 cursor-pointer">
               Xem tất cả <ArrowRight size={12} />
             </Link>
           </div>
           {pendingWithdrawals.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-slate-500">
+            <div className="flex flex-col items-center justify-center py-10 text-text-muted">
               <CheckCircle size={28} className="mb-2 opacity-40" />
               <p className="text-sm">Không có yêu cầu rút tiền nào</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-700/50">
+            <div className="divide-y divide-border-brand">
               {pendingWithdrawals.map((w) => (
-                <div key={w.id} className="flex items-center justify-between px-5 py-3 hover:bg-slate-700/20 transition-colors">
+                <div key={w.id} className="flex items-center justify-between px-5 py-3 hover:bg-surface-elevated transition-colors">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-white">{w.wallet.user.displayName}</p>
-                    <p className="text-xs text-slate-500">{w.wallet.user.email}</p>
+                    <p className="text-sm font-medium text-text-primary">{w.wallet.user.displayName}</p>
+                    <p className="text-xs text-text-muted">{w.wallet.user.email}</p>
                   </div>
-                  <span className="text-sm font-bold text-rose-400 shrink-0">
+                  <span className="text-sm font-bold text-rose-500 shrink-0">
                     {Math.abs(w.amount).toLocaleString("vi")} xu
                   </span>
+                  <Link href={`/admin/withdrawals`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-500 border border-indigo-500/30 hover:bg-indigo-500/10 transition-all cursor-pointer shrink-0 ml-3">
+                    <Eye size={13} /> Xem
+                  </Link>
                 </div>
               ))}
             </div>
