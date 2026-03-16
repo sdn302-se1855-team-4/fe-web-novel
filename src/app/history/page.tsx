@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { Clock, BookOpen, ChevronRight, ChevronLeft } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
-import styles from "./history.module.css";
 
 const DEFAULT_COVER =
   "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop";
@@ -79,15 +78,15 @@ export default function HistoryPage() {
             Quay lại
           </button>
           
-          <h1 className={`${styles.pageTitle} !mb-0`}>
+          <h1 className="flex items-center gap-3 text-2xl md:text-3xl font-black text-text-primary tracking-tight italic uppercase font-heading !mb-0">
             <Clock size={32} className="text-emerald-500" /> Lịch sử đọc
           </h1>
         </div>
 
         {loading ? (
-          <div className={styles.list}>
+          <div className="flex flex-col gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className={styles.item}>
+              <div key={i} className="flex items-center gap-4 md:gap-6 p-4 md:p-5 bg-surface-brand border border-border-brand rounded-[2rem] no-underline text-inherit transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/5 hover:translate-x-2 group">
                 <div
                   className="skeleton"
                   style={{
@@ -121,55 +120,55 @@ export default function HistoryPage() {
             ))}
           </div>
         ) : history.length > 0 ? (
-          <div className={styles.list}>
+          <div className="flex flex-col gap-4">
             {history.map((item) => (
               <Link
                 key={item.id}
                 href={`/stories/${item.story.id}/chapters/${item.chapter.chapterNumber}`}
-                className={styles.item}
+                className="flex items-center gap-4 md:gap-6 p-4 md:p-5 bg-surface-brand border border-border-brand rounded-[2rem] no-underline text-inherit transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/5 hover:translate-x-2 group"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.story.coverImage || DEFAULT_COVER}
                   alt={item.story.title}
-                  className={styles.cover}
+                  className="w-16 md:w-20 h-24 md:h-28 object-cover rounded-2xl shadow-lg flex-shrink-0"
                   onError={handleImageError}
                 />
-                <div className={styles.info}>
-                  <div className={styles.titleRow}>
-                    <span className={styles.title}>{item.story.title}</span>
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-lg text-text-primary truncate">{item.story.title}</span>
                     {item.story.type && (
-                      <span className={styles.typeBadge}>
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-500 text-white uppercase tracking-wider flex-shrink-0">
                         {item.story.type}
                       </span>
                     )}
                   </div>
-                  <span className={styles.chapterText}>
+                  <span className="text-sm font-medium text-text-secondary truncate">
                     Chương {item.chapter.chapterNumber}: {item.chapter.title}
                   </span>
-                  <div className={styles.metaRow}>
-                    <span className={styles.author}>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs font-bold text-emerald-500/70">
                       {item.story.author?.displayName ||
                         item.story.author?.username ||
                         "Unknown"}
                     </span>
-                    <span className={styles.time}>
+                    <span className="text-xs font-medium text-text-muted">
                       {formatDate(item.readAt)}
                     </span>
                   </div>
-                  <div className={styles.progressBar}>
+                  <div className="h-1.5 bg-surface-elevated rounded-full overflow-hidden mt-3 max-w-[200px]">
                     <div
-                      className={styles.progressFill}
+                      className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                       style={{ width: `${item.progress || 0}%` }}
                     />
                   </div>
                 </div>
-                <ChevronRight size={18} className={styles.arrow} />
+                <ChevronRight size={18} className="text-text-muted transition-colors duration-300 group-hover:text-emerald-500" />
               </Link>
             ))}
           </div>
         ) : (
-          <div className={styles.empty}>
+          <div className="flex flex-col items-center gap-6 py-24 text-text-muted text-center">
             <BookOpen size={48} />
             <p>Chưa có lịch sử đọc. Hãy bắt đầu đọc truyện nào!</p>
             <Link href="/stories" className="btn btn-primary">

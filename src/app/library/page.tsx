@@ -7,8 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import StoryCard from "@/components/StoryCard";
-import styles from "./library.module.css";
-
 interface StoryItem {
   id: string;
   title: string;
@@ -167,7 +165,7 @@ export default function LibraryPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className={styles.empty}
+            className="flex flex-col items-center justify-center text-center py-24 text-text-muted"
           >
             <BookOpen size={48} className="text-text-muted mb-6" />
             <h3 className="text-xl font-bold text-text-primary mb-2">Thư viện trống</h3>

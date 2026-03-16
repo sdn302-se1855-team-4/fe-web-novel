@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle, Coins, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
-import styles from "../wallet.module.css";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -61,21 +60,12 @@ function SuccessContent() {
         <>
           <Loader2
             size={48}
-            style={{
-              color: "var(--color-primary)",
-              animation: "spin 1s linear infinite",
-              marginBottom: "1rem",
-            }}
+            className="text-emerald-500 animate-spin mb-4 mx-auto"
           />
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
-            Đang xác minh thanh toán...
+          <h2 className="text-lg font-bold">
+            Đã xác minh thanh toán...
           </h2>
-          <p
-            style={{
-              color: "var(--color-text-muted)",
-              marginTop: "0.5rem",
-            }}
-          >
+          <p className="text-text-muted mt-2">
             Vui lòng chờ trong giây lát
           </p>
         </>
@@ -85,36 +75,20 @@ function SuccessContent() {
         <>
           <CheckCircle
             size={56}
-            style={{ color: "#22c55e", marginBottom: "1rem" }}
+            className="text-green-500 mb-4 mx-auto"
           />
-          <h2 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
+          <h2 className="text-2xl font-bold">
             Nạp xu thành công! 🎉
           </h2>
-          <p
-            style={{
-              color: "var(--color-text-muted)",
-              marginTop: "0.5rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "0.5rem",
-            }}
-          >
+          <p className="text-text-muted mt-2 flex items-center justify-center gap-2">
             <Coins size={16} /> {message}
           </p>
-          <p
-            style={{
-              color: "var(--color-text-muted)",
-              marginTop: "1rem",
-              fontSize: "0.875rem",
-            }}
-          >
+          <p className="text-text-muted mt-4 text-sm">
             Tự động chuyển về Ví sau 4 giây...
           </p>
           <button
-            className="btn btn-primary"
+            className="btn btn-primary mt-4"
             onClick={() => router.push("/wallet")}
-            style={{ marginTop: "1rem" }}
           >
             Về Ví ngay
           </button>
@@ -123,29 +97,18 @@ function SuccessContent() {
 
       {status === "error" && (
         <>
-          <div
-            style={{
-              fontSize: "3rem",
-              marginBottom: "1rem",
-            }}
-          >
+          <div className="text-5xl mb-4">
             ⚠️
           </div>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
+          <h2 className="text-lg font-bold">
             Thanh toán chưa hoàn tất
           </h2>
-          <p
-            style={{
-              color: "var(--color-text-muted)",
-              marginTop: "0.5rem",
-            }}
-          >
+          <p className="text-text-muted mt-2">
             {message}
           </p>
           <button
-            className="btn btn-primary"
+            className="btn btn-primary mt-6"
             onClick={() => router.push("/wallet")}
-            style={{ marginTop: "1.5rem" }}
           >
             Quay lại Ví
           </button>
@@ -157,31 +120,16 @@ function SuccessContent() {
 
 export default function DepositSuccessPage() {
   return (
-    <div className={`container ${styles.page}`}>
-      <div
-        style={{
-          maxWidth: 480,
-          margin: "2rem auto",
-          textAlign: "center",
-          padding: "3rem 2rem",
-          borderRadius: "var(--radius-xl)",
-          background: "var(--color-surface-elevated)",
-          border: "1px solid var(--color-border)",
-          boxShadow: "var(--shadow-lg)",
-        }}
-      >
+    <div className="container py-8">
+      <div className="max-w-[480px] mx-auto my-8 text-center px-8 py-12 rounded-xl bg-surface-elevated border border-border-brand shadow-lg">
         <Suspense
           fallback={
             <>
               <Loader2
                 size={48}
-                style={{
-                  color: "var(--color-primary)",
-                  animation: "spin 1s linear infinite",
-                  marginBottom: "1rem",
-                }}
+                className="text-emerald-500 animate-spin mb-4 mx-auto"
               />
-              <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
+              <h2 className="text-lg font-bold">
                 Đang xác minh...
               </h2>
             </>

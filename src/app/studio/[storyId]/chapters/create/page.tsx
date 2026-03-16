@@ -12,10 +12,10 @@ export default function CreateChapterPage() {
   const storyId = params.storyId as string;
 
   const [title, setTitle] = useState("");
-  const [chapterNumber, setChapterNumber] = useState(1);
+  const [chapterNumber, setChapterNumber] = useState("");
   const [content, setContent] = useState("");
   const [isPremium, setIsPremium] = useState(false);
-  const [price, setPrice] = useState(0);
+  const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -36,15 +36,27 @@ export default function CreateChapterPage() {
         .replace(/[\s_-]+/g, "-")
         .replace(/^-+|-+$/g, "");
 
+      const parsedChapterNumber = parseInt(chapterNumber, 10);
+      if (!parsedChapterNumber || parsedChapterNumber < 1) {
+        throw new Error("Số chương không hợp lệ. Vui lòng nhập số lớn hơn hoặc bằng 1.");
+      }
+
+      const parsedPrice = parseInt(price, 10);
+      if (isPremium) {
+        if (!parsedPrice || parsedPrice < 0) {
+          throw new Error("Giá chương không hợp lệ. Vui lòng nhập số lớn hơn hoặc bằng 0.");
+        }
+      }
+
       await apiFetch(`/stories/${storyId}/chapters`, {
         method: "POST",
         body: JSON.stringify({
           title,
           slug,
-          chapterNumber,
+          chapterNumber: parsedChapterNumber,
           content,
           isPremium,
-          price: isPremium ? price : 0,
+          price: isPremium ? parsedPrice : 0,
         }),
       });
       router.push(`/studio`);
@@ -100,7 +112,7 @@ export default function CreateChapterPage() {
             min="1"
             className="input"
             value={chapterNumber}
-            onChange={(e) => setChapterNumber(parseInt(e.target.value) || 1)}
+            onChange={(e) => setChapterNumber(e.target.value)}
             required
           />
         </div>
@@ -166,7 +178,7 @@ export default function CreateChapterPage() {
                 min="0"
                 className="input"
                 value={price}
-                onChange={(e) => setPrice(parseInt(e.target.value) || 0)}
+                onChange={(e) => setPrice(e.target.value)}
                 placeholder="VD: 50"
                 required={isPremium}
               />

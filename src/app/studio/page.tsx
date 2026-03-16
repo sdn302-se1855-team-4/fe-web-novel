@@ -8,7 +8,6 @@ import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
-import styles from "./studio.module.css";
 
 interface Story {
   id: string;
@@ -85,7 +84,7 @@ export default function StudioPage() {
         </button>
       </div>
 
-      <div className={styles.header}>
+      <div className="flex items-center justify-between gap-6 mb-12 flex-wrap">
         <h1 className="section-title">
           <Pen size={24} /> Writer Studio
         </h1>
@@ -100,13 +99,13 @@ export default function StudioPage() {
       </div>
 
       {loading ? (
-        <div className={styles.list}>
+        <div className="flex flex-col gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className={styles.storyRow}>
+            <div key={i} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[2rem] md:rounded-[2.5rem] transition-all duration-300">
               <div
                 className="skeleton"
                 style={{
-                  width: 60,
+                  width: 64,
                   height: 80,
                   borderRadius: "var(--radius-md)",
                 }}
@@ -132,20 +131,20 @@ export default function StudioPage() {
           ))}
         </div>
       ) : stories.length > 0 ? (
-        <div className={styles.list}>
+        <div className="flex flex-col gap-4">
           {stories.map((story) => (
-            <div key={story.id} className={styles.storyRow}>
-              <div className={styles.storyCover}>
+            <div key={story.id} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[2rem] md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
+              <div className="w-16 h-20 rounded-2xl overflow-hidden bg-surface-elevated flex items-center justify-center text-text-muted shadow-sm flex-shrink-0">
                 {story.coverImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={story.coverImage} alt={story.title} />
+                  <img src={story.coverImage} alt={story.title} className="w-full h-full object-cover" />
                 ) : (
                   <BookOpen size={24} />
                 )}
               </div>
-              <div className={styles.storyInfo}>
-                <h3 className={styles.storyTitle}>{story.title}</h3>
-                <div className={styles.storyMeta}>
+              <div className="flex-1 min-w-0 flex flex-col gap-2">
+                <h3 className="text-lg font-bold text-text-primary truncate">{story.title}</h3>
+                <div className="flex items-center gap-4 flex-wrap text-sm font-medium">
                   <span
                     className={`badge ${story.status === "COMPLETED" ? "badge-success" : story.status === "ONGOING" ? "badge-primary" : "badge-warning"}`}
                   >
@@ -164,7 +163,7 @@ export default function StudioPage() {
                   </span>
                 </div>
               </div>
-              <div className={styles.storyActions}>
+              <div className="flex items-center gap-3 flex-shrink-0 w-full md:w-auto justify-end pt-4 md:pt-0 border-t md:border-t-0 border-border-brand">
                 <Link
                   href={`/studio/${story.id}/chapters/create`}
                   className="btn btn-outline btn-sm"
@@ -189,9 +188,9 @@ export default function StudioPage() {
           ))}
         </div>
       ) : (
-        <div className={styles.empty}>
+        <div className="flex flex-col items-center gap-6 py-24 text-text-muted text-center">
           <Pen size={48} />
-          <h3>Chưa có truyện nào</h3>
+          <h3 className="text-2xl font-bold text-text-primary tracking-tight">Chưa có truyện nào</h3>
           <p>Bắt đầu sáng tác truyện đầu tiên của bạn!</p>
           <Link href="/studio/create" className="btn btn-primary">
             <Plus size={18} /> Tạo truyện mới

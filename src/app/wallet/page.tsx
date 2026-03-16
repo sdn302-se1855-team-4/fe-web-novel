@@ -18,8 +18,6 @@ import {
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn, getUserRole } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
-import styles from "./wallet.module.css";
-
 interface WalletData {
   id: string;
   balance: number;
@@ -196,15 +194,15 @@ export default function WalletPage() {
 
   if (loading && !wallet) {
     return (
-      <div className={`container ${styles.page}`}>
-        <div className={styles.header}>
+      <div className="container py-8">
+        <div className="mb-6 flex items-center justify-between">
           <div className="skeleton" style={{ height: 32, width: 200 }} />
         </div>
-        <div className={styles.statsRow}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className={`skeleton ${styles.statCard}`}
+              className="skeleton p-8 rounded-3xl bg-surface-brand border border-border-brand shadow-sm flex flex-col gap-2 transition-all duration-300"
               style={{ height: 100 }}
             />
           ))}
@@ -214,7 +212,7 @@ export default function WalletPage() {
   }
 
   return (
-    <div className={`container ${styles.page}`}>
+    <div className="container py-8">
       <div className="mb-6 flex items-center justify-between">
         <button 
           onClick={() => router.back()}
@@ -225,36 +223,36 @@ export default function WalletPage() {
           </div>
           Quay lại
         </button>
-        <h1 className={`${styles.title} !mb-0`}>
+        <h1 className="flex items-center gap-3 text-xl md:text-2xl font-bold text-text-primary mb-0">
           <Wallet size={24} /> Ví của tôi
         </h1>
       </div>
 
       {/* Stats cards */}
-      <div className={styles.statsRow}>
-        <div className={`${styles.statCard} ${styles.balanceCard}`}>
-          <span className={styles.statLabel}>Số dư hiện tại</span>
-          <span className={styles.statValue}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="p-8 rounded-3xl bg-emerald-500 text-white border-none shadow-xl shadow-emerald-500/20 flex flex-col gap-2 transition-all duration-300">
+          <span className="text-xs font-bold uppercase tracking-widest text-white/80">Số dư hiện tại</span>
+          <span className="text-3xl font-black text-white flex items-center gap-2">
             <Coins size={20} /> {wallet?.balance?.toLocaleString("vi") || 0} xu
           </span>
         </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Tổng đã kiếm</span>
-          <span className={styles.statValue}>
+        <div className="p-8 rounded-3xl bg-surface-brand border border-border-brand shadow-sm flex flex-col gap-2 transition-all duration-300">
+          <span className="text-xs font-bold uppercase tracking-widest text-text-muted">Tổng đã kiếm</span>
+          <span className="text-3xl font-black text-text-primary flex items-center gap-2">
             {wallet?.totalEarned?.toLocaleString("vi") || 0} xu
           </span>
         </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Tổng đã chi</span>
-          <span className={styles.statValue}>
+        <div className="p-8 rounded-3xl bg-surface-brand border border-border-brand shadow-sm flex flex-col gap-2 transition-all duration-300">
+          <span className="text-xs font-bold uppercase tracking-widest text-text-muted">Tổng đã chi</span>
+          <span className="text-3xl font-black text-text-primary flex items-center gap-2">
             {wallet?.totalSpent?.toLocaleString("vi") || 0} xu
           </span>
         </div>
       </div>
 
       {/* Deposit via PayOS */}
-      <div className={styles.depositSection}>
-        <h2 className={styles.sectionTitle}>
+      <div className="mb-8 p-8 rounded-3xl bg-surface-brand border border-border-brand shadow-sm">
+        <h2 className="flex items-center gap-3 text-xl font-bold text-text-primary mb-6">
           <CreditCard size={18} /> Nạp xu qua PayOS
         </h2>
         <p
@@ -267,12 +265,16 @@ export default function WalletPage() {
           Chọn gói nạp bên dưới. Bạn sẽ được chuyển đến trang thanh toán PayOS
           để hoàn tất.
         </p>
-        <div className={styles.quickAmounts}>
+        <div className="flex gap-3 flex-wrap">
           {PACKAGES.map((pkg) => (
             <button
               key={pkg.vnd}
               type="button"
-              className={`${styles.quickBtn} ${selectedPackage === pkg.vnd ? styles.quickBtnActive : ""}`}
+              className={`px-5 py-3 rounded-2xl border border-border-brand bg-surface-elevated text-text-secondary font-bold text-sm transition-all duration-300 hover:border-emerald-500/50 hover:text-emerald-500 hover:bg-emerald-500/5 ${
+                selectedPackage === pkg.vnd 
+                  ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20" 
+                  : ""
+              }`}
               onClick={() => setSelectedPackage(pkg.vnd)}
             >
               {pkg.label} → {pkg.xu} xu
@@ -317,8 +319,8 @@ export default function WalletPage() {
 
       {/* Withdraw section for Writers */}
       {isWriter && (
-        <div className={styles.depositSection}>
-          <h2 className={styles.sectionTitle}>
+        <div className="mb-8 p-8 rounded-3xl bg-surface-brand border border-border-brand shadow-sm">
+          <h2 className="flex items-center gap-3 text-xl font-bold text-text-primary mb-6">
             <ArrowUpRight size={18} /> Rút tiền (Tác giả)
           </h2>
           <p
@@ -333,11 +335,11 @@ export default function WalletPage() {
           </p>
           <form
             onSubmit={handleWithdraw}
-            className={styles.depositForm}
+            className="flex flex-col gap-6"
             style={{ gap: "1rem" }}
           >
             <div
-              className={styles.depositRow}
+              className="flex flex-col gap-4"
               style={{ flexDirection: "column" }}
             >
               <input
@@ -346,7 +348,7 @@ export default function WalletPage() {
                 placeholder="Nhập số xu cần rút (tối thiểu 200)..."
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(e.target.value)}
-                className={styles.depositInput}
+                className="flex-1 p-4 bg-surface-elevated border border-border-brand rounded-2xl text-text-primary font-medium text-base outline-none transition-all duration-200 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 focus:bg-surface-brand"
                 required
               />
               {withdrawXu >= 200 && (
@@ -400,7 +402,7 @@ export default function WalletPage() {
                 placeholder="Tên ngân hàng (VD: Vietcombank)"
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
-                className={styles.depositInput}
+                className="flex-1 p-4 bg-surface-elevated border border-border-brand rounded-2xl text-text-primary font-medium text-base outline-none transition-all duration-200 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 focus:bg-surface-brand"
                 required
               />
               <input
@@ -408,7 +410,7 @@ export default function WalletPage() {
                 placeholder="Số tài khoản"
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value)}
-                className={styles.depositInput}
+                className="flex-1 p-4 bg-surface-elevated border border-border-brand rounded-2xl text-text-primary font-medium text-base outline-none transition-all duration-200 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 focus:bg-surface-brand"
                 required
               />
               <input
@@ -416,7 +418,7 @@ export default function WalletPage() {
                 placeholder="Tên chủ tài khoản"
                 value={accountName}
                 onChange={(e) => setAccountName(e.target.value)}
-                className={styles.depositInput}
+                className="flex-1 p-4 bg-surface-elevated border border-border-brand rounded-2xl text-text-primary font-medium text-base outline-none transition-all duration-200 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 focus:bg-surface-brand"
                 required
               />
             </div>
@@ -433,36 +435,38 @@ export default function WalletPage() {
       )}
 
       {/* Transaction history */}
-      <div className={styles.historySection}>
-        <h2 className={styles.sectionTitle}>
+      <div className="p-8 rounded-3xl bg-surface-brand border border-border-brand shadow-sm">
+        <h2 className="flex items-center gap-3 text-xl font-bold text-text-primary mb-6">
           <Clock size={18} /> Lịch sử giao dịch
         </h2>
         {transactions.length === 0 ? (
-          <p className={styles.empty}>Chưa có giao dịch nào</p>
+          <p className="text-center py-16 text-text-muted italic font-medium">Chưa có giao dịch nào</p>
         ) : (
           <>
-            <div className={styles.transactionList}>
+            <div className="flex flex-col gap-1">
               {transactions.map((tx) => (
-                <div key={tx.id} className={styles.txItem}>
+                <div key={tx.id} className="group flex items-center gap-6 p-4 rounded-2xl transition-all duration-300 hover:bg-surface-elevated">
                   <div
-                    className={`${styles.txIcon} ${tx.amount > 0 ? styles.txPositive : styles.txNegative}`}
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${
+                      tx.amount > 0 ? "text-emerald-500 bg-emerald-500/10" : "text-rose-500 bg-rose-500/10"
+                    }`}
                   >
                     {getTypeIcon(tx.type)}
                   </div>
-                  <div className={styles.txInfo}>
-                    <span className={styles.txType}>
+                  <div className="flex-1 flex flex-col gap-1 min-w-0">
+                    <span className="font-bold text-sm text-text-primary">
                       {getTypeLabel(tx.type)}
                     </span>
-                    <span className={styles.txDesc}>{tx.description}</span>
+                    <span className="text-xs text-text-muted truncate">{tx.description}</span>
                   </div>
-                  <div className={styles.txRight}>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <span
-                      className={`${styles.txAmount} ${tx.amount > 0 ? styles.txPositive : styles.txNegative}`}
+                      className={`font-black text-sm ${tx.amount > 0 ? "text-emerald-500" : "text-rose-500"}`}
                     >
                       {tx.amount > 0 ? "+" : ""}
                       {tx.amount.toLocaleString("vi")} xu
                     </span>
-                    <span className={styles.txDate}>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
                       {new Date(tx.createdAt).toLocaleDateString("vi")}
                     </span>
                   </div>
@@ -470,7 +474,7 @@ export default function WalletPage() {
               ))}
             </div>
             {totalPages > 1 && (
-              <div className={styles.pagination}>
+              <div className="flex items-center justify-center gap-6 mt-8 text-sm font-bold text-text-secondary">
                 <button
                   className="btn btn-ghost"
                   disabled={page <= 1}

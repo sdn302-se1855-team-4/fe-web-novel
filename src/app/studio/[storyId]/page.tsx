@@ -3,12 +3,11 @@
 import { useEffect, useState, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Save, Plus, BookOpen, Trash2, Edit, RefreshCw } from "lucide-react";
+import { Save, Plus, BookOpen, Trash2, Edit, RefreshCw, ChevronLeft } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
-import styles from "../studio.module.css";
 
 interface Story {
   id: string;
@@ -94,6 +93,10 @@ export default function EditStoryPage() {
         }),
       });
       showToast("Cập nhật thành công!", "success");
+      // Navigate back to studio after successful save
+      setTimeout(() => {
+        router.push("/studio");
+      }, 500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Cập nhật thất bại");
       showToast("Cập nhật thất bại", "error");
@@ -138,8 +141,18 @@ export default function EditStoryPage() {
   if (!story) return null;
 
   return (
-    <div className="page-wrapper">
-      <div className="container" style={{ maxWidth: 800 }}>
+    <div className="page-wrapper" style={{ paddingTop: 0 }}>
+      <div className="container" style={{ maxWidth: 800, marginTop: 0, paddingTop: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+          <button
+            onClick={() => router.push("/studio")}
+            className="btn btn-ghost btn-sm"
+            aria-label="Quay lại Writer Studio"
+            style={{ padding: "0.5rem 0.75rem" }}
+          >
+            <ChevronLeft size={18} /> Quay lại
+          </button>
+        </div>
         <h1 className="section-title">
           <Edit size={24} /> Chỉnh sửa: {story.title}
         </h1>
@@ -276,7 +289,7 @@ export default function EditStoryPage() {
         </form>
 
         {/* Chapter Management */}
-        <div className={styles.header}>
+        <div className="flex items-center justify-between gap-6 mb-8 flex-wrap">
           <h2 className="section-title">
             <BookOpen size={22} /> Danh sách chương ({chapters.length})
           </h2>
@@ -288,15 +301,15 @@ export default function EditStoryPage() {
           </Link>
         </div>
 
-        <div className={styles.list}>
+        <div className="flex flex-col gap-4">
           {chapters.length > 0 ? (
             chapters.map((ch) => (
-              <div key={ch.id} className={styles.storyRow}>
-                <div className={styles.storyInfo}>
-                  <h3 className={styles.storyTitle}>
+              <div key={ch.id} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[2rem] md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <h3 className="text-lg font-bold text-text-primary truncate">
                     Chương {ch.chapterNumber}: {ch.title}
                   </h3>
-                  <div className={styles.storyMeta}>
+                  <div className="flex items-center gap-4 flex-wrap text-sm font-medium">
                     {ch.isPremium && (
                       <span className="badge badge-premium">Premium</span>
                     )}
@@ -309,7 +322,7 @@ export default function EditStoryPage() {
                     )}
                   </div>
                 </div>
-                <div className={styles.storyActions}>
+                <div className="flex items-center gap-3 flex-shrink-0 w-full md:w-auto justify-end pt-4 md:pt-0 border-t md:border-t-0 border-border-brand">
                   <Link
                     href={`/studio/${storyId}/chapters/${ch.chapterNumber}/edit`}
                     className="btn btn-outline btn-sm"
