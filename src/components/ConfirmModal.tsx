@@ -99,23 +99,18 @@ export default function ConfirmModal({
         {children}
 
         <div
-          style={{
-            display: "flex",
-            gap: "0.75rem",
-            justifyContent: "flex-end",
-          }}
+          className="flex gap-3 justify-end mt-4 pt-4 border-t border-slate-700/30"
         >
-          <button className="btn btn-ghost" onClick={onCancel}>
+          <button className="btn btn-ghost transition-all" onClick={onCancel}>
             {cancelText}
           </button>
           <button
-            className="btn"
+            className={`btn transition-all ${
+              variant === "danger"
+                ? "bg-rose-500 hover:bg-rose-400 text-white shadow-lg shadow-rose-500/20"
+                : "btn-primary"
+            }`}
             onClick={onConfirm}
-            style={{
-              background:
-                variant === "danger" ? "#ef4444" : "var(--color-primary)",
-              color: "#fff",
-            }}
           >
             {confirmText}
           </button>

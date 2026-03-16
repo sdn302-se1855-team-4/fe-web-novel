@@ -25,6 +25,7 @@ export default function AdminUsersPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [blockModal, setBlockModal] = useState<{ open: boolean; id: string; name: string; isBlocked: boolean }>({ open: false, id: "", name: "", isBlocked: false });
   const [roleModal, setRoleModal] = useState<{ open: boolean; id: string; name: string; currentRole: string }>({ open: false, id: "", name: "", currentRole: "" });
+  const [selectedRole, setSelectedRole] = useState<string>("");
 
   const fetchUsers = () => {
     setLoading(true);
@@ -57,14 +58,18 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleRoleChange = async (newRole: string) => {
+  const handleRoleChange = async () => {
     const { id } = roleModal;
+    if (!selectedRole || selectedRole === roleModal.currentRole) {
+      setRoleModal({ ...roleModal, open: false });
+      return;
+    }
     setRoleModal({ ...roleModal, open: false });
     setActionLoading(id);
     try {
       await apiFetch(`/admin/users/${id}/role`, {
         method: "PUT",
-        body: JSON.stringify({ role: newRole })
+        body: JSON.stringify({ role: selectedRole })
       });
       showToast("Cập nhật vai trò thành công", "success");
       fetchUsers();
@@ -180,7 +185,10 @@ export default function AdminUsersPage() {
                     <td className="px-5 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button 
-                          onClick={() => setRoleModal({ open: true, id: user.id, name: user.displayName || user.username, currentRole: user.role })}
+                          onClick={() => {
+                            setRoleModal({ open: true, id: user.id, name: user.displayName || user.username, currentRole: user.role });
+                            setSelectedRole(user.role);
+                          }}
                           disabled={actionLoading === user.id}
                           className="p-2 rounded-lg hover:bg-indigo-500/10 text-slate-400 hover:text-indigo-400 transition-colors cursor-pointer disabled:opacity-40"
                           title="Đổi vai trò"
@@ -231,23 +239,35 @@ export default function AdminUsersPage() {
         message={`Chọn vai trò mới cho người dùng "${roleModal.name}":`}
         confirmText="Lưu thay đổi"
         cancelText="Hủy"
-        onConfirm={() => {}} // We'll use custom buttons inside the modal if possible, or just default to something
+        onConfirm={handleRoleChange}
         onCancel={() => setRoleModal({ ...roleModal, open: false })}
       >
-        <div className="grid grid-cols-3 gap-2 mt-4">
-          {(["READER", "WRITER", "ADMIN"] as const).map((r) => (
-            <button
-              key={r}
-              onClick={() => handleRoleChange(r)}
-              className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-all ${
-                roleModal.currentRole === r
-                  ? "bg-indigo-500 border-indigo-400 text-white"
-                  : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
-              }`}
-            >
-              {r === "ADMIN" ? "Admin" : r === "WRITER" ? "Tác giả" : "Độc giả"}
-            </button>
-          ))}
+        <div className="grid grid-cols-3 gap-3 mt-5 mb-6">
+          {(["READER", "WRITER", "ADMIN"] as const).map((r) => {
+            const isSel = selectedRole === r;
+            const config = {
+              READER: { label: "Độc giả", icon: <UserCircle size={14} />, activeCls: "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/30", hoverCls: "hover:border-indigo-500/50 hover:bg-indigo-500/5" },
+              WRITER: { label: "Tác giả", icon: <Pen size={14} />, activeCls: "bg-amber-500 border-amber-400 text-white shadow-lg shadow-amber-500/30", hoverCls: "hover:border-amber-500/50 hover:bg-amber-500/5" },
+              ADMIN: { label: "Admin", icon: <Shield size={14} />, activeCls: "bg-rose-500 border-rose-400 text-white shadow-lg shadow-rose-500/30", hoverCls: "hover:border-rose-500/50 hover:bg-rose-500/5" },
+            }[r];
+
+            return (
+              <button
+                key={r}
+                onClick={() => setSelectedRole(r)}
+                className={`flex flex-col items-center gap-2 px-3 py-3.5 rounded-xl border text-[11px] font-bold transition-all duration-300 cursor-pointer group ${
+                  isSel
+                    ? config.activeCls
+                    : `bg-slate-900/40 border-slate-700/50 text-slate-400 ${config.hoverCls} hover:text-slate-200 hover:-translate-y-0.5`
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg transition-colors ${isSel ? "bg-white/20" : "bg-slate-800 group-hover:bg-slate-700"}`}>
+                  {config.icon}
+                </div>
+                {config.label}
+              </button>
+            );
+          })}
         </div>
       </ConfirmModal>
     </div>
