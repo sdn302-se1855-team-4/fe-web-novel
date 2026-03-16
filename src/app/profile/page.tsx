@@ -186,7 +186,7 @@ export default function ProfileSettingsPage() {
   if (!user) return null;
 
   return (
-    <div className="page-wrapper min-h-screen overflow-x-hidden">
+    <div className="page-wrapper min-h-screen pt-4 pb-16 px-4 sm:px-6 bg-linear-to-br from-emerald-500/5 via-transparent to-blue-500/5">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -261,7 +261,7 @@ export default function ProfileSettingsPage() {
                     <Input
                       value={user.username}
                       readOnly
-                      className="bg-emerald-500/5 border-emerald-500/20 pl-12 h-10 rounded font-bold text-text-muted cursor-default"
+                      className="bg-emerald-500/5 border-emerald-500/20 pl-12 h-11 rounded-xl font-bold text-text-muted cursor-default"
                     />
                     <UserIcon
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500"
@@ -275,7 +275,7 @@ export default function ProfileSettingsPage() {
                     <Input
                       value={user.email}
                       readOnly
-                      className="bg-emerald-500/5 border-emerald-500/20 pl-12 h-10 rounded font-bold text-text-muted cursor-default"
+                      className="bg-emerald-500/5 border-emerald-500/20 pl-12 h-11 rounded-xl font-bold text-text-muted cursor-default"
                     />
                     <Mail
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500"
@@ -307,7 +307,7 @@ export default function ProfileSettingsPage() {
                         setFormData((p) => ({ ...p, lastName: e.target.value }))
                       }
                       placeholder="Họ của bạn"
-                      className="h-10 rounded border-border-brand focus:border-emerald-500/50 bg-transparent"
+                      className="h-11 rounded-xl border-border-brand focus:border-emerald-500/50 bg-transparent focus:bg-surface-elevated/20 transition-all font-medium"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -318,7 +318,7 @@ export default function ProfileSettingsPage() {
                         setFormData((p) => ({ ...p, firstName: e.target.value }))
                       }
                       placeholder="Tên của bạn"
-                      className="h-10 rounded border-border-brand focus:border-emerald-500/50 bg-transparent"
+                      className="h-11 rounded-xl border-border-brand focus:border-emerald-500/50 bg-transparent focus:bg-surface-elevated/20 transition-all font-medium"
                     />
                   </div>
                 </div>
@@ -330,8 +330,8 @@ export default function ProfileSettingsPage() {
                     onChange={(e) =>
                       setFormData((p) => ({ ...p, displayName: e.target.value }))
                     }
-                    placeholder="Tên hiển thị công khai"
-                    className="h-10 border-border-brand focus:border-emerald-500/50 rounded bg-transparent"
+                    placeholder="Tên hiển thị công khai trên ứng dụng"
+                    className="h-11 border-border-brand focus:border-emerald-500/50 rounded-xl bg-transparent focus:bg-surface-elevated/20 transition-all font-medium"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -375,27 +375,27 @@ export default function ProfileSettingsPage() {
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Tiểu sử</label>
                   <textarea
-                    className="w-full px-4 py-3 bg-transparent border border-border-brand rounded text-text-primary placeholder:text-text-muted transition-all duration-200 outline-none focus:border-emerald-500/50 min-h-[140px] resize-none"
+                    className="w-full px-5 py-4 bg-transparent border border-border-brand/60 rounded-2xl text-text-primary placeholder:text-text-muted transition-all duration-300 outline-none focus:border-emerald-500/50 min-h-[140px] resize-none focus:bg-surface-elevated/20 text-sm leading-relaxed"
                     value={formData.bio}
                     onChange={(e) =>
                       setFormData((p) => ({ ...p, bio: e.target.value }))
                     }
-                    placeholder="Hãy viết vài dòng giới thiệu về bản thân bạn..."
+                    placeholder="Hãy viết vài dòng giới thiệu về bản thân bạn để mọi người biết thêm nhé..."
                   />
                 </div>
               </div>
 
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center pt-6">
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-black h-12 px-12 rounded transition-all hover:scale-[1.02] active:scale-95 shadow-2xl shadow-emerald-600/20 uppercase text-lg tracking-widest flex items-center gap-3"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-black h-14 px-14 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-2xl shadow-emerald-600/20 uppercase text-lg tracking-widest flex items-center gap-3 border-none"
                 >
                   {saving ? (
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 1 }}
-                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                      className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full"
                     />
                   ) : (
                     <CheckCircle2 size={24} />
@@ -405,20 +405,20 @@ export default function ProfileSettingsPage() {
               </div>
             </motion.form>
           </div>
-        </main>
+        </div>
       </motion.div>
 
       {/* Change Password Dialog */}
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent className="bg-surface-brand border-border-brand text-text-primary rounded max-w-md w-[95%] shadow-2xl p-0 overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-rose-500 to-emerald-500" />
-          <div className="p-8">
+        <DialogContent className="bg-surface-brand/95 backdrop-blur-3xl border-border-brand text-text-primary rounded-[2rem] max-w-md w-[95%] shadow-2xl p-0 overflow-hidden">
+          <div className="h-2 bg-linear-to-r from-rose-500 to-emerald-500" />
+          <div className="p-8 sm:p-10">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black flex items-center gap-2 uppercase tracking-tighter">
-                <Lock className="text-rose-500" /> ĐỔI MẬT KHẨU
+              <DialogTitle className="text-2xl font-black flex items-center gap-3 uppercase tracking-tighter">
+                <Lock className="text-rose-500" size={24} /> ĐỐI MẬT KHẨU
               </DialogTitle>
-              <DialogDescription className="text-text-muted mt-2">
-                Để bảo mật, vui lòng không chia sẻ mật khẩu mới với bất kỳ ai.
+              <DialogDescription className="text-text-muted mt-2 font-medium">
+                Để bảo mật tốt nhất, vui lòng sử dụng mật khẩu mạnh và không chia sẻ với bất kỳ ai.
               </DialogDescription>
             </DialogHeader>
 
@@ -434,7 +434,7 @@ export default function ProfileSettingsPage() {
                       currentPassword: e.target.value,
                     }))
                   }
-                  className="h-10 rounded border-border-brand focus:border-rose-500/50 bg-surface-elevated/50"
+                  className="h-11 rounded-xl border-border-brand focus:border-rose-500/50 bg-surface-elevated/40 px-4 transition-all"
                   placeholder="••••••••"
                 />
               </div>
@@ -449,7 +449,7 @@ export default function ProfileSettingsPage() {
                       newPassword: e.target.value,
                     }))
                   }
-                  className="h-10 rounded border-border-brand focus:border-emerald-500/50 bg-surface-elevated/50"
+                  className="h-11 rounded-xl border-border-brand focus:border-emerald-500/50 bg-surface-elevated/40 px-4 transition-all"
                   placeholder="Tối thiểu 6 ký tự"
                 />
               </div>
@@ -464,21 +464,21 @@ export default function ProfileSettingsPage() {
                       confirmPassword: e.target.value,
                     }))
                   }
-                  className="h-10 rounded border-border-brand focus:border-emerald-500/50 bg-surface-elevated/50"
+                  className="h-11 rounded-xl border-border-brand focus:border-emerald-500/50 bg-surface-elevated/40 px-4 transition-all"
                   placeholder="Nhập lại mật khẩu mới"
                 />
               </div>
-              <div className="flex justify-center pt-4">
+              <div className="flex justify-center pt-6">
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-lg rounded transition-all shadow-lg shadow-emerald-600/20 uppercase flex items-center justify-center gap-2"
+                  className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-emerald-600/20 uppercase flex items-center justify-center gap-3 border-none"
                 >
                   {saving && (
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 1 }}
-                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                      className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full"
                     />
                   )}
                   {saving ? "ĐANG CẬP NHẬT..." : "XÁC NHẬN THAY ĐỔI"}

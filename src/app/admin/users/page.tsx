@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
-import { UserCircle, Shield, Pen } from "lucide-react";
+import { UserCircle, Shield, Pen, Search, Users, Ban, UserCheck, ShieldAlert, Loader2 } from "lucide-react";
+import { useToast } from "@/components/Toast";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface AdminUser {
   id: string;
@@ -10,172 +12,206 @@ interface AdminUser {
   username: string;
   displayName: string;
   role: string;
+  isBlocked?: boolean;
   createdAt: string;
 }
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | "ADMIN" | "WRITER" | "READER">("all");
+  const { showToast } = useToast();
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [blockModal, setBlockModal] = useState<{ open: boolean; id: string; name: string; isBlocked: boolean }>({ open: false, id: "", name: "", isBlocked: false });
+  const [roleModal, setRoleModal] = useState<{ open: boolean; id: string; name: string; currentRole: string }>({ open: false, id: "", name: "", currentRole: "" });
+  const [selectedRole, setSelectedRole] = useState<string>("");
 
-  useEffect(() => {
+  const fetchUsers = () => {
+    setLoading(true);
     apiFetch<AdminUser[]>("/admin/users")
       .then((res) => setUsers(res))
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchUsers();
   }, []);
 
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case "ADMIN":
-        return (
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "2px 8px",
-              background: "rgba(239, 68, 68, 0.1)",
-              color: "#ef4444",
-              borderRadius: "99px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-            }}
-          >
-            <Shield size={12} /> QUẢN TRỊ VIÊN
-          </span>
-        );
-      case "WRITER":
-        return (
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "2px 8px",
-              background: "rgba(245, 158, 11, 0.1)",
-              color: "#f59e0b",
-              borderRadius: "99px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-            }}
-          >
-            <Pen size={12} /> TÁC GIẢ
-          </span>
-        );
-      default:
-        return (
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "2px 8px",
-              background: "rgba(var(--color-primary-rgb), 0.1)",
-              color: "var(--color-primary)",
-              borderRadius: "99px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-            }}
-          >
-            <UserCircle size={12} /> ĐỘC GIẢ
-          </span>
-        );
+  const handleBlock = async () => {
+    const { id, isBlocked } = blockModal;
+    setBlockModal({ ...blockModal, open: false });
+    setActionLoading(id);
+    try {
+      await apiFetch(`/admin/users/${id}/block`, {
+        method: "PUT",
+        body: JSON.stringify({ isBlocked: !isBlocked })
+      });
+      showToast(`${isBlocked ? "Mở khóa" : "Khóa"} người dùng thành công`, "success");
+      fetchUsers();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Thao tác thất bại";
+      showToast(msg, "error");
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  return (
-    <div>
-      <h1 className="section-title">Quản lý Người dùng</h1>
+  const handleRoleChange = async () => {
+    const { id } = roleModal;
+    if (!selectedRole || selectedRole === roleModal.currentRole) {
+      setRoleModal({ ...roleModal, open: false });
+      return;
+    }
+    setRoleModal({ ...roleModal, open: false });
+    setActionLoading(id);
+    try {
+      await apiFetch(`/admin/users/${id}/role`, {
+        method: "PUT",
+        body: JSON.stringify({ role: selectedRole })
+      });
+      showToast("Cập nhật vai trò thành công", "success");
+      fetchUsers();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Thao tác thất bại";
+      showToast(msg, "error");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
-      <div className="card">
-        {loading ? (
-          <div className="skeleton" style={{ height: "300px" }} />
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                textAlign: "left",
-              }}
+  const filtered = users.filter((u) => {
+    const matchSearch =
+      !search ||
+      u.displayName?.toLowerCase().includes(search.toLowerCase()) ||
+      u.username.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase());
+    const matchRole = roleFilter === "all" || u.role === roleFilter;
+    return matchSearch && matchRole;
+  });
+
+  const counts = {
+    all: users.length,
+    ADMIN: users.filter((u) => u.role === "ADMIN").length,
+    WRITER: users.filter((u) => u.role === "WRITER").length,
+    READER: users.filter((u) => u.role === "READER").length,
+  };
+
+  const roleBadge = (role: string) => {
+    const map: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
+      ADMIN: { label: "Admin", icon: <Shield size={12} />, cls: "bg-rose-500/10 text-rose-400" },
+      WRITER: { label: "Tác giả", icon: <Pen size={12} />, cls: "bg-amber-500/10 text-amber-400" },
+      READER: { label: "Độc giả", icon: <UserCircle size={12} />, cls: "bg-indigo-500/10 text-indigo-400" },
+    };
+    const m = map[role] || map.READER;
+    return (
+      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${m.cls}`}>
+        {m.icon} {m.label}
+      </span>
+    );
+  };
+
+  const tabLabel = (r: string) => (r === "all" ? "Tất cả" : r === "ADMIN" ? "Admin" : r === "WRITER" ? "Tác giả" : "Độc giả");
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+        <Users size={24} className="text-indigo-400" /> Quản lý Người dùng
+      </h1>
+
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm người dùng..."
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex bg-slate-800/60 rounded-lg p-1 border border-slate-700/50">
+          {(["all", "ADMIN", "WRITER", "READER"] as const).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRoleFilter(r)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
+                roleFilter === r
+                  ? "bg-slate-700 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white"
+              }`}
             >
+              {tabLabel(r)} ({counts[r]})
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
+        {loading ? (
+          <div className="h-72 animate-pulse bg-slate-800/40" />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
-                  <th style={{ padding: "1rem" }}>Người dùng</th>
-                  <th style={{ padding: "1rem" }}>Email</th>
-                  <th style={{ padding: "1rem" }}>Vai trò</th>
-                  <th style={{ padding: "1rem" }}>Ngày tham gia</th>
+                <tr className="border-b border-slate-700/50">
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Người dùng</th>
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Email</th>
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Vai trò</th>
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Ngày tham gia</th>
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr
-                    key={user.id}
-                    style={{ borderBottom: "1px solid var(--color-border)" }}
-                  >
-                    <td style={{ padding: "1rem" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.75rem",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: "50%",
-                            background: "var(--color-surface)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "var(--color-text-muted)",
-                          }}
-                        >
-                          <UserCircle size={20} />
+              <tbody className="divide-y divide-slate-700/30">
+                {filtered.map((user) => (
+                  <tr key={user.id} className={`hover:bg-slate-700/20 transition-colors ${user.isBlocked ? "opacity-60 bg-rose-500/2" : ""}`}>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-400 shrink-0">
+                          <UserCircle size={18} />
                         </div>
                         <div>
-                          <div style={{ fontWeight: 600 }}>
-                            {user.displayName || user.username}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "0.8125rem",
-                              color: "var(--color-text-muted)",
-                            }}
-                          >
-                            @{user.username}
-                          </div>
+                          <div className="text-sm font-semibold text-white">{user.displayName || user.username}</div>
+                          <div className="text-xs text-slate-500">@{user.username}</div>
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: "1rem" }}>{user.email}</td>
-                    <td style={{ padding: "1rem" }}>
-                      {getRoleBadge(user.role)}
-                    </td>
-                    <td
-                      style={{
-                        padding: "1rem",
-                        color: "var(--color-text-muted)",
-                        fontSize: "0.875rem",
-                      }}
-                    >
-                      {new Date(user.createdAt).toLocaleDateString("vi")}
+                    <td className="px-5 py-3 text-sm text-slate-300">{user.email}</td>
+                    <td className="px-5 py-3">{roleBadge(user.role)}</td>
+                    <td className="px-5 py-3 text-sm text-slate-500">{new Date(user.createdAt).toLocaleDateString("vi")}</td>
+                    <td className="px-5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button 
+                          onClick={() => {
+                            setRoleModal({ open: true, id: user.id, name: user.displayName || user.username, currentRole: user.role });
+                            setSelectedRole(user.role);
+                          }}
+                          disabled={actionLoading === user.id}
+                          className="p-2 rounded-lg hover:bg-indigo-500/10 text-slate-400 hover:text-indigo-400 transition-colors cursor-pointer disabled:opacity-40"
+                          title="Đổi vai trò"
+                        >
+                          {actionLoading === user.id ? <Loader2 size={16} className="animate-spin" /> : <ShieldAlert size={16} />}
+                        </button>
+                        <button 
+                          onClick={() => setBlockModal({ open: true, id: user.id, name: user.displayName || user.username, isBlocked: !!user.isBlocked })}
+                          disabled={actionLoading === user.id}
+                          className={`p-2 rounded-lg transition-colors cursor-pointer disabled:opacity-40 ${user.isBlocked ? "hover:bg-emerald-500/10 text-emerald-500" : "hover:bg-rose-500/10 text-slate-400 hover:text-rose-400"}`}
+                          title={user.isBlocked ? "Mở khóa" : "Khóa tài khoản"}
+                        >
+                          {actionLoading === user.id ? <Loader2 size={16} className="animate-spin" /> : (user.isBlocked ? <UserCheck size={16} /> : <Ban size={16} />)}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
-                {users.length === 0 && (
+                {filtered.length === 0 && (
                   <tr>
-                    <td
-                      colSpan={5}
-                      style={{
-                        padding: "3rem",
-                        textAlign: "center",
-                        color: "gray",
-                      }}
-                    >
-                      Không có người dùng nào.
+                    <td colSpan={5} className="px-5 py-12 text-center text-slate-500">
+                      <UserCircle size={28} className="mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">Không tìm thấy người dùng nào.</p>
                     </td>
                   </tr>
                 )}
@@ -184,6 +220,56 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <ConfirmModal 
+        isOpen={blockModal.open}
+        title={blockModal.isBlocked ? "Mở khóa tài khoản" : "Khóa tài khoản"}
+        message={`Bạn có chắc muốn ${blockModal.isBlocked ? "mở khóa" : "khóa"} người dùng "${blockModal.name}"?`}
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        variant={blockModal.isBlocked ? "primary" : "danger"}
+        onConfirm={handleBlock}
+        onCancel={() => setBlockModal({ ...blockModal, open: false })}
+      />
+
+      <ConfirmModal 
+        isOpen={roleModal.open}
+        title="Thay đổi vai trò"
+        message={`Chọn vai trò mới cho người dùng "${roleModal.name}":`}
+        confirmText="Lưu thay đổi"
+        cancelText="Hủy"
+        onConfirm={handleRoleChange}
+        onCancel={() => setRoleModal({ ...roleModal, open: false })}
+      >
+        <div className="grid grid-cols-3 gap-3 mt-5 mb-6">
+          {(["READER", "WRITER", "ADMIN"] as const).map((r) => {
+            const isSel = selectedRole === r;
+            const config = {
+              READER: { label: "Độc giả", icon: <UserCircle size={14} />, activeCls: "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/30", hoverCls: "hover:border-indigo-500/50 hover:bg-indigo-500/5" },
+              WRITER: { label: "Tác giả", icon: <Pen size={14} />, activeCls: "bg-amber-500 border-amber-400 text-white shadow-lg shadow-amber-500/30", hoverCls: "hover:border-amber-500/50 hover:bg-amber-500/5" },
+              ADMIN: { label: "Admin", icon: <Shield size={14} />, activeCls: "bg-rose-500 border-rose-400 text-white shadow-lg shadow-rose-500/30", hoverCls: "hover:border-rose-500/50 hover:bg-rose-500/5" },
+            }[r];
+
+            return (
+              <button
+                key={r}
+                onClick={() => setSelectedRole(r)}
+                className={`flex flex-col items-center gap-2 px-3 py-3.5 rounded-xl border text-[11px] font-bold transition-all duration-300 cursor-pointer group ${
+                  isSel
+                    ? config.activeCls
+                    : `bg-slate-900/40 border-slate-700/50 text-slate-400 ${config.hoverCls} hover:text-slate-200 hover:-translate-y-0.5`
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg transition-colors ${isSel ? "bg-white/20" : "bg-slate-800 group-hover:bg-slate-700"}`}>
+                  {config.icon}
+                </div>
+                {config.label}
+              </button>
+            );
+          })}
+        </div>
+      </ConfirmModal>
     </div>
   );
 }

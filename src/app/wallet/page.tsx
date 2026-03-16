@@ -214,7 +214,7 @@ export default function WalletPage() {
   return (
     <div className="container py-8">
       <div className="mb-6 flex items-center justify-between">
-        <button 
+        <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-medium text-sm group"
         >
@@ -255,13 +255,7 @@ export default function WalletPage() {
         <h2 className="flex items-center gap-3 text-xl font-bold text-text-primary mb-6">
           <CreditCard size={18} /> Nạp xu qua PayOS
         </h2>
-        <p
-          style={{
-            fontSize: "0.875rem",
-            color: "var(--color-text-muted)",
-            marginBottom: "1rem",
-          }}
-        >
+        <p className="text-sm text-text-muted mb-4">
           Chọn gói nạp bên dưới. Bạn sẽ được chuyển đến trang thanh toán PayOS
           để hoàn tất.
         </p>
@@ -282,20 +276,14 @@ export default function WalletPage() {
           ))}
         </div>
         {selectedPackage && (
-          <div style={{ marginTop: "1rem" }}>
-            <p
-              style={{
-                fontSize: "0.9375rem",
-                fontWeight: 600,
-                marginBottom: "0.75rem",
-              }}
-            >
+          <div className="mt-4">
+            <p className="text-[15px] font-semibold mb-3">
               Bạn sẽ nạp:{" "}
-              <span style={{ color: "var(--color-primary)" }}>
+              <span className="text-emerald-500">
                 {selectedPackage / 1000} xu
               </span>{" "}
               với giá{" "}
-              <span style={{ color: "var(--color-primary)" }}>
+              <span className="text-emerald-500">
                 {selectedPackage.toLocaleString("vi")}₫
               </span>
             </p>
@@ -323,13 +311,7 @@ export default function WalletPage() {
           <h2 className="flex items-center gap-3 text-xl font-bold text-text-primary mb-6">
             <ArrowUpRight size={18} /> Rút tiền (Tác giả)
           </h2>
-          <p
-            style={{
-              fontSize: "0.875rem",
-              color: "var(--color-text-muted)",
-              marginBottom: "1rem",
-            }}
-          >
+          <p className="text-sm text-text-muted mb-4">
             Số dư: {wallet?.balance?.toLocaleString("vi")} xu. Tối thiểu 200 xu.
             Phí hệ thống: <strong>15%</strong>.
           </p>
@@ -352,46 +334,16 @@ export default function WalletPage() {
                 required
               />
               {withdrawXu >= 200 && (
-                <div
-                  style={{
-                    padding: "0.75rem 1rem",
-                    borderRadius: "var(--radius-md)",
-                    background: "var(--color-surface)",
-                    border: "1px solid var(--color-border)",
-                    fontSize: "0.875rem",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
+                <div className="p-3 bg-surface-elevated border border-border-brand rounded-2xl text-sm">
+                  <div className="flex justify-between mb-1">
                     <span>Tổng:</span>
                     <span>{withdrawVndGross.toLocaleString("vi")}₫</span>
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: "0.25rem",
-                      color: "var(--color-error)",
-                    }}
-                  >
+                  <div className="flex justify-between mb-1 text-rose-500">
                     <span>Phí 15%:</span>
                     <span>-{withdrawFee.toLocaleString("vi")}₫</span>
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontWeight: 700,
-                      color: "var(--color-primary)",
-                      paddingTop: "0.25rem",
-                      borderTop: "1px solid var(--color-border)",
-                    }}
-                  >
+                  <div className="flex justify-between font-bold text-emerald-500 pt-1 border-t border-border-brand">
                     <span>Thực nhận:</span>
                     <span>{withdrawVndNet.toLocaleString("vi")}₫</span>
                   </div>
@@ -424,9 +376,8 @@ export default function WalletPage() {
             </div>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary self-start"
               disabled={withdrawing}
-              style={{ alignSelf: "flex-start" }}
             >
               {withdrawing ? "Đang xử lý..." : "Yêu cầu rút tiền"}
             </button>

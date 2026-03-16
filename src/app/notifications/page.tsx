@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Check, CheckCheck } from "lucide-react";
+import { Bell, Check, CheckCheck, Inbox } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 interface Notification {
@@ -80,16 +80,19 @@ export default function NotificationsPage() {
           )}
         </h1>
         {unreadCount > 0 && (
-          <button className="btn btn-outline btn-sm" onClick={markAllRead}>
-            <CheckCheck size={16} /> Đọc tất cả
+          <button
+            className="btn btn-outline btn-sm sm:btn-md border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-500 flex items-center gap-2"
+            onClick={markAllRead}
+          >
+            <CheckCheck size={18} /> Đánh dấu đã đọc tất cả
           </button>
         )}
       </div>
 
       {loading ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="flex flex-col gap-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="skeleton" style={{ height: 64 }} />
+            <div key={i} className="skeleton h-20 rounded-2xl w-full" />
           ))}
         </div>
       ) : notifications.length === 0 ? (
@@ -122,7 +125,7 @@ export default function NotificationsPage() {
                   onClick={() => markAsRead(n.id)}
                   title="Đánh dấu đã đọc"
                 >
-                  <Check size={16} />
+                  <Check size={20} />
                 </button>
               )}
             </div>

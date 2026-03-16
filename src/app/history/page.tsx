@@ -65,12 +65,12 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="page-wrapper">
-      <div className="container">
-        <div className="mb-8">
+    <div className="page-wrapper min-h-screen">
+      <div className="container py-8 sm:py-12">
+        <div className="mb-8 sm:mb-12">
           <button 
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-medium text-sm group mb-6"
+            className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-medium text-sm group mb-8"
           >
             <div className="p-1.5 rounded-full bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
               <ChevronLeft size={16} />
@@ -88,33 +88,17 @@ export default function HistoryPage() {
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 md:gap-6 p-4 md:p-5 bg-surface-brand border border-border-brand rounded-[2rem] no-underline text-inherit transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/5 hover:translate-x-2 group">
                 <div
-                  className="skeleton"
+                  className="skeleton shrink-0"
                   style={{
                     width: 64,
                     height: 86,
                     borderRadius: "var(--radius-sm)",
                   }}
                 />
-                <div
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 8,
-                  }}
-                >
-                  <div
-                    className="skeleton"
-                    style={{ height: 16, width: "60%" }}
-                  />
-                  <div
-                    className="skeleton"
-                    style={{ height: 12, width: "40%" }}
-                  />
-                  <div
-                    className="skeleton"
-                    style={{ height: 4, width: "100%" }}
-                  />
+                <div className="flex-1 flex flex-col gap-2">
+                  <div className="skeleton h-5 w-[60%]" />
+                  <div className="skeleton h-4 w-[40%]" />
+                  <div className="skeleton h-1.5 w-full mt-2" />
                 </div>
               </div>
             ))}
@@ -170,8 +154,8 @@ export default function HistoryPage() {
         ) : (
           <div className="flex flex-col items-center gap-6 py-24 text-text-muted text-center">
             <BookOpen size={48} />
-            <p>Chưa có lịch sử đọc. Hãy bắt đầu đọc truyện nào!</p>
-            <Link href="/stories" className="btn btn-primary">
+            <p className="font-medium">Chưa có lịch sử đọc. Hãy bắt đầu đọc truyện nào!</p>
+            <Link href="/stories" className="btn btn-primary mt-2">
               Khám phá truyện
             </Link>
           </div>

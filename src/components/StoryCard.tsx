@@ -36,7 +36,9 @@ function formatTimeAgo(date?: string | Date) {
     // distance is something like "19 giờ", "2 ngày"
     // We want "19 Giờ Trước" or "2 Ngày Trước"
     const words = distance.replace("khoảng ", "").split(" ");
-    const formattedDistance = words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    const formattedDistance = words
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
     return `${formattedDistance} Trước`;
   } catch (e) {
     return "Vừa cập nhật";
@@ -45,10 +47,14 @@ function formatTimeAgo(date?: string | Date) {
 
 function typeLabel(type: string) {
   switch (type) {
-    case "NOVEL": return "Novel";
-    case "MANGA": return "Manga";
-    case "COMIC": return "Comic";
-    default: return "LN";
+    case "NOVEL":
+      return "Novel";
+    case "MANGA":
+      return "Manga";
+    case "COMIC":
+      return "Comic";
+    default:
+      return "LN";
   }
 }
 
@@ -61,7 +67,9 @@ export default function StoryCard({ story }: { story: Story }) {
     story.author?.name ||
     "Unknown";
 
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const handleImageError = (
+    e: React.SyntheticEvent<HTMLImageElement, Event>,
+  ) => {
     const target = e.target as HTMLImageElement;
     if (target.src !== DEFAULT_COVER) target.src = DEFAULT_COVER;
   };
@@ -71,7 +79,8 @@ export default function StoryCard({ story }: { story: Story }) {
     if (!story.updatedAt) return false;
     const updatedAt = new Date(story.updatedAt);
     const now = new Date();
-    const hoursSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
+    const hoursSinceUpdate =
+      (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
     return hoursSinceUpdate < 24 && (story.viewCount || 0) > 100;
   };
 
@@ -82,39 +91,29 @@ export default function StoryCard({ story }: { story: Story }) {
       href={`/stories/${story.id}`}
       className="group relative block cursor-pointer"
     >
-      {/* Cover */}
-      <div className="relative aspect-[2/3] overflow-hidden bg-surface-elevated/80 rounded-2xl border border-border-bright group-hover:border-primary-brand/30 transition-all duration-300 shadow-sm group-hover:shadow-md">
+      {/* Cover Image Container */}
+      <div className="relative aspect-3/4 overflow-hidden rounded-2xl bg-surface-elevated ring-1 ring-border-brand/40 group-hover:ring-primary-brand/30 transition-all duration-500 shadow-sm group-hover:shadow-[0_20px_40px_-15px_rgba(16,185,129,0.25)]">
         {story.coverImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={story.coverImage}
             alt={story.title}
-            className="w-full h-full object-cover transition-transform duration-500 
-                       group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             loading="lazy"
             onError={handleImageError}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-text-muted">
+          <div className="w-full h-full flex items-center justify-center text-text-muted bg-surface-elevated">
             <BookOpen size={32} strokeWidth={1} />
           </div>
         )}
 
-        {/* Dark overlay gradient at bottom */}
-        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-
-        {/* Top Left Badges - Grouped together as per image */}
-        <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10">
-          <Badge
-            className="bg-[#5bc0de] hover:bg-[#5bc0de] text-white text-[10px] font-bold border-none rounded-lg px-2 py-1 shadow-md whitespace-nowrap"
-          >
+        {/* Overlay Badges */}
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+          <Badge className="bg-black/60 backdrop-blur-md text-white border-none rounded-lg px-2 py-1 text-[10px] font-bold group-hover:bg-emerald-500 transition-colors">
             {formatTimeAgo(story.updatedAt)}
           </Badge>
-          
           {hot && (
-            <Badge
-              className="bg-[#ff3b5c] hover:bg-[#ff3b5c] text-white text-[10px] font-black border-none rounded-lg px-2.5 py-1 shadow-md uppercase tracking-tight"
-            >
+            <Badge className="bg-rose-500 text-white border-none rounded-lg px-2 py-1 text-[10px] font-black uppercase tracking-wider animate-pulse">
               Hot
             </Badge>
           )}
@@ -127,20 +126,25 @@ export default function StoryCard({ story }: { story: Story }) {
             <Star size={10} fill="currentColor" />
             {story.rating.toFixed(1)}
           </div>
-        )}
+          <div className="bg-emerald-500/90 backdrop-blur-sm text-[10px] font-black text-white px-2 py-0.5 rounded-md">
+            {story.status === "COMPLETED" ? "Full" : "New"}
+          </div>
+        </div>
       </div>
 
-      {/* Info - Center Aligned as per image */}
-      <div className="pt-3 text-center">
-        <h3
-          className="text-base font-bold text-text-primary leading-tight line-clamp-2
-                     group-hover:text-primary-brand transition-colors duration-200"
-        >
+      {/* Info Content */}
+      <div className="mt-3 px-1">
+        <h3 className="text-sm sm:text-base font-bold text-text-primary leading-tight line-clamp-2 min-h-[2.5rem] group-hover:text-emerald-500 transition-colors duration-300">
           {story.title}
         </h3>
-        <p className="text-xs font-bold text-text-primary/80 mt-1 uppercase tracking-wide">
-          Chương {story._count?.chapters || 0}
-        </p>
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
+            Chương {story._count?.chapters || 0}
+          </span>
+          <span className="text-[10px] font-medium text-emerald-500/80 bg-emerald-500/5 px-2 py-0.5 rounded-full border border-emerald-500/10">
+            {story.genres?.[0]?.name || "Novel"}
+          </span>
+        </div>
       </div>
     </Link>
   );

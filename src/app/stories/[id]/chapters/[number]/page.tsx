@@ -4,15 +4,18 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  Search,
+  Check,
   ChevronLeft,
   ChevronRight,
-  List,
-  Sun,
-  Moon,
+  X,
   Minus,
   Plus,
-  Lock,
+  Sun,
+  Moon,
   Coins,
+  Lock,
+  List,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
@@ -75,7 +78,43 @@ export default function ChapterReaderPage() {
   );
   const [totalChapters, setTotalChapters] = useState(0);
   const [purchasing, setPurchasing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const { showToast } = useToast();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > 100) {
+        if (currentScrollY > lastScrollY) {
+          setShowControls(false); // Scrolling down
+        } else {
+          setShowControls(true); // Scrolling up
+        }
+      } else {
+        setShowControls(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
+  const toggleUI = (e: React.MouseEvent) => {
+    // Don't toggle if clicking on links or buttons
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("select")
+    ) {
+      return;
+    }
+    setShowControls(!showControls);
+  };
 
   useEffect(() => {
     const fetchChapter = async () => {
@@ -86,8 +125,10 @@ export default function ChapterReaderPage() {
       ])
         .then(([chData, chaptersData]) => {
           setChapter(chData);
-          const sortedChapters = Array.isArray(chaptersData) 
-            ? [...chaptersData].sort((a, b) => a.chapterNumber - b.chapterNumber)
+          const sortedChapters = Array.isArray(chaptersData)
+            ? [...chaptersData].sort(
+                (a, b) => a.chapterNumber - b.chapterNumber,
+              )
             : [];
           setAllChapters(sortedChapters);
           setTotalChapters(sortedChapters.length);
@@ -127,13 +168,27 @@ export default function ChapterReaderPage() {
 
   const cycleTheme = () => {
     setReaderTheme((prev) => {
-      const next = prev === "light" ? "sepia" : prev === "sepia" ? "dark" : "light";
+      const next =
+        prev === "light" ? "sepia" : prev === "sepia" ? "dark" : "light";
       localStorage.setItem("readerTheme", next);
       return next;
     });
   };
 
+  const filteredChapters = allChapters.filter(
+    (ch) =>
+      ch.chapterNumber.toString().includes(searchQuery) ||
+      ch.title.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const handleSelectChapter = (num: number) => {
+    navigateChapter(num);
+    setIsModalOpen(false);
+    setSearchQuery("");
+  };
+
   const navigateChapter = (num: number) => {
+    if (num < 1 || num > totalChapters) return;
     router.push(`/stories/${storyId}/chapters/${num}`);
   };
 
@@ -155,7 +210,11 @@ export default function ChapterReaderPage() {
         <div className="max-w-[800px] mx-auto px-6 py-16 md:py-20 w-full">
           <div className="animate-pulse bg-gray-200/50 h-10 w-3/4 rounded-xl mx-auto mb-10" />
           {[...Array(12)].map((_, i) => (
-            <div key={i} className="animate-pulse bg-gray-200/30 h-4 rounded-full mb-4" style={{ width: `${85 + Math.random() * 15}%` }} />
+            <div
+              key={i}
+              className="animate-pulse bg-black/5 h-4 rounded-full mb-4"
+              style={{ width: `${85 + Math.random() * 15}%` }}
+            />
           ))}
         </div>
       </div>
@@ -163,6 +222,41 @@ export default function ChapterReaderPage() {
   }
 
   if (!chapter) return null;
+
+  const themes = {
+    light: {
+      bg: "bg-[#f9f7f2]",
+      text: "text-[#1a1a1a]",
+      bar: "bg-white",
+      border: "border-black/10",
+      shadow: "shadow-md shadow-black/5",
+      btn: "bg-[#f0ede5] border-black/10 text-[#1a1a1a] hover:bg-[#e6e3d9] hover:text-emerald-600 hover:border-emerald-600/30",
+      accent: "text-emerald-600",
+      accentBg: "bg-emerald-600",
+    },
+    dark: {
+      bg: "bg-[#0f1117]",
+      text: "text-[#e2e8f0]",
+      bar: "bg-[#171923]",
+      border: "border-white/10",
+      shadow: "shadow-2xl shadow-black/50",
+      btn: "bg-[#1e212f] border-white/10 text-[#e2e8f0] hover:bg-[#2a2d3d] hover:text-emerald-400 hover:border-emerald-500/30",
+      accent: "text-emerald-400",
+      accentBg: "bg-emerald-500",
+    },
+    sepia: {
+      bg: "bg-[#f1e7d0]",
+      text: "text-[#433422]",
+      bar: "bg-[#eaddc0]",
+      border: "border-[#433422]/20",
+      shadow: "shadow-md shadow-[#433422]/5",
+      btn: "bg-[#e6d8b9] border-[#433422]/20 text-[#433422] hover:bg-[#decfa9] hover:text-[#8b4513] hover:border-[#8b4513]/30",
+      accent: "text-[#8b4513]",
+      accentBg: "bg-[#8b4513]",
+    },
+  };
+
+  const currentTheme = themes[readerTheme];
 
   return (
     <div 
@@ -190,15 +284,30 @@ export default function ChapterReaderPage() {
           <button className="btn-icon" onClick={() => changeFontSize(2)} aria-label="Tăng chữ">
             <Plus size={16} />
           </button>
-          <button className="btn-icon" onClick={cycleTheme} aria-label="Đổi nền">
-            {readerTheme === "dark" ? <Moon size={18} /> : <Sun size={18} />}
+
+          <div
+            className={cn(
+              "w-px h-5 sm:h-6 mx-0.5 sm:mx-1",
+              currentTheme.border,
+            )}
+          />
+
+          <button
+            className={cn(
+              "p-1.5 sm:p-2 rounded-xl transition-all active:scale-90 border flex items-center justify-center scale-90 sm:scale-100",
+              currentTheme.btn,
+            )}
+            onClick={() => router.push(`/stories/${storyId}`)}
+            title="Thoát"
+          >
+            <X size={18} className="sm:w-5 sm:h-5" />
           </button>
         </div>
       </motion.div>
 
       {/* Chapter Content */}
       <AnimatePresence mode="wait">
-        <motion.article 
+        <motion.article
           key={chapter.id}
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -214,7 +323,7 @@ export default function ChapterReaderPage() {
                 <Coins size={14} /> PREMIUM
               </span>
             )}
-          </h1>
+          </header>
 
           {/* Inline Navigation Bar */}
           <div className="flex items-center justify-center gap-3 mb-10 w-full">
@@ -223,7 +332,7 @@ export default function ChapterReaderPage() {
               disabled={chapterNumber <= 1}
               onClick={() => navigateChapter(chapterNumber - 1)}
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={20} className="sm:w-[22px] sm:h-[22px]" />
             </button>
             
             <select 
@@ -243,7 +352,7 @@ export default function ChapterReaderPage() {
               disabled={chapterNumber >= totalChapters}
               onClick={() => navigateChapter(chapterNumber + 1)}
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={20} className="sm:w-[22px] sm:h-[22px]" />
             </button>
           </div>
 
@@ -255,7 +364,7 @@ export default function ChapterReaderPage() {
               <h2 className="text-xl font-bold">Mở khóa nội dung Premium</h2>
               <p className="text-base opacity-80">Chương này cần <strong>{chapter.price?.toLocaleString("vi") || 0} xu</strong> để tiếp tục đọc.</p>
               <button
-                className="btn btn-primary w-full max-w-xs h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 border-none shadow-lg shadow-amber-500/20 text-white font-black text-lg"
+                className="w-full max-w-sm h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 shadow-xl shadow-amber-500/30 text-white font-black text-lg transition-transform active:scale-95 disabled:opacity-50"
                 disabled={purchasing}
                 onClick={async () => {
                   setPurchasing(true);

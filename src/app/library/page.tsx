@@ -63,7 +63,7 @@ function normalizeStories(raw: any): StoryItem[] {
               genre?: { id: string; name: string };
               id?: string;
               name?: string;
-            }) => (g.genre ? g.genre : g),
+              }) => (g.genre ? g.genre : g),
           )
         : undefined;
 

@@ -127,13 +127,11 @@ export default function EditStoryPage() {
 
   if (loading) {
     return (
-      <div className="page-wrapper">
-        <div className="container">
-          <div
-            className="skeleton"
-            style={{ height: 32, width: "40%", marginBottom: 24 }}
-          />
-          <div className="skeleton" style={{ height: 200, width: "100%" }} />
+      <div className="min-h-screen pt-4">
+        <div className="w-24 h-6 skeleton rounded-lg mb-8" />
+        <div className="max-w-[800px] mx-auto space-y-8">
+           <div className="h-10 w-2/3 skeleton rounded-lg" />
+           <div className="h-96 skeleton rounded-[2.5rem]" />
         </div>
       </div>
     );
@@ -163,130 +161,145 @@ export default function EditStoryPage() {
           className="flex flex-col gap-md"
           style={{ marginBottom: "var(--spacing-2xl)" }}
         >
-          {error && <div className="error-text">{error}</div>}
-          <div className="form-group">
-            <label htmlFor="title" className="label">
-              Tiêu đề
-            </label>
-            <input
-              id="title"
-              className="input"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
+          <div className="p-2 rounded-xl bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
+            <ChevronLeft size={18} />
           </div>
-          <div className="form-group">
-            <label htmlFor="description" className="label">
-              Mô tả
-            </label>
-            <textarea
-              id="description"
-              className="input textarea"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-            />
-          </div>
-          <div
-            className="form-group"
-            style={{ marginBottom: "var(--spacing-md)" }}
-          >
-            <label
-              htmlFor="coverImage"
-              className="label"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <span>Link ảnh bìa</span>
-              <button
-                type="button"
-                className="btn btn-xs btn-ghost"
-                onClick={handleRandomCover}
-                style={{ fontSize: "0.7rem", color: "var(--color-primary)" }}
-              >
-                <RefreshCw size={12} /> Ngẫu nhiên
-              </button>
-            </label>
-            <div style={{ display: "flex", gap: "var(--spacing-sm)" }}>
-              <input
-                id="coverImage"
-                className="input"
-                style={{ flex: 1 }}
-                value={coverImage}
-                onChange={(e) => setCoverImage(e.target.value)}
-                placeholder="https://..."
-                type="url"
-              />
-              {coverImage && (
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "var(--radius-sm)",
-                    overflow: "hidden",
-                    border: "1px solid var(--color-border)",
-                    flexShrink: 0,
-                  }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={coverImage}
-                    alt="Preview"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="form-group">
-            <label htmlFor="status" className="label">
-              Trạng thái
-            </label>
-            <select
-              id="status"
-              className="input"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <option value="ONGOING">Đang ra</option>
-              <option value="COMPLETED">Hoàn thành</option>
-              <option value="HIATUS">Tạm dừng</option>
-            </select>
-          </div>
-          <div
-            style={{
-              padding: "0.75rem 1rem",
-              borderRadius: "var(--radius-md)",
-              backgroundColor: isPublished
-                ? "rgba(16, 185, 129, 0.1)"
-                : "rgba(245, 158, 11, 0.1)",
-              color: isPublished ? "#10b981" : "#f59e0b",
-              fontSize: "0.875rem",
-              fontWeight: 600,
-            }}
-          >
-            {isPublished
-              ? "✅ Truyện đã được Admin duyệt và hiển thị trên trang Duyệt truyện"
-              : "⏳ Truyện đang chờ Admin duyệt. Sau khi được duyệt sẽ hiển thị công khai."}
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? (
-              "Đang lưu..."
-            ) : (
-              <>
-                <Save size={18} /> Lưu thay đổi
-              </>
+          Quay lại Studio
+        </button>
+      </div>
+
+      <div className="max-w-[850px] mx-auto">
+        <h1 className="text-3xl font-black text-text-primary italic uppercase tracking-tighter mb-10 flex items-center gap-4">
+          <Edit size={32} className="text-emerald-500" /> Chỉnh sửa tác phẩm
+        </h1>
+
+        {/* Edit Form Card */}
+        <div className="bg-surface-brand border border-border-brand/50 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl shadow-black/5 mb-16 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] pointer-events-none" />
+          
+          <form onSubmit={handleSave} className="space-y-8 relative">
+            <h2 className="text-lg font-black text-text-primary uppercase tracking-wider flex items-center gap-3 mb-4">
+              <Info size={20} className="text-emerald-500" /> Thông tin cơ bản
+            </h2>
+
+            {error && (
+              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-sm font-bold text-center">
+                {error}
+              </div>
             )}
-          </button>
-        </form>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="title" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Tiêu đề tác phẩm</label>
+                <input
+                  id="title"
+                  className="input h-14 rounded-2xl"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="description" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Mô tả chi tiết</label>
+                <textarea
+                  id="description"
+                  className="input min-h-[160px] py-4 rounded-2xl resize-none leading-relaxed"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label htmlFor="coverImage" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1 flex justify-between">
+                    Link ảnh bìa
+                    <button
+                      type="button"
+                      className="text-[10px] text-emerald-500 hover:text-emerald-400 font-bold flex items-center gap-1 transition-colors uppercase tracking-tight"
+                      onClick={handleRandomCover}
+                    >
+                      <RefreshCw size={12} /> Ngẫu nhiên
+                    </button>
+                  </label>
+                  <div className="flex gap-3">
+                    <input
+                      id="coverImage"
+                      className="input h-14 flex-1 rounded-2xl"
+                      value={coverImage}
+                      onChange={(e) => setCoverImage(e.target.value)}
+                      placeholder="https://..."
+                      type="url"
+                    />
+                    {coverImage && (
+                      <div className="w-14 h-14 rounded-xl overflow-hidden border border-border-brand bg-surface-elevated shrink-0 shadow-lg">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={coverImage} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="status" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Trạng thái phát hành</label>
+                  <select
+                    id="status"
+                    className="input h-14 appearance-none rounded-2xl"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                  >
+                    <option value="ONGOING">Đang ra</option>
+                    <option value="COMPLETED">Hoàn thành</option>
+                    <option value="HIATUS">Tạm dừng</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={cn(
+                "p-5 rounded-2xl border-2 flex items-start gap-4 transition-all duration-300",
+                isPublished 
+                  ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-500 shadow-lg shadow-emerald-500/5" 
+                  : "bg-amber-500/5 border-amber-500/20 text-amber-500 shadow-lg shadow-amber-500/5"
+              )}>
+                 <div className={cn("p-1.5 rounded-full", isPublished ? "bg-emerald-500/20" : "bg-amber-500/20")}>
+                   <Info size={16} />
+                 </div>
+                 <div className="flex-1">
+                   {isPublished
+                     ? <p className="text-sm font-bold leading-tight">Truyện đã được duyệt và hiển thị công khai trên hệ thống.</p>
+                     : <p className="text-sm font-bold leading-tight">Tác phẩm đang chờ kiểm duyệt. Sau khi Admin phê duyệt, nội dung sẽ được xuất bản rộng rãi.</p>
+                   }
+                 </div>
+              </div>
+
+              <button type="submit" className="btn btn-primary w-full h-16 text-lg uppercase tracking-widest font-black italic shadow-xl shadow-emerald-500/20 mt-6" disabled={saving}>
+                {saving ? (
+                  <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <Save size={20} /> Lưu thay đổi tác phẩm
+                  </div>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Chapter Management Section */}
+        <div className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <h2 className="text-2xl font-black text-text-primary uppercase tracking-tight italic flex items-center gap-3">
+              <div className="w-2 h-8 bg-blue-500 rounded-full" />
+              <LayoutList size={28} className="text-blue-500" /> Danh sách chương ({chapters.length})
+            </h2>
+            <Link
+              href={`/studio/${storyId}/chapters/create`}
+              className="btn btn-primary px-8 rounded-2xl shadow-lg shadow-emerald-500/10 gap-2 shrink-0 h-12"
+            >
+              <Plus size={18} /> Thêm chương mới
+            </Link>
+          </div>
 
         {/* Chapter Management */}
         <div className="flex items-center justify-between gap-6 mb-8 flex-wrap">
@@ -327,33 +340,18 @@ export default function EditStoryPage() {
                     href={`/studio/${storyId}/chapters/${ch.chapterNumber}/edit`}
                     className="btn btn-outline btn-sm"
                   >
-                    <Edit size={14} /> Sửa
+                    <Plus size={18} /> Thêm chương ngay
                   </Link>
-                  <button
-                    className="btn-icon"
-                    onClick={() => confirmDeleteChapter(ch.chapterNumber)}
-                    aria-label="Xóa chương"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
               </div>
-            ))
-          ) : (
-            <p
-              className="text-center text-muted"
-              style={{ padding: "var(--spacing-2xl)" }}
-            >
-              Chưa có chương nào.
-            </p>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       <ConfirmModal
         isOpen={deleteModal.open}
-        title="Xóa chương"
-        message={`Bạn có chắc muốn xóa chương ${deleteModal.chNum}? Hành động này không thể hoàn tác.`}
+        title="Xóa chương truyện"
+        message={`Bạn có chắc muốn xóa chương ${deleteModal.chNum}? Hành động này sẽ xóa vĩnh viễn nội dung chương và không thể hoàn tác.`}
         confirmText="Xác nhận xóa"
         cancelText="Hủy"
         variant="danger"
