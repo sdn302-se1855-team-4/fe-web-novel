@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle, XCircle, Eye, BookOpen } from "lucide-react";
+import { CheckCircle, XCircle, Eye, BookOpen, Search } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
@@ -24,35 +24,24 @@ export default function AdminStoriesPage() {
   const [stories, setStories] = useState<AdminStory[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "published">("all");
+  const [search, setSearch] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { showToast } = useToast();
-  const [rejectModal, setRejectModal] = useState<{
-    open: boolean;
-    storyId: string;
-  }>({
-    open: false,
-    storyId: "",
-  });
+  const [rejectModal, setRejectModal] = useState<{ open: boolean; storyId: string }>({ open: false, storyId: "" });
 
-  const fetchStories = () => {
+  useEffect(() => {
     setLoading(true);
     apiFetch<AdminStory[]>("/admin/stories")
       .then((res) => setStories(res))
       .catch(() => {})
       .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchStories();
   }, []);
 
   const handleApprove = async (storyId: string) => {
     setActionLoading(storyId);
     try {
       await apiFetch(`/admin/stories/${storyId}/approve`, { method: "PUT" });
-      setStories((prev) =>
-        prev.map((s) => (s.id === storyId ? { ...s, isPublished: true } : s)),
-      );
+      setStories((prev) => prev.map((s) => (s.id === storyId ? { ...s, isPublished: true } : s)));
       showToast("Đã duyệt truyện", "success");
     } catch {
       showToast("Duyệt truyện thất bại", "error");
@@ -61,21 +50,14 @@ export default function AdminStoriesPage() {
     }
   };
 
-  const confirmReject = (storyId: string) => {
-    setRejectModal({ open: true, storyId });
-  };
-
   const executeReject = async () => {
     const { storyId } = rejectModal;
     if (!storyId) return;
-
     setRejectModal({ open: false, storyId: "" });
     setActionLoading(storyId);
     try {
       await apiFetch(`/admin/stories/${storyId}/reject`, { method: "PUT" });
-      setStories((prev) =>
-        prev.map((s) => (s.id === storyId ? { ...s, isPublished: false } : s)),
-      );
+      setStories((prev) => prev.map((s) => (s.id === storyId ? { ...s, isPublished: false } : s)));
       showToast("Đã từ chối truyện", "success");
     } catch {
       showToast("Từ chối truyện thất bại", "error");
@@ -84,198 +66,113 @@ export default function AdminStoriesPage() {
     }
   };
 
-  const filteredStories = stories.filter((s) => {
-    if (filter === "pending") return !s.isPublished;
-    if (filter === "published") return s.isPublished;
-    return true;
+  const filtered = stories.filter((s) => {
+    const matchFilter = filter === "all" ? true : filter === "pending" ? !s.isPublished : s.isPublished;
+    const matchSearch = !search || s.title.toLowerCase().includes(search.toLowerCase()) || (s.author?.displayName || s.author?.username || "").toLowerCase().includes(search.toLowerCase());
+    return matchFilter && matchSearch;
   });
 
   const pendingCount = stories.filter((s) => !s.isPublished).length;
+  const publishedCount = stories.filter((s) => s.isPublished).length;
 
   return (
-    <div>
-      <h1 className="section-title">Quản lý nội dung</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+        <BookOpen size={24} className="text-emerald-400" /> Quản lý Nội dung
+      </h1>
 
-      {/* Filter tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <button
-          className={`btn btn-sm ${filter === "all" ? "btn-primary" : "btn-outline"}`}
-          onClick={() => setFilter("all")}
-        >
-          Tất cả ({stories.length})
-        </button>
-        <button
-          className={`btn btn-sm ${filter === "pending" ? "btn-primary" : "btn-outline"}`}
-          onClick={() => setFilter("pending")}
-          style={
-            pendingCount > 0
-              ? {
-                  borderColor: "#f59e0b",
-                  color: filter === "pending" ? "white" : "#f59e0b",
-                  backgroundColor:
-                    filter === "pending" ? "#f59e0b" : "transparent",
-                }
-              : {}
-          }
-        >
-          Chờ duyệt ({pendingCount})
-        </button>
-        <button
-          className={`btn btn-sm ${filter === "published" ? "btn-primary" : "btn-outline"}`}
-          onClick={() => setFilter("published")}
-        >
-          Đã duyệt ({stories.filter((s) => s.isPublished).length})
-        </button>
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm truyện..."
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex bg-slate-800/60 rounded-lg p-1 border border-slate-700/50">
+          {([
+            { key: "all" as const, label: "Tất cả", count: stories.length },
+            { key: "pending" as const, label: "Chờ duyệt", count: pendingCount },
+            { key: "published" as const, label: "Đã duyệt", count: publishedCount },
+          ]).map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setFilter(t.key)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
+                filter === t.key ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-white"
+              }`}
+            >
+              {t.label} ({t.count})
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="card">
+      {/* Table */}
+      <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
         {loading ? (
-          <div className="skeleton" style={{ height: "300px" }} />
+          <div className="h-72 animate-pulse bg-slate-800/40" />
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                textAlign: "left",
-              }}
-            >
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
-                  <th style={{ padding: "1rem" }}>Tiêu đề</th>
-                  <th style={{ padding: "1rem" }}>Tác giả</th>
-                  <th style={{ padding: "1rem" }}>Loại</th>
-                  <th style={{ padding: "1rem" }}>Chương</th>
-                  <th style={{ padding: "1rem" }}>Trạng thái</th>
-                  <th style={{ padding: "1rem" }}>Ngày tạo</th>
-                  <th style={{ padding: "1rem", textAlign: "center" }}>
-                    Hành động
-                  </th>
+                <tr className="border-b border-slate-700/50">
+                  {["Tiêu đề", "Tác giả", "Loại", "Chương", "Trạng thái", "Ngày tạo", "Hành động"].map((h) => (
+                    <th key={h} className={`px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 ${h === "Hành động" ? "text-center" : ""}`}>
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody>
-                {filteredStories.map((story) => (
-                  <tr
-                    key={story.id}
-                    style={{
-                      borderBottom: "1px solid var(--color-border)",
-                      backgroundColor: !story.isPublished
-                        ? "rgba(245, 158, 11, 0.05)"
-                        : "transparent",
-                    }}
-                  >
-                    <td style={{ padding: "1rem" }}>
-                      <div>
-                        <strong>{story.title}</strong>
-                        {story.description && (
-                          <p
-                            style={{
-                              margin: "0.25rem 0 0",
-                              fontSize: "0.8rem",
-                              opacity: 0.6,
-                              maxWidth: 300,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {story.description}
-                          </p>
-                        )}
-                      </div>
+              <tbody className="divide-y divide-slate-700/30">
+                {filtered.map((story) => (
+                  <tr key={story.id} className={`hover:bg-slate-700/20 transition-colors ${!story.isPublished ? "bg-amber-500/[0.02]" : ""}`}>
+                    <td className="px-5 py-3">
+                      <div className="text-sm font-semibold text-white">{story.title}</div>
+                      {story.description && (
+                        <p className="text-xs text-slate-500 truncate max-w-[260px] mt-0.5">{story.description}</p>
+                      )}
                     </td>
-                    <td style={{ padding: "1rem" }}>
-                      {story.author?.displayName || story.author?.username}
+                    <td className="px-5 py-3 text-sm text-slate-300">{story.author?.displayName || story.author?.username}</td>
+                    <td className="px-5 py-3">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400">{story.type}</span>
                     </td>
-                    <td style={{ padding: "1rem" }}>{story.type}</td>
-                    <td style={{ padding: "1rem" }}>
-                      {story._count?.chapters || 0}
-                    </td>
-                    <td style={{ padding: "1rem" }}>
-                      <span
-                        style={{
-                          padding: "0.25rem 0.75rem",
-                          borderRadius: "99px",
-                          fontSize: "0.75rem",
-                          fontWeight: "bold",
-                          backgroundColor: story.isPublished
-                            ? "rgba(16, 185, 129, 0.15)"
-                            : "rgba(245, 158, 11, 0.15)",
-                          color: story.isPublished ? "#10b981" : "#f59e0b",
-                        }}
-                      >
-                        {story.isPublished ? "✅ Đã duyệt" : "⏳ Chờ duyệt"}
+                    <td className="px-5 py-3 text-sm text-slate-300">{story._count?.chapters || 0}</td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                        story.isPublished ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
+                      }`}>
+                        {story.isPublished ? <><CheckCircle size={12} /> Đã duyệt</> : <><Eye size={12} /> Chờ duyệt</>}
                       </span>
                     </td>
-                    <td style={{ padding: "1rem" }}>
-                      {new Date(story.createdAt).toLocaleDateString("vi")}
-                    </td>
-                    <td style={{ padding: "1rem", textAlign: "center" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "0.5rem",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Link
-                          href={`/stories/${story.id}`}
-                          className="btn-icon"
-                          title="Xem truyện"
-                          style={{ color: "var(--color-primary)" }}
-                        >
-                          <Eye size={18} />
+                    <td className="px-5 py-3 text-sm text-slate-500">{new Date(story.createdAt).toLocaleDateString("vi")}</td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center justify-center gap-1">
+                        <Link href={`/stories/${story.id}`} className="p-2 rounded-lg hover:bg-slate-700/40 text-slate-400 hover:text-white transition-colors cursor-pointer" title="Xem">
+                          <Eye size={16} />
                         </Link>
-
                         {!story.isPublished ? (
-                          <button
-                            className="btn-icon"
-                            title="Duyệt truyện"
-                            onClick={() => handleApprove(story.id)}
-                            disabled={actionLoading === story.id}
-                            style={{ color: "#10b981" }}
-                          >
-                            <CheckCircle size={18} />
+                          <button onClick={() => handleApprove(story.id)} disabled={actionLoading === story.id} className="p-2 rounded-lg hover:bg-emerald-500/10 text-slate-400 hover:text-emerald-400 transition-colors disabled:opacity-40 cursor-pointer" title="Duyệt">
+                            <CheckCircle size={16} />
                           </button>
                         ) : (
-                          <button
-                            className="btn-icon"
-                            title="Gỡ xuất bản"
-                            onClick={() => confirmReject(story.id)}
-                            disabled={actionLoading === story.id}
-                            style={{ color: "#ef4444" }}
-                          >
-                            <XCircle size={18} />
+                          <button onClick={() => setRejectModal({ open: true, storyId: story.id })} disabled={actionLoading === story.id} className="p-2 rounded-lg hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-40 cursor-pointer" title="Gỡ">
+                            <XCircle size={16} />
                           </button>
                         )}
                       </div>
                     </td>
                   </tr>
                 ))}
-                {filteredStories.length === 0 && (
+                {filtered.length === 0 && (
                   <tr>
-                    <td
-                      colSpan={7}
-                      style={{
-                        padding: "3rem",
-                        textAlign: "center",
-                        color: "gray",
-                      }}
-                    >
-                      <BookOpen
-                        size={32}
-                        style={{ marginBottom: "0.5rem", opacity: 0.5 }}
-                      />
-                      <br />
-                      {filter === "pending"
-                        ? "Không có truyện nào chờ duyệt 🎉"
-                        : "Không có truyện nào."}
+                    <td colSpan={7} className="px-5 py-12 text-center text-slate-500">
+                      <BookOpen size={28} className="mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">{filter === "pending" ? "Không có truyện nào chờ duyệt" : "Không có truyện nào."}</p>
                     </td>
                   </tr>
                 )}
@@ -285,16 +182,7 @@ export default function AdminStoriesPage() {
         )}
       </div>
 
-      <ConfirmModal
-        isOpen={rejectModal.open}
-        title="Từ chối truyện"
-        message="Bạn có chắc muốn từ chối truyện này? Truyện sẽ bị gỡ khỏi danh sách hiển thị công khai."
-        confirmText="Xác nhận"
-        cancelText="Hủy"
-        variant="danger"
-        onConfirm={executeReject}
-        onCancel={() => setRejectModal({ open: false, storyId: "" })}
-      />
+      <ConfirmModal isOpen={rejectModal.open} title="Từ chối truyện" message="Bạn có chắc muốn từ chối truyện này? Truyện sẽ bị gỡ khỏi danh sách hiển thị công khai." confirmText="Xác nhận" cancelText="Hủy" variant="danger" onConfirm={executeReject} onCancel={() => setRejectModal({ open: false, storyId: "" })} />
     </div>
   );
 }

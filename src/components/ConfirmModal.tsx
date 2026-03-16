@@ -12,6 +12,7 @@ interface ConfirmModalProps {
   variant?: "danger" | "primary";
   onConfirm: () => void;
   onCancel: () => void;
+  children?: React.ReactNode;
 }
 
 export default function ConfirmModal({
@@ -23,6 +24,7 @@ export default function ConfirmModal({
   variant = "primary",
   onConfirm,
   onCancel,
+  children,
 }: ConfirmModalProps) {
   if (!isOpen) return null;
 
@@ -93,6 +95,8 @@ export default function ConfirmModal({
         >
           {message}
         </p>
+
+        {children}
 
         <div
           style={{
