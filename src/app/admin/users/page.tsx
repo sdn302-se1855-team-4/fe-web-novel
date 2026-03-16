@@ -165,7 +165,7 @@ export default function AdminUsersPage() {
                   <tr key={user.id} className={`hover:bg-slate-700/20 transition-colors ${user.isBlocked ? "opacity-60 bg-rose-500/[0.02]" : ""}`}>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-400 flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-400 shrink-0">
                           <UserCircle size={18} />
                         </div>
                         <div>

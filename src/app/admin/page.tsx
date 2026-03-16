@@ -53,44 +53,66 @@ interface PendingWithdrawal {
   createdAt: string;
 }
 
-// Mock data for charts (will be replaced when backend provides real data)
-const mockMonthlyData = [
-  { name: "T1", users: 45, stories: 12, revenue: 320 },
-  { name: "T2", users: 62, stories: 18, revenue: 480 },
-  { name: "T3", users: 78, stories: 24, revenue: 620 },
-  { name: "T4", users: 95, stories: 31, revenue: 750 },
-  { name: "T5", users: 121, stories: 38, revenue: 890 },
-  { name: "T6", users: 148, stories: 45, revenue: 1050 },
-];
+interface AdminExtendedStats {
+  summary: {
+    userGrowth: number;
+    storyGrowth: number;
+    chapterGrowth: number;
+    revenueGrowth?: number;
+  };
+  monthlyData: { name: string; users: number; stories: number; revenue?: number }[];
+}
 
-const roleDistribution = [
-  { name: "Độc giả", value: 70, color: "#6366f1" },
-  { name: "Tác giả", value: 25, color: "#f59e0b" },
-  { name: "Admin", value: 5, color: "#ef4444" },
-];
 
-const contentTypeData = [
-  { name: "Novel", count: 45 },
-  { name: "Manga", count: 28 },
-  { name: "LightNovel", count: 18 },
-  { name: "Comic", count: 9 },
-];
+interface RoleDistribution {
+  name: string;
+  value: number;
+  color?: string;
+}
+
+interface ContentTypeStat {
+  name: string;
+  count: number;
+}
+
+// Colors for pie chart
+const PIE_COLORS = ["#6366f1", "#f59e0b", "#ef4444", "#10b981", "#8b5cf6"];
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<AdminStats>({ users: 0, stories: 0, chapters: 0 });
   const [pendingStories, setPendingStories] = useState<PendingStory[]>([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState<PendingWithdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Real API states
+  const [summary, setSummary] = useState<Partial<AdminExtendedStats["summary"]>>({});
+  const [monthlyData, setMonthlyData] = useState<AdminExtendedStats["monthlyData"]>([]);
+  const [roleData, setRoleData] = useState<RoleDistribution[]>([]);
+  const [contentData, setContentData] = useState<ContentTypeStat[]>([]);
 
   useEffect(() => {
     Promise.all([
       apiFetch<AdminStats>("/admin/stats").catch(() => ({ users: 0, stories: 0, chapters: 0 })),
       apiFetch<PendingStory[]>("/admin/stories").catch(() => []),
       apiFetch<PendingWithdrawal[]>("/admin/withdrawals").catch(() => []),
-    ]).then(([s, stories, withdrawals]) => {
+      apiFetch<AdminExtendedStats>("/admin/stats/extended").catch(() => ({ summary: { userGrowth: 0, storyGrowth: 0, chapterGrowth: 0 }, monthlyData: [] })),
+      apiFetch<RoleDistribution[]>("/admin/stats/role-distribution").catch(() => []),
+      apiFetch<ContentTypeStat[]>("/admin/stats/content-types").catch(() => [])
+    ]).then(([s, stories, withdrawals, ext, roles, contents]) => {
       setStats(s);
       setPendingStories(stories.filter((st) => !st.isPublished).slice(0, 5));
       setPendingWithdrawals(withdrawals.filter((w) => w.status === "PENDING").slice(0, 5));
+      
+      if (ext?.summary) setSummary(ext.summary);
+      if (ext?.monthlyData) setMonthlyData(ext.monthlyData);
+      
+      if (roles && Array.isArray(roles)) {
+        setRoleData(roles.map((r, i) => ({ ...r, color: PIE_COLORS[i % PIE_COLORS.length] })));
+      }
+      if (contents && Array.isArray(contents)) {
+        setContentData(contents);
+      }
+      
       setLoading(false);
     });
   }, []);
@@ -100,8 +122,8 @@ export default function AdminDashboardPage() {
       label: "Tổng người dùng",
       value: stats.users,
       icon: Users,
-      trend: "+12%",
-      trendUp: true,
+      trend: `${(summary.userGrowth || 0) > 0 ? "+" : ""}${summary.userGrowth || 0}%`,
+      trendUp: (summary.userGrowth || 0) >= 0,
       gradient: "from-indigo-500 to-indigo-600",
       shadow: "shadow-indigo-500/20",
       iconBg: "bg-indigo-500/10",
@@ -111,8 +133,8 @@ export default function AdminDashboardPage() {
       label: "Tổng truyện",
       value: stats.stories,
       icon: BookOpen,
-      trend: "+8%",
-      trendUp: true,
+      trend: `${(summary.storyGrowth || 0) > 0 ? "+" : ""}${summary.storyGrowth || 0}%`,
+      trendUp: (summary.storyGrowth || 0) >= 0,
       gradient: "from-emerald-500 to-emerald-600",
       shadow: "shadow-emerald-500/20",
       iconBg: "bg-emerald-500/10",
@@ -122,8 +144,8 @@ export default function AdminDashboardPage() {
       label: "Tổng chương",
       value: stats.chapters,
       icon: Layers,
-      trend: "+24%",
-      trendUp: true,
+      trend: `${(summary.chapterGrowth || 0) > 0 ? "+" : ""}${summary.chapterGrowth || 0}%`,
+      trendUp: (summary.chapterGrowth || 0) >= 0,
       gradient: "from-amber-500 to-amber-600",
       shadow: "shadow-amber-500/20",
       iconBg: "bg-amber-500/10",
@@ -189,7 +211,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             {/* Decorative gradient */}
-            <div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full bg-gradient-to-br ${card.gradient} opacity-5 group-hover:opacity-10 transition-opacity`} />
+            <div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full bg-linear-to-br ${card.gradient} opacity-5 group-hover:opacity-10 transition-opacity`} />
           </div>
         ))}
       </div>
@@ -208,7 +230,7 @@ export default function AdminDashboardPage() {
             </span>
           </div>
           <ResponsiveContainer width="100%" height={240}>
-            <AreaChart data={mockMonthlyData}>
+            <AreaChart data={monthlyData}>
               <defs>
                 <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
@@ -244,7 +266,7 @@ export default function AdminDashboardPage() {
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
               <Pie
-                data={roleDistribution}
+                data={roleData}
                 cx="50%"
                 cy="50%"
                 innerRadius={50}
@@ -252,7 +274,7 @@ export default function AdminDashboardPage() {
                 paddingAngle={4}
                 dataKey="value"
               >
-                {roleDistribution.map((entry, index) => (
+                {roleData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
@@ -267,7 +289,7 @@ export default function AdminDashboardPage() {
             </PieChart>
           </ResponsiveContainer>
           <div className="flex justify-center gap-4 mt-2">
-            {roleDistribution.map((item) => (
+            {roleData.map((item) => (
               <div key={item.name} className="flex items-center gap-1.5 text-xs text-slate-400">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                 {item.name}
@@ -286,7 +308,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
         <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={contentTypeData}>
+          <BarChart data={contentData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
             <XAxis dataKey="name" stroke="#475569" fontSize={12} />
             <YAxis stroke="#475569" fontSize={12} />
@@ -329,7 +351,7 @@ export default function AdminDashboardPage() {
                     <p className="text-sm font-medium text-white truncate">{story.title}</p>
                     <p className="text-xs text-slate-500">{story.author?.displayName || story.author?.username}</p>
                   </div>
-                  <Link href={`/stories/${story.id}`} className="p-2 rounded-lg hover:bg-slate-700/40 text-slate-400 hover:text-white transition-colors cursor-pointer flex-shrink-0">
+                  <Link href={`/stories/${story.id}`} className="p-2 rounded-lg hover:bg-slate-700/40 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0">
                     <Eye size={16} />
                   </Link>
                 </div>
@@ -362,7 +384,7 @@ export default function AdminDashboardPage() {
                     <p className="text-sm font-medium text-white">{w.wallet.user.displayName}</p>
                     <p className="text-xs text-slate-500">{w.wallet.user.email}</p>
                   </div>
-                  <span className="text-sm font-bold text-rose-400 flex-shrink-0">
+                  <span className="text-sm font-bold text-rose-400 shrink-0">
                     {Math.abs(w.amount).toLocaleString("vi")} xu
                   </span>
                 </div>
