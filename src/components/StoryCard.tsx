@@ -136,7 +136,7 @@ export default function StoryCard({ story }: { story: Story }) {
 
       {/* Info Content */}
       <div className="mt-3 px-1">
-        <h3 className="text-sm sm:text-base font-bold text-text-primary leading-tight line-clamp-2 min-h-[2.5rem] group-hover:text-emerald-500 transition-colors duration-300">
+        <h3 className="text-sm sm:text-base font-bold text-text-primary leading-tight line-clamp-3 min-h-[3.75rem] group-hover:text-emerald-500 transition-colors duration-300">
           {story.title}
         </h3>
         <div className="flex items-center justify-between mt-2">
