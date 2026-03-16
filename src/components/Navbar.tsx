@@ -19,7 +19,6 @@ import {
   Wallet,
   Bell,
   Lightbulb,
-  Gift,
 } from "lucide-react";
 import Logo from "./Logo";
 import { useTheme } from "./ThemeProvider";
@@ -76,20 +75,12 @@ export default function Navbar() {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [rankOpen, setRankOpen] = useState(false);
-
-  const rankTabs = [
-    { key: "viewCount", label: "Xem nhiều nhất" },
-    { key: "rating", label: "Đánh giá cao" },
-    { key: "updatedAt", label: "Mới cập nhật" },
-    { key: "chapters", label: "Số chương" },
-  ];
 
 
   const genreRef = useRef<HTMLDivElement>(null);
+  const genrePanelRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
-  const rankRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -181,7 +172,10 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (genreRef.current && !genreRef.current.contains(e.target as Node)) {
+      if (
+        genreRef.current && !genreRef.current.contains(e.target as Node) &&
+        genrePanelRef.current && !genrePanelRef.current.contains(e.target as Node)
+      ) {
         setGenreOpen(false);
       }
       if (
@@ -193,10 +187,7 @@ export default function Navbar() {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
       }
-      if (rankRef.current && !rankRef.current.contains(e.target as Node)) {
-        setRankOpen(false);
-      }
-      // Close search suggestions on click outside
+// Close search suggestions on click outside
       setShowSuggestions(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -480,64 +471,29 @@ export default function Navbar() {
                 "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
                 pathname === "/" && "underline decoration-2 underline-offset-4",
               )}
-              onClick={() => {
-                setGenreOpen((p) => !p);
-              }}
             >
               Trang chủ
             </Link>
 
-
-            {/* Xếp Hạng Dropdown */}
-            <div className="relative" ref={rankRef}>
+            {/* Thể Loại Dropdown */}
+            <div className="relative" ref={genreRef}>
               <button
                 className={cn(
                   "flex items-center gap-1.5 text-[13px] sm:text-sm font-bold transition-all uppercase tracking-tight font-sans whitespace-nowrap",
                   "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
-                  (pathname.startsWith("/rankings") || rankOpen) &&
-                    "underline decoration-2 underline-offset-4",
+                  genreOpen && "underline decoration-2 underline-offset-4",
                 )}
-                onClick={() => {
-                  setRankOpen((p) => !p);
-                  setGenreOpen(false);
-                }}
+                onClick={() => setGenreOpen((p) => !p)}
               >
-                Xếp hạng
+                Thể loại
                 <ChevronDown
                   size={14}
                   className={cn(
                     "transition-transform",
-                    rankOpen && "rotate-180",
+                    genreOpen && "rotate-180",
                   )}
                 />
               </button>
-
-              <AnimatePresence>
-                {rankOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-48 bg-surface-brand border border-border-brand rounded-2xl shadow-2xl overflow-hidden py-2 z-50 px-1"
-                  >
-                    {rankTabs.map((tab) => (
-                      <Link
-                        key={tab.key}
-                        href={`/rankings/${tab.key}`}
-                        className={cn(
-                          "flex items-center justify-center py-3 text-sm font-bold transition-all rounded-xl my-0.5",
-                          pathname === `/rankings/${tab.key}`
-                            ? "text-emerald-500 bg-emerald-500/5"
-                            : "text-text-secondary hover:text-emerald-500 hover:bg-surface-elevated",
-                        )}
-                        onClick={() => setRankOpen(false)}
-                      >
-                        {tab.label}
-                      </Link>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
 
             {navLinks.map((link) => (
@@ -563,6 +519,7 @@ export default function Navbar() {
       <AnimatePresence>
         {genreOpen && (
           <motion.div
+            ref={genrePanelRef}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -707,49 +664,6 @@ export default function Navbar() {
                                 onClick={() => setMobileOpen(false)}
                               >
                                 {g.name}
-                              </Link>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-
-                    {/* Rankings Mobile */}
-                    <div className="space-y-1">
-                      <button
-                        onClick={() => setRankOpen(!rankOpen)}
-                        className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-text-primary hover:bg-surface-elevated font-bold transition-all"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
-                            <Gift size={18} />
-                          </div>
-                          Xếp hạng
-                        </div>
-                        <ChevronDown
-                          size={18}
-                          className={cn(
-                            "transition-transform",
-                            rankOpen && "rotate-180",
-                          )}
-                        />
-                      </button>
-                      <AnimatePresence>
-                        {rankOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden space-y-1 px-2 py-2 bg-surface-elevated/50 rounded-2xl"
-                          >
-                            {rankTabs.map((tab) => (
-                              <Link
-                                key={tab.key}
-                                href={`/rankings/${tab.key}`}
-                                className="flex items-center gap-3 p-3 rounded-xl hover:text-emerald-500 font-medium transition-colors"
-                                onClick={() => setMobileOpen(false)}
-                              >
-                                {tab.label}
                               </Link>
                             ))}
                           </motion.div>
