@@ -13,6 +13,7 @@ import {
   Star,
   Tags,
   RotateCcw,
+  Flame,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
@@ -66,16 +67,19 @@ function StoriesContent() {
     (searchParams.get("genre") ? [searchParams.get("genre") as string] : [])
   );
   const [selectedType, setSelectedType] = useState<string>(
-    searchParams.get("type") || ""
+    searchParams.get("type") || "Tất cả"
   );
   const [selectedStatus, setSelectedStatus] = useState<string>(
-    searchParams.get("status") || ""
+    searchParams.get("status") || "Tất cả"
   );
   const [selectedChapters, setSelectedChapters] = useState<string>(
     searchParams.get("chapters") || "0"
   );
   const [selectedSort, setSelectedSort] = useState<string>(
-    searchParams.get("sort") || ""
+    searchParams.get("sort") || "Tất cả"
+  );
+  const [selectedTimeframe, setSelectedTimeframe] = useState<string>(
+    searchParams.get("timeframe") || "Tất cả"
   );
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -95,14 +99,48 @@ function StoriesContent() {
   }, []);
 
   useEffect(() => {
+    const genre = searchParams.get("genre") || searchParams.get("genreId");
+    if (genre) {
+      setSelectedGenres([genre]);
+    } else {
+      const genresParam = searchParams.get("genres");
+      setSelectedGenres(genresParam ? genresParam.split(",").filter(Boolean) : []);
+    }
+    setSearch(searchParams.get("search") || "");
+    setSelectedType(searchParams.get("type") || "Tất cả");
+    setSelectedStatus(searchParams.get("status") || "Tất cả");
+    setSelectedChapters(searchParams.get("chapters") || "0");
+    setSelectedSort(searchParams.get("sort") || "Tất cả");
+    setSelectedTimeframe(searchParams.get("timeframe") || "Tất cả");
+    setPage(1);
+  }, [searchParams]);
+
+  useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams();
     if (debouncedSearch) params.set("search", debouncedSearch);
-    if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
-    if (selectedType) params.set("type", selectedType);
-    if (selectedStatus) params.set("status", selectedStatus);
+    if (selectedGenres.length > 0) params.set("genreId", selectedGenres[0]);
+
+    if (selectedType && selectedType !== "Tất cả") {
+      const typeMap: Record<string, string> = { "Novel": "NOVEL", "Manga": "MANGA", "Comic": "COMIC", "Light Novel": "LIGHTNOVEL" };
+      params.set("type", typeMap[selectedType] || selectedType);
+    }
+
+    if (selectedStatus && selectedStatus !== "Tất cả") {
+      const statusMap: Record<string, string> = { "Đang ra": "ONGOING", "Hoàn thành": "COMPLETED", "Tạm dừng": "HIATUS" };
+      params.set("status", statusMap[selectedStatus] || selectedStatus);
+    }
+
     if (selectedChapters !== "0") params.set("minChapters", selectedChapters);
-    if (selectedSort) params.set("sortBy", selectedSort);
+
+    if (selectedSort && selectedSort !== "Tất cả") {
+      const sortMap: Record<string, string> = { "Mới nhất": "createdAt", "Xem nhiều nhất": "viewCount", "Đánh giá cao": "rating", "Mới cập nhật": "updatedAt" };
+      params.set("sortBy", sortMap[selectedSort] || selectedSort);
+    }
+
+    if (selectedTimeframe && selectedTimeframe !== "Tất cả") {
+      params.set("sortBy", "viewCount");
+    }
     params.set("page", String(page));
     params.set("limit", "12");
 
@@ -125,10 +163,11 @@ function StoriesContent() {
     setSearch("");
     setDebouncedSearch("");
     setSelectedGenres([]);
-    setSelectedType("");
-    setSelectedStatus("");
+    setSelectedType("Tất cả");
+    setSelectedStatus("Tất cả");
     setSelectedChapters("0");
-    setSelectedSort("createdAt");
+    setSelectedSort("Tất cả");
+    setSelectedTimeframe("Tất cả");
     setPage(1);
   };
 
@@ -174,7 +213,7 @@ function StoriesContent() {
           animate={{ opacity: 1, x: 0 }}
           className="mb-8"
         >
-          <h1 className="text-4xl md:text-5xl font-black text-text-primary mb-2 tracking-tight pt-12">
+          <h1 className="text-4xl md:text-5xl font-black text-text-primary mb-2 tracking-tight pt-0">
             Danh sách <span className="text-emerald-500">truyện</span>
           </h1>
           <p className="text-text-muted font-medium">
@@ -275,7 +314,7 @@ function StoriesContent() {
                     <SelectValue placeholder="Tất cả" />
                   </SelectTrigger>
                   <SelectContent className={contentCls}>
-                    <SelectItem value="" className={itemCls}>Tất cả</SelectItem>
+                    <SelectItem value="Tất cả" className={itemCls}>Tất cả</SelectItem>
                     <SelectItem value="Đang ra" className={itemCls}>Đang ra</SelectItem>
                     <SelectItem value="Hoàn thành" className={itemCls}>Hoàn thành</SelectItem>
                     <SelectItem value="Tạm dừng" className={itemCls}>Tạm dừng</SelectItem>
@@ -302,7 +341,7 @@ function StoriesContent() {
                     <SelectValue placeholder="Tất cả" />
                   </SelectTrigger>
                   <SelectContent className={contentCls}>
-                    <SelectItem value="" className={itemCls}>Tất cả</SelectItem>
+                    <SelectItem value="Tất cả" className={itemCls}>Tất cả</SelectItem>
                     <SelectItem value="Novel" className={itemCls}>Novel</SelectItem>
                     <SelectItem value="Manga" className={itemCls}>Manga</SelectItem>
                     <SelectItem value="Comic" className={itemCls}>Comic</SelectItem>
@@ -313,16 +352,19 @@ function StoriesContent() {
 
               <div className="hidden sm:block w-px h-4 bg-border-brand" />
 
-              {/* Số chương */}
+              {/* Xếp hạng thời gian */}
+
+              {/* Xếp hạng thời gian */}
               <div className="flex items-center gap-2">
                 <span className={labelCls}>
-                  <Layers size={11} className="text-emerald-500" />
-                  Chương
+                  <Flame size={11} className="text-emerald-500" />
+                  Xếp hạng
                 </span>
                 <Select
-                  value={selectedChapters === "0" ? "" : selectedChapters}
+                  value={selectedTimeframe || "Tất cả"}
                   onValueChange={(val) => {
-                    setSelectedChapters(val || "0");
+                    setSelectedTimeframe(val || "Tất cả");
+                    setSelectedSort("Tất cả");
                     setPage(1);
                   }}
                 >
@@ -330,11 +372,10 @@ function StoriesContent() {
                     <SelectValue placeholder="Tất cả" />
                   </SelectTrigger>
                   <SelectContent className={contentCls}>
-                    <SelectItem value="" className={itemCls}>Tất cả</SelectItem>
-                    <SelectItem value="50" className={itemCls}>&gt; 50 chương</SelectItem>
-                    <SelectItem value="100" className={itemCls}>&gt; 100 chương</SelectItem>
-                    <SelectItem value="200" className={itemCls}>&gt; 200 chương</SelectItem>
-                    <SelectItem value="500" className={itemCls}>&gt; 500 chương</SelectItem>
+                    <SelectItem value="Tất cả" className={itemCls}>Tất cả</SelectItem>
+                    <SelectItem value="Top ngày" className={itemCls}>Top Ngày</SelectItem>
+                    <SelectItem value="Top tháng" className={itemCls}>Top Tháng</SelectItem>
+                    <SelectItem value="Top năm" className={itemCls}>Top Năm</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -350,7 +391,8 @@ function StoriesContent() {
                 <Select
                   value={selectedSort || ""}
                   onValueChange={(val) => {
-                    setSelectedSort(val || "");
+                    setSelectedSort(val || "Tất cả");
+                    setSelectedTimeframe("Tất cả");
                     setPage(1);
                   }}
                 >
@@ -358,7 +400,7 @@ function StoriesContent() {
                     <SelectValue placeholder="Tất cả" />
                   </SelectTrigger>
                   <SelectContent className={contentCls}>
-                    <SelectItem value="" className={itemCls}>Tất cả</SelectItem>
+                    <SelectItem value="Tất cả" className={itemCls}>Tất cả</SelectItem>
                     <SelectItem value="Mới nhất" className={itemCls}>Mới nhất</SelectItem>
                     <SelectItem value="Xem nhiều nhất" className={itemCls}>Xem nhiều nhất</SelectItem>
                     <SelectItem value="Đánh giá cao" className={itemCls}>Đánh giá cao</SelectItem>

@@ -72,20 +72,13 @@ export default function Navbar() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [rankOpen, setRankOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const rankTabs = [
-    { key: "day", label: "Top Ngày" },
-    { key: "week", label: "Top Tuần" },
-    { key: "month", label: "Top Tháng" },
-  ];
 
   const genreRef = useRef<HTMLDivElement>(null);
-  const rankRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -191,9 +184,6 @@ export default function Navbar() {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
       }
-      if (rankRef.current && !rankRef.current.contains(e.target as Node)) {
-        setRankOpen(false);
-      }
       // Close search suggestions on click outside
       setShowSuggestions(false);
     };
@@ -203,9 +193,9 @@ export default function Navbar() {
 
   const handleLogout = () => {
     removeTokens();
-    setLoggedIn(false);
-    setUserMenuOpen(false);
-    router.push("/");
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
   };
 
   const handleSearch = (e: FormEvent) => {
@@ -478,33 +468,13 @@ export default function Navbar() {
                 "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
                 pathname === "/" && "underline decoration-2 underline-offset-4",
               )}
+              onClick={() => {
+                setGenreOpen((p) => !p);
+              }}
             >
               Trang chủ
             </Link>
 
-            {/* Thể Loại Dropdown */}
-            <div className="relative" ref={genreRef}>
-              <button
-                className={cn(
-                  "flex items-center gap-1.5 text-[13px] sm:text-sm font-bold transition-all uppercase tracking-tight font-sans whitespace-nowrap",
-                  "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
-                  genreOpen && "underline decoration-2 underline-offset-4",
-                )}
-                onClick={() => {
-                  setGenreOpen((p) => !p);
-                  setRankOpen(false);
-                }}
-              >
-                Thể Loại
-                <ChevronDown
-                  size={14}
-                  className={cn(
-                    "transition-transform",
-                    genreOpen && "rotate-180",
-                  )}
-                />
-              </button>
-            </div>
 
             {/* Xếp Hạng Dropdown */}
             <div className="relative" ref={rankRef}>

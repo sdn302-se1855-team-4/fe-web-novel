@@ -84,9 +84,9 @@ export default function StudioPage() {
         </button>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 flex-wrap">
-        <h1 className="flex items-center gap-3 text-3xl font-black text-text-primary italic uppercase tracking-tight">
-          <Pen size={32} className="text-emerald-500" /> Writer Studio
+      <div className="flex items-center justify-between gap-6 mb-12 flex-wrap">
+        <h1 className="section-title">
+          <Pen size={24} /> Writer Studio
         </h1>
         <div className="flex flex-wrap gap-3">
           <Link href="/studio/analytics" className="btn btn-outline border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/5 group gap-2">
@@ -101,9 +101,14 @@ export default function StudioPage() {
       {loading ? (
         <div className="flex flex-col gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex flex-col md:flex-row md:items-center gap-6 p-6 bg-surface-brand border border-border-brand/40 rounded-[1.5rem] md:rounded-[2.5rem]">
+            <div key={i} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[2rem] md:rounded-[2.5rem] transition-all duration-300">
               <div
-                className="skeleton shrink-0 w-16 h-20 rounded-2xl"
+                className="skeleton"
+                style={{
+                  width: 64,
+                  height: 80,
+                  borderRadius: "var(--radius-md)",
+                }}
               />
               <div className="flex-1 space-y-3">
                 <div className="skeleton h-6 w-[40%]" />
@@ -115,8 +120,8 @@ export default function StudioPage() {
       ) : stories.length > 0 ? (
         <div className="flex flex-col gap-4">
           {stories.map((story) => (
-            <div key={story.id} className="group flex flex-col md:flex-row md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[1.5rem] md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
-              <div className="w-16 h-20 rounded-2xl overflow-hidden bg-surface-elevated flex items-center justify-center text-text-muted shadow-sm shrink-0 border border-border-brand/30">
+            <div key={story.id} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[2rem] md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
+              <div className="w-16 h-20 rounded-2xl overflow-hidden bg-surface-elevated flex items-center justify-center text-text-muted shadow-sm flex-shrink-0">
                 {story.coverImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={story.coverImage} alt={story.title} className="w-full h-full object-cover" />
@@ -125,7 +130,7 @@ export default function StudioPage() {
                 )}
               </div>
               <div className="flex-1 min-w-0 flex flex-col gap-2">
-                <h3 className="text-lg font-bold text-text-primary truncate transition-colors group-hover:text-emerald-500">{story.title}</h3>
+                <h3 className="text-lg font-bold text-text-primary truncate">{story.title}</h3>
                 <div className="flex items-center gap-4 flex-wrap text-sm font-medium">
                   <span
                     className={`px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
@@ -149,7 +154,7 @@ export default function StudioPage() {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0 pt-4 md:pt-0 border-t md:border-t-0 border-border-brand/40 justify-end md:justify-start">
+              <div className="flex items-center gap-3 flex-shrink-0 w-full md:w-auto justify-end pt-4 md:pt-0 border-t md:border-t-0 border-border-brand">
                 <Link
                   href={`/studio/${story.id}/chapters/create`}
                   className="btn btn-outline btn-sm border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 px-4 rounded-xl"
@@ -174,15 +179,11 @@ export default function StudioPage() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-6 py-24 text-text-muted text-center max-w-md mx-auto">
-          <div className="w-24 h-24 rounded-full bg-surface-elevated flex items-center justify-center">
-            <Pen size={48} className="opacity-20 text-emerald-500" />
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-text-primary tracking-tight uppercase">Chưa có truyện nào</h3>
-            <p className="mt-2 font-medium">Bắt đầu hành trình sáng tác bộ truyện tuyệt vời đầu tiên của bạn ngay hôm nay!</p>
-          </div>
-          <Link href="/studio/create" className="btn btn-primary px-10 rounded-2xl">
+        <div className="flex flex-col items-center gap-6 py-24 text-text-muted text-center">
+          <Pen size={48} />
+          <h3 className="text-2xl font-bold text-text-primary tracking-tight">Chưa có truyện nào</h3>
+          <p>Bắt đầu sáng tác truyện đầu tiên của bạn!</p>
+          <Link href="/studio/create" className="btn btn-primary">
             <Plus size={18} /> Tạo truyện mới
           </Link>
         </div>

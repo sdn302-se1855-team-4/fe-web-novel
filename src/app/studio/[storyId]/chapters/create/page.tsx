@@ -13,10 +13,10 @@ export default function CreateChapterPage() {
   const storyId = params.storyId as string;
 
   const [title, setTitle] = useState("");
-  const [chapterNumber, setChapterNumber] = useState(1);
+  const [chapterNumber, setChapterNumber] = useState("");
   const [content, setContent] = useState("");
   const [isPremium, setIsPremium] = useState(false);
-  const [price, setPrice] = useState(0);
+  const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,15 +37,27 @@ export default function CreateChapterPage() {
         .replace(/[\s_-]+/g, "-")
         .replace(/^-+|-+$/g, "");
 
+      const parsedChapterNumber = parseInt(chapterNumber, 10);
+      if (!parsedChapterNumber || parsedChapterNumber < 1) {
+        throw new Error("Số chương không hợp lệ. Vui lòng nhập số lớn hơn hoặc bằng 1.");
+      }
+
+      const parsedPrice = parseInt(price, 10);
+      if (isPremium) {
+        if (!parsedPrice || parsedPrice < 0) {
+          throw new Error("Giá chương không hợp lệ. Vui lòng nhập số lớn hơn hoặc bằng 0.");
+        }
+      }
+
       await apiFetch(`/stories/${storyId}/chapters`, {
         method: "POST",
         body: JSON.stringify({
           title,
           slug,
-          chapterNumber,
+          chapterNumber: parsedChapterNumber,
           content,
           isPremium,
-          price: isPremium ? price : 0,
+          price: isPremium ? parsedPrice : 0,
         }),
       });
       router.push(`/studio/${storyId}`);
@@ -116,23 +128,20 @@ export default function CreateChapterPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="content" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1 flex items-center gap-2">
-                    <Sparkles size={14} className="text-emerald-500" /> Nội dung chương truyện
-                  </label>
-                  <textarea
-                    id="content"
-                    className="input min-h-[500px] py-6 px-8 rounded-3xl resize-none leading-relaxed text-lg"
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    required
-                    placeholder="Bắt đầu sáng tác nội dung chương truyện tại đây..."
-                    style={{
-                      fontFamily: "var(--font-reader)",
-                    }}
-                  />
-                  <p className="text-[10px] font-bold text-text-muted text-right px-2 italic uppercase">Đã viết: {content.length} ký tự</p>
-                </div>
+        <div className="form-group">
+          <label htmlFor="chapterNumber" className="label">
+            Số chương *
+          </label>
+          <input
+            id="chapterNumber"
+            type="number"
+            min="1"
+            className="input"
+            value={chapterNumber}
+            onChange={(e) => setChapterNumber(e.target.value)}
+            required
+          />
+        </div>
 
                 <div className={cn(
                   "p-6 rounded-3xl border-2 transition-all duration-300 space-y-4",
@@ -158,31 +167,60 @@ export default function CreateChapterPage() {
                     </span>
                   </label>
 
-                  {isPremium && (
-                    <div className="flex flex-col sm:flex-row items-center gap-6 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="w-full sm:w-1/3 space-y-2">
-                        <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest ml-1 flex items-center gap-1">
-                          <Coins size={12} /> Giá chương (Xu)
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          className="input h-12 rounded-xl font-black text-amber-500 border-amber-500/30 bg-amber-500/5 focus:border-amber-500 text-center"
-                          value={price}
-                          onChange={(e) => setPrice(parseInt(e.target.value) || 0)}
-                          placeholder="VD: 50"
-                          required={isPremium}
-                        />
-                      </div>
-                      <div className="flex-1 p-4 bg-amber-500/10 rounded-2xl">
-                         <p className="text-xs font-bold text-amber-600 leading-relaxed">
-                           <Info size={14} className="inline mr-1 -mt-0.5" /> 
-                           Chương Premium yêu cầu người đọc phải thanh toán số xu trên để mở khóa nội dung. Số xu này sẽ được cộng vào doanh thu của tác giả.
-                         </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+            padding: "1rem",
+            background: "var(--color-surface)",
+            borderRadius: "var(--radius-md)",
+            border: "1px solid var(--color-border)",
+          }}
+        >
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={isPremium}
+              onChange={(e) => setIsPremium(e.target.checked)}
+              style={{
+                width: "1.25rem",
+                height: "1.25rem",
+                accentColor: "var(--color-primary)",
+              }}
+            />
+            Bật kiếm tiền (Premium)
+          </label>
+
+          {isPremium && (
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="label">Giá chương (Xu)</label>
+              <input
+                type="number"
+                min="0"
+                className="input"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="VD: 50"
+                required={isPremium}
+              />
+              <p
+                className="text-xs text-muted"
+                style={{ marginTop: "0.5rem" }}
+              >
+                Người đọc phải trả số xu này để mở khóa chương.
+              </p>
+            </div>
+          )}
+        </div>
 
                 <button 
                   type="submit" 

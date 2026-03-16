@@ -119,13 +119,12 @@ export default function StoryCard({ story }: { story: Story }) {
           )}
         </div>
 
-        {/* Bottom Info Overlay (Rating) */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 bg-linear-to-t from-black/80 via-black/40 to-transparent flex items-end justify-between">
-          <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-1 text-xs font-black text-amber-400">
-              <Star size={12} fill="currentColor" />
-              {(story.rating || 0).toFixed(1)}
-            </div>
+
+        {/* Subtle Rating overlay if needed */}
+        {story.rating !== undefined && story.rating > 0 && (
+          <div className="absolute bottom-2 left-3 flex items-center gap-1 text-[10px] text-amber-500 font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+            <Star size={10} fill="currentColor" />
+            {story.rating.toFixed(1)}
           </div>
           <div className="bg-emerald-500/90 backdrop-blur-sm text-[10px] font-black text-white px-2 py-0.5 rounded-md">
             {story.status === "COMPLETED" ? "Full" : "New"}

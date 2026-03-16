@@ -17,9 +17,8 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/register";
-  const isChapterPage = pathname.includes("/stories/") && pathname.includes("/chapters/");
-  const isAdminPage = pathname.startsWith("/admin");
-  const hideShell = isAuthPage || isChapterPage || isAdminPage;
+  const isReaderPage = /^\/stories\/[^\/]+\/chapters\/[^\/]+$/.test(pathname);
+  const hideNavbar = isAuthPage || isReaderPage;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -30,15 +29,15 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <ToastProvider>
-            {!hideShell && <Navbar />}
+            {!hideNavbar && <Navbar />}
             <main className={cn(
               "min-h-screen",
-              !hideShell && "pt-[var(--navbar-height)]"
+              !hideNavbar && "pt-[var(--navbar-height)]"
             )}>
               {children}
             </main>
-            {!hideShell && <Footer />}
-            {!isAdminPage && <ScrollToTop />}
+            {!hideNavbar && <Footer />}
+            <ScrollToTop />
           </ToastProvider>
         </ThemeProvider>
       </body>

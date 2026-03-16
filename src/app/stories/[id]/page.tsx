@@ -20,8 +20,7 @@ import {
   ChevronLeft,
   ThumbsUp,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, ApiRequestError } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
@@ -38,10 +37,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { motion } from "framer-motion";
 
 interface Story {
   id: string;
@@ -80,8 +80,10 @@ interface Comment {
   id: string;
   content: string;
   createdAt: string;
-  user: { id: string; name: string };
+  user: { id: string; name?: string; displayName?: string; username?: string; avatar?: string; isAnonymous?: boolean };
   parentId?: string;
+  replies?: Comment[];
+  _count?: { replies?: number; likes?: number };
 }
 
 interface Review {
@@ -89,7 +91,7 @@ interface Review {
   rating: number;
   content?: string;
   createdAt: string;
-  user: { id: string; name: string };
+  user: { id: string; name?: string; displayName?: string; username?: string; avatar?: string; isAnonymous?: boolean };
 }
 
 export default function StoryDetailPage() {
@@ -103,9 +105,16 @@ export default function StoryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [bookmarked, setBookmarked] = useState(false);
   const [newComment, setNewComment] = useState("");
+  const [newReply, setNewReply] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyTargetUser, setReplyTargetUser] = useState<string | null>(null);
   const [commentLoading, setCommentLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("chapters");
+  const [expandedComments, setExpandedComments] = useState<string[]>([]);
+  const [likedComments, setLikedComments] = useState<string[]>([]);
+  const [feedTab, setFeedTab] = useState<"comments" | "reviews">("comments");
+  const [originalLikes, setOriginalLikes] = useState<string[]>([]);
+  const [readChapterIds, setReadChapterIds] = useState<string[]>([]);
 
   // Donate modal state
   const [showDonate, setShowDonate] = useState(false);
@@ -120,24 +129,64 @@ export default function StoryDetailPage() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const { showToast } = useToast();
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       apiFetch<Story>(`/stories/${storyId}`),
       apiFetch<Chapter[]>(`/stories/${storyId}/chapters`),
       apiFetch<{ data: Comment[] } | Comment[]>(`/stories/${storyId}/comments`),
+      isLoggedIn() ? apiFetch<string[]>(`/stories/${storyId}/my-likes`) : Promise.resolve([] as string[]),
+      isLoggedIn() ? apiFetch<any>("/auth/profile") : Promise.resolve(null),
+      isLoggedIn() ? apiFetch<string[]>(`/reading-history/story/${storyId}`) : Promise.resolve([] as string[])
     ])
-      .then(([storyData, chaptersData, commentsData]) => {
-        setStory(storyData);
-        setChapters(Array.isArray(chaptersData) ? chaptersData : []);
-        setComments(
-          Array.isArray(commentsData)
+      .then(([storyResult, chaptersResult, commentsResult, likesResult, profileResult, historyResult]) => {
+        // Story is critical — if it fails, show not found
+        if (storyResult.status === 'fulfilled') {
+          setStory(storyResult.value);
+        } else {
+          setLoading(false);
+          return;
+        }
+
+        if (chaptersResult.status === 'fulfilled') {
+          setChapters(Array.isArray(chaptersResult.value) ? chaptersResult.value : []);
+        }
+
+        if (commentsResult.status === 'fulfilled') {
+          const commentsData = commentsResult.value;
+          const rawComments = Array.isArray(commentsData)
             ? commentsData
-            : (commentsData as { data: Comment[] }).data || [],
-        );
+            : (commentsData as { data: Comment[] }).data || [];
+          const flatComments: Comment[] = [];
+          rawComments.forEach((c: Comment) => {
+            flatComments.push(c);
+            if (c.replies && Array.isArray(c.replies)) {
+              c.replies.forEach((r: Comment) => {
+                flatComments.push({ ...r, parentId: c.id });
+              });
+            }
+          });
+          setComments(flatComments);
+        }
+
+        if (likesResult.status === 'fulfilled') {
+          const likedIds = Array.isArray(likesResult.value) ? likesResult.value : [];
+          setLikedComments(likedIds);
+          setOriginalLikes(likedIds);
+        }
+
+        if (profileResult.status === 'fulfilled' && profileResult.value) {
+          setCurrentUserProfile(profileResult.value);
+        }
+
+        if (historyResult.status === 'fulfilled') {
+          setReadChapterIds(historyResult.value || []);
+        }
+
+        setLoading(false);
       })
-      .catch(() => { })
-      .finally(() => setLoading(false));
+      .catch(() => setLoading(false));
 
     // Fetch reviews
     apiFetch<{ data: Review[] }>(`/reviews/story/${storyId}`)
@@ -155,6 +204,18 @@ export default function StoryDetailPage() {
         .catch(() => { });
     }
   }, [storyId]);
+  const markAsRead = async (chapterId: string) => {
+    if (!isLoggedIn() || readChapterIds.includes(chapterId)) return;
+    setReadChapterIds(prev => [...prev, chapterId]);
+    try {
+      await apiFetch("/reading-history", {
+        method: "POST",
+        body: JSON.stringify({ storyId, chapterId }),
+      });
+    } catch (err) {
+      console.error("Failed to save reading history optimistically:", err);
+    }
+  };
 
   const handleBookmark = async () => {
     if (!isLoggedIn()) {
@@ -179,17 +240,25 @@ export default function StoryDetailPage() {
       router.push("/login");
       return;
     }
-    if (!newComment.trim()) return;
+    const contentToSubmit = replyTo && replyTargetUser ? `[@${replyTargetUser}] ${newReply}` : (replyTo ? newReply : newComment);
+    if (!contentToSubmit.trim()) return;
     setCommentLoading(true);
     try {
       const comment = await apiFetch<Comment>(`/stories/${storyId}/comments`, {
         method: "POST",
-        body: JSON.stringify({ content: newComment, parentId: replyTo }),
+        body: JSON.stringify({ content: contentToSubmit, parentId: replyTo }),
       });
+
       setComments((prev) => [comment, ...prev]);
-      setNewComment("");
-      setReplyTo(null);
-    } catch {
+      if (replyTo) {
+        setNewReply("");
+        setReplyTo(null);
+        setReplyTargetUser(null);
+      } else {
+        setNewComment("");
+      }
+    } catch (err) {
+      showToast((err as Error).message || "Không thể gửi bình luận", "error");
     } finally {
       setCommentLoading(false);
     }
@@ -237,19 +306,20 @@ export default function StoryDetailPage() {
         body: JSON.stringify({
           storyId,
           rating: newReviewRating,
-          content: newReviewContent,
+          content: newReviewContent.trim() || undefined,
         }),
       });
       setReviews((prev) => [review, ...prev]);
-      setNewReviewContent("");
       setNewReviewRating(5);
+      setNewReviewContent("");
       setShowReviewDialog(false);
       showToast("Gửi đánh giá thành công!", "success");
     } catch (err) {
-      showToast(
-        (err as Error).message || "Bạn đã đánh giá bộ truyện này rồi.",
-        "error",
-      );
+      console.error('Review submission error:', err);
+      const message = err instanceof ApiRequestError
+        ? `${err.message} (${err.statusCode})`
+        : (err as Error).message || "Đã có lỗi xảy ra khi gửi đánh giá.";
+      showToast(message, "error");
     } finally {
       setReviewLoading(false);
     }
@@ -279,7 +349,7 @@ export default function StoryDetailPage() {
       <div className="min-h-screen bg-bg-brand pt-16 pb-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row gap-8">
-            <div className="w-full md:w-72 aspect-[2/3] bg-surface-elevated rounded-2xl animate-pulse" />
+            <div className="w-full md:w-72 aspect-2/3 bg-surface-elevated rounded-2xl animate-pulse" />
             <div className="flex-1 space-y-4">
               <div className="h-10 bg-surface-elevated rounded-lg animate-pulse w-2/3" />
               <div className="h-6 bg-surface-elevated rounded-lg animate-pulse w-1/3" />
@@ -305,16 +375,16 @@ export default function StoryDetailPage() {
   }
 
   return (
-    <div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden -mt-[var(--navbar-height)]">
-      {/* Immersive Background Header */}
-      <div className="relative h-[20vh] md:h-[25vh] w-full overflow-hidden">
-        {story.coverImage && (
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-3xl opacity-20 transition-opacity duration-1000"
-            style={{ backgroundImage: `url(${story.coverImage})` }}
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-bg-brand/0 via-bg-brand/80 to-bg-brand" />
+<div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden -mt-(--navbar-height)">
+        {/* Immersive Background Header */}
+        <div className="relative h-[20vh] md:h-[25vh] w-full overflow-hidden">
+          {story.coverImage && (
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-3xl opacity-20 transition-opacity duration-1000"
+              style={{ backgroundImage: `url(${story.coverImage})` }}
+            />
+          )}
+          <div className="absolute inset-0 bg-linear-to-b from-bg-brand/0 via-bg-brand/80 to-bg-brand" />
       </div>
 
       <div className="container max-w-7xl mx-auto px-6 -mt-20 md:-mt-28 relative z-10">
@@ -337,7 +407,7 @@ export default function StoryDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             className="w-full md:w-56 lg:w-64 shrink-0"
           >
-            <div className="relative group rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-border-brand aspect-[2/3] bg-surface-elevated">
+            <div className="relative group rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-border-brand aspect-2/3 bg-surface-elevated">
               {story.coverImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -405,6 +475,21 @@ export default function StoryDetailPage() {
                   {story.title}
                 </h1>
 
+                {/* Genres */}
+                {story.genres && story.genres.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {story.genres.map((g: any) => (
+                      <Link 
+                        key={g.genre.id} 
+                        href={`/stories?genre=${g.genre.id}`}
+                        className="px-3 py-1 border border-orange-400/80 rounded-md font-bold text-orange-400 text-xs hover:bg-orange-400 hover:text-[#020617] transition-all cursor-pointer backdrop-blur-sm shadow-sm hover:shadow-orange-500/20"
+                      >
+                        {g.genre.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
                 <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted font-bold">
                   {story.author?.id ? (
                     <Link href={`/users/${story.author.id}`} className="flex items-center gap-2 hover:text-primary-brand transition-colors group text-sm">
@@ -437,21 +522,6 @@ export default function StoryDetailPage() {
                 </div>
               </div>
 
-              {/* Genres Tag Cloud */}
-              {story.genres && story.genres.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {story.genres.map((g) => (
-                    <Badge
-                      key={g.id}
-                      variant="secondary"
-                      className="bg-white/5 hover:bg-[#10b981]/20 hover:text-[#10b981] text-slate-300 border-white/5 transition-all cursor-pointer rounded-lg px-3 py-1.5"
-                    >
-                      {g.name}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
               <Separator className="bg-border-brand" />
 
               <div className="space-y-3">
@@ -467,7 +537,10 @@ export default function StoryDetailPage() {
               <div className="pt-2 flex flex-wrap gap-2">
                 {chapters.length > 0 && (
                   <Button
-                    onClick={() => router.push(`/stories/${story.id}/chapters/${chapters[0]?.chapterNumber || 1}`)}
+                    onClick={() => {
+                      if (chapters[0]?.id) markAsRead(chapters[0].id);
+                      router.push(`/stories/${story.id}/chapters/${chapters[0]?.chapterNumber || 1}`);
+                    }}
                     className="h-10 px-6 bg-[#8ac94e] hover:bg-[#7ab343] text-white font-black rounded-lg gap-2 shadow-md transition-all hover:scale-105 active:scale-95 text-xs border-none"
                   >
                     <BookOpen size={16} />
@@ -488,12 +561,27 @@ export default function StoryDetailPage() {
                 </Button>
 
                 <Button
-                  onClick={() => setShowReviewDialog(true)}
+                  onClick={() => {
+                    setFeedTab("comments");
+                    document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
                   variant="outline"
                   className="h-10 px-4 border-border-brand bg-surface-elevated text-text-primary hover:bg-surface-brand font-bold rounded-lg gap-2 text-xs"
                 >
                   <MessageCircle size={16} />
                   Bình luận
+                </Button>
+
+                <Button
+                  onClick={() => {
+                    setFeedTab("reviews");
+                    document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  variant="outline"
+                  className="h-10 px-4 border-border-brand bg-surface-elevated text-text-primary hover:bg-surface-brand font-bold rounded-lg gap-2 text-xs"
+                >
+                  <Star size={16} className="text-accent-brand" />
+                  Đánh giá
                 </Button>
               </div>
             </motion.div>
@@ -529,7 +617,11 @@ export default function StoryDetailPage() {
                         >
                           <Link
                             href={`/stories/${story.id}/chapters/${ch.chapterNumber}`}
-                            className="group block relative p-5 bg-surface-brand/40 border border-border-brand/50 rounded-2xl hover:bg-surface-elevated hover:border-primary-brand/30 transition-all duration-300 backdrop-blur-sm overflow-hidden"
+                            onClick={() => markAsRead(ch.id)}
+                            className={cn(
+                              "group block relative p-5 bg-surface-brand/40 border border-border-brand/50 rounded-2xl hover:bg-surface-elevated hover:border-primary-brand/30 transition-all duration-300 backdrop-blur-sm overflow-hidden",
+                              readChapterIds.includes(ch.id) && "opacity-60 bg-surface-brand/20"
+                            )}
                           >
                             <div className="flex items-center gap-6">
                               {/* Chapter Number Badge */}
@@ -542,7 +634,10 @@ export default function StoryDetailPage() {
                               {/* Title and Info section */}
                               <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="space-y-1">
-                                  <h4 className="text-base md:text-lg font-black text-text-primary group-hover:text-primary-brand transition-colors truncate">
+                                  <h4 className={cn(
+                                    "text-base md:text-lg font-black transition-colors truncate",
+                                    readChapterIds.includes(ch.id) ? "text-text-muted" : "text-text-primary group-hover:text-primary-brand"
+                                  )}>
                                     {ch.title}
                                   </h4>
                                   <div className="flex items-center gap-4 text-xs font-bold text-text-muted">
@@ -576,7 +671,7 @@ export default function StoryDetailPage() {
                             </div>
 
                             {/* Visual Glow Effect on Hover */}
-                            <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-primary-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            <div className="absolute top-0 right-0 w-32 h-full bg-linear-to-l from-primary-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                           </Link>
                         </motion.div>
                       ))
@@ -592,7 +687,7 @@ export default function StoryDetailPage() {
               </Tabs>
             </motion.div>
 
-            {/* Community & Reviews Feed */}
+            {/* Community & Comments Feed */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -601,98 +696,330 @@ export default function StoryDetailPage() {
               id="reviews-section"
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-black text-text-primary flex items-center gap-3">
-                  <div className="w-2 h-6 bg-primary-brand rounded-full shadow-lg shadow-primary-glow" />
-                  Cộng đồng & Đánh giá
-                  <span className="text-sm font-bold text-text-muted bg-surface-elevated px-3 py-1 rounded-full border border-border-brand ml-2">
-                    {reviews.length + comments.length}
-                  </span>
-                </h3>
+                <div className="flex items-center gap-2 bg-surface-elevated p-1 rounded-xl border border-border-brand/50">
+                  <button 
+                    onClick={() => setFeedTab("comments")}
+                    className={`px-4 py-2 rounded-lg text-sm font-black transition-all flex items-center gap-1.5 ${feedTab === 'comments' ? 'bg-primary-brand text-slate-950 shadow-md' : 'text-text-muted hover:text-text-primary'}`}
+                  >
+                    <MessageCircle size={14} /> Bình luận ({rootComments.length})
+                  </button>
+                  <button 
+                    onClick={() => setFeedTab("reviews")}
+                    className={`px-4 py-2 rounded-lg text-sm font-black transition-all flex items-center gap-1.5 ${feedTab === 'reviews' ? 'bg-primary-brand text-slate-950 shadow-md' : 'text-text-muted hover:text-text-primary'}`}
+                  >
+                    <Star size={14} className={feedTab === 'reviews' ? 'text-slate-950' : 'text-accent-brand'} /> Đánh giá ({reviews.length})
+                  </button>
+                </div>
                 <Button
                   onClick={() => setShowReviewDialog(true)}
                   variant="ghost"
                   className="text-primary-brand hover:text-primary-light font-bold gap-2"
                 >
-                  <MessageCircle size={18} />
-                  Viết đánh giá
+                  <Star size={18} />
+                  Đánh giá ngay
                 </Button>
               </div>
 
-              <div className="space-y-6">
-                {[...reviews.map(r => ({ ...r, type: 'review' })), ...rootComments.map(c => ({ ...c, type: 'comment' }))]
-                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                  .map((item: any) => (
-                    <div key={item.id} className="group">
-                      <div className="bg-surface-brand border border-border-brand p-6 rounded-3xl group-hover:bg-surface-elevated transition-all shadow-md">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-lg shadow-lg">
-                              {(item.user?.name || "A")[0].toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-black text-text-primary">{item.user?.name || "Người dùng"}</p>
-                                {item.type === 'review' && (
-                                  <div className="flex gap-0.5">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star key={i} size={10} className={i < item.rating ? "text-accent-brand" : "text-border-brand"} fill={i < item.rating ? "currentColor" : "none"} />
-                                    ))}
-                                  </div>
+              {/* Comments Tab */}
+              {feedTab === 'comments' && (
+                <div className="space-y-4">
+                  {/* Comment Input Form */}
+                  <div className="bg-[#F8F9FA]/95 border border-slate-200/60 p-5 rounded-2xl">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
+                        {currentUserProfile?.avatar ? (
+                          <img src={currentUserProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          currentUserProfile?.displayName?.[0]?.toUpperCase() || currentUserProfile?.username?.[0]?.toUpperCase() || "B"
+                        )}
+                      </div>
+                      <p className="font-black text-slate-800 text-sm">
+                        {isLoggedIn() ? (currentUserProfile?.displayName || "Bạn") : "Đăng nhập để bình luận"}
+                      </p>
+                    </div>
+                    <textarea
+                      disabled={!isLoggedIn()}
+                      placeholder={isLoggedIn() ? "Chia sẻ ý kiến của bạn..." : "Vui lòng đăng nhập để bình luận"}
+                      className="w-full bg-white border border-slate-200 rounded-lg p-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-brand/30 min-h-[80px] resize-none disabled:opacity-50"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                    />
+                    <div className="flex justify-end gap-2 mt-3">
+                      {newComment.trim() && (
+                        <Button variant="ghost" size="sm" className="text-text-muted hover:text-text-primary text-xs font-bold" onClick={() => setNewComment("")}>Hủy</Button>
+                      )}
+                      <Button
+                        size="sm"
+                        className="bg-[#10b981] text-[#020617] hover:bg-[#10b981]/80 transition-colors font-black px-4 rounded-lg text-xs"
+                        onClick={handleComment}
+                        disabled={!newComment.trim() || commentLoading || !isLoggedIn()}
+                      >
+                        {commentLoading ? "Đang gửi..." : "Gửi bình luận"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Comments List */}
+                  <div className="space-y-3">
+                    {rootComments.length === 0 ? (
+                      <div className="py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl">
+                        <MessageCircle size={40} className="mx-auto mb-4 text-slate-400 opacity-30" />
+                        <p className="text-slate-500 font-medium">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+                      </div>
+                    ) : (
+                      rootComments.map((comment) => {
+                        const authorName = comment.user?.isAnonymous
+                          ? "Người dùng"
+                          : comment.user?.displayName || comment.user?.username || comment.user?.name || "Người dùng";
+                        const initial = authorName[0].toUpperCase();
+                        const repliesForThisComment = childComments
+                          .filter((c: any) => c.parentId === comment.id)
+                          .sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                        const isExpanded = expandedComments.includes(comment.id);
+
+                        return (
+                          <div key={comment.id} className="group">
+                            <div className="bg-[#F8F9FA]/95 border border-slate-200/60 p-5 rounded-2xl group-hover:bg-white transition-all shadow-sm">
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
+                                  {comment.user?.avatar && !comment.user?.isAnonymous ? (
+                                    <img src={comment.user.avatar} alt={authorName} className="w-full h-full object-cover" />
+                                  ) : (
+                                    initial
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-slate-800 text-sm">{authorName}</p>
+                                  <p className="text-[10px] text-slate-400 font-bold">{new Intl.DateTimeFormat("vi").format(new Date(comment.createdAt))}</p>
+                                </div>
+                              </div>
+                              <div className="border-t border-slate-200 my-2.5" />
+                              <p className="text-slate-700 leading-relaxed font-medium text-sm">
+                                {comment.content}
+                              </p>
+                              <div className="mt-3 flex items-center gap-3">
+                                <button 
+                                  className={cn(
+                                    "flex items-center gap-1 text-xs font-bold transition-colors",
+                                    likedComments.includes(comment.id) ? "text-rose-500" : "text-slate-500 hover:text-rose-500"
+                                  )}
+                                  onClick={async () => {
+                                    if (!isLoggedIn()) {
+                                      showToast("Vui lòng đăng nhập để thích", "error");
+                                      return;
+                                    }
+                                    const isLiked = likedComments.includes(comment.id);
+                                    if (isLiked) {
+                                      setLikedComments(prev => prev.filter(id => id !== comment.id));
+                                      try {
+                                        await apiFetch(`/comments/${comment.id}/like`, { method: "DELETE" });
+                                      } catch (err) {
+                                        setLikedComments(prev => [...prev, comment.id]);
+                                      }
+                                    } else {
+                                      setLikedComments(prev => [...prev, comment.id]);
+                                      try {
+                                        await apiFetch(`/comments/${comment.id}/like`, { method: "POST" });
+                                      } catch (err) {
+                                        setLikedComments(prev => prev.filter(id => id !== comment.id));
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <ThumbsUp size={12} fill={likedComments.includes(comment.id) ? "currentColor" : "none"} /> 
+                                  {(comment._count?.likes || 0) + (originalLikes.includes(comment.id) && !likedComments.includes(comment.id) ? -1 : !originalLikes.includes(comment.id) && likedComments.includes(comment.id) ? 1 : 0)} Thích
+                                </button>
+                                <button 
+                                  className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-primary-brand transition-colors"
+                                  onClick={() => {
+                                    setReplyTo(comment.id);
+                                    setNewReply("");
+                                    setReplyTargetUser(authorName);
+                                  }}
+                                >
+                                  <MessageCircle size={12} fill="currentColor" /> Trả lời
+                                </button>
+                                {repliesForThisComment.length > 0 && (
+                                  <button
+                                    className="flex items-center gap-1 text-xs font-bold text-[#10b981] hover:underline transition-all ml-auto"
+                                    onClick={() => {
+                                      setExpandedComments(prev => 
+                                        prev.includes(comment.id) ? prev.filter(id => id !== comment.id) : [...prev, comment.id]
+                                      )
+                                    }}
+                                  >
+                                    <MessageCircle size={12} /> {isExpanded ? "Ẩn" : `${repliesForThisComment.length}`} phản hồi
+                                  </button>
                                 )}
                               </div>
-                              <p className="text-xs text-text-muted font-medium">{new Intl.DateTimeFormat("vi").format(new Date(item.createdAt))}</p>
+
+                              {isExpanded && (
+                                <div className="pl-8 mt-4 space-y-3 border-t border-slate-200/50 pt-3">
+                                  {repliesForThisComment.map(reply => {
+                                    const replyAuthorName = reply.user?.isAnonymous
+                                      ? "Người dùng"
+                                      : reply.user?.displayName || reply.user?.username || reply.user?.name || "Người dùng";
+                                    const match = reply.content.match(/^\[@([^\]]+)\]\s*(.*)/);
+                                    const taggedName = match ? match[1] : null;
+                                    const actualContent = match ? match[2] : reply.content;
+                                    return (
+                                      <div key={reply.id} className="group/reply bg-white border border-slate-200/30 p-3 rounded-lg transition-all hover:bg-slate-50 shadow-sm">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <p className="font-bold text-xs text-slate-800 flex items-center gap-1.5 flex-wrap">
+                                            {replyAuthorName}
+                                            {taggedName && (
+                                              <span className="text-slate-400 font-medium text-[10px] flex items-center gap-1">
+                                                trả lời <span className="text-emerald-500">@{taggedName}</span>
+                                              </span>
+                                            )}
+                                          </p>
+                                          <p className="text-[9px] text-slate-400 font-bold">• {new Intl.DateTimeFormat("vi").format(new Date(reply.createdAt))}</p>
+                                        </div>
+                                        <p className="text-slate-700 text-xs font-medium mb-2">{actualContent}</p>
+                                        <div className="flex items-center gap-2">
+                                          <button 
+                                            className={cn(
+                                              "flex items-center gap-0.5 text-[10px] font-bold transition-colors",
+                                              likedComments.includes(reply.id) ? "text-rose-500" : "text-slate-500 hover:text-rose-500"
+                                            )}
+                                            onClick={async () => {
+                                              if (!isLoggedIn()) {
+                                                showToast("Vui lòng đăng nhập để thích", "error");
+                                                return;
+                                              }
+                                              const isLiked = likedComments.includes(reply.id);
+                                              if (isLiked) {
+                                                setLikedComments(prev => prev.filter(id => id !== reply.id));
+                                                try {
+                                                  await apiFetch(`/comments/${reply.id}/like`, { method: "DELETE" });
+                                                } catch (err) {
+                                                  setLikedComments(prev => [...prev, reply.id]);
+                                                }
+                                              } else {
+                                                setLikedComments(prev => [...prev, reply.id]);
+                                                try {
+                                                  await apiFetch(`/comments/${reply.id}/like`, { method: "POST" });
+                                                } catch (err) {
+                                                  setLikedComments(prev => prev.filter(id => id !== reply.id));
+                                                }
+                                              }
+                                            }}
+                                          >
+                                            <ThumbsUp size={10} fill={likedComments.includes(reply.id) ? "currentColor" : "none"} /> 
+                                            {(reply._count?.likes || 0) + (originalLikes.includes(reply.id) && !likedComments.includes(reply.id) ? -1 : !originalLikes.includes(reply.id) && likedComments.includes(reply.id) ? 1 : 0)} Thích
+                                          </button>
+                                          <button 
+                                            className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-primary-brand transition-colors"
+                                            onClick={() => {
+                                              setReplyTo(comment.id);
+                                              setNewReply("");
+                                              setReplyTargetUser(replyAuthorName);
+                                            }}
+                                          >
+                                            <MessageCircle size={10} fill="currentColor" /> Trả lời
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {replyTo === comment.id && (
+                                <div className="mt-4 pt-3 border-t border-slate-200/50 pl-8">
+                                  {replyTargetUser && (
+                                    <div className="flex items-center gap-1.5 mb-2.5">
+                                      <span className="text-xs text-slate-500">Trả lời</span>
+                                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-bold border border-emerald-500/20">
+                                        @{replyTargetUser}
+                                      </span>
+                                    </div>
+                                  )}
+                                  <textarea
+                                    autoFocus
+                                    placeholder="Viết câu trả lời..."
+                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-primary-brand/30 min-h-[50px] resize-none"
+                                    value={newReply}
+                                    onChange={(e) => setNewReply(e.target.value)}
+                                  />
+                                  <div className="flex justify-end gap-2 mt-2">
+                                    <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-700 text-xs font-bold" onClick={() => { setReplyTo(null); setNewReply(""); setReplyTargetUser(null); }}>Hủy</Button>
+                                    <Button
+                                      size="sm"
+                                      className="bg-[#10b981] text-white hover:bg-[#10b981]/80 transition-colors font-black px-3 rounded-lg text-xs"
+                                      onClick={handleComment}
+                                      disabled={!newReply.trim() || commentLoading}
+                                    >
+                                      {commentLoading ? "..." : "Gửi"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
-                          {item.type === 'comment' && (
-                            <Button variant="ghost" size="sm" className="text-text-muted hover:text-primary-brand font-bold" onClick={() => setReplyTo(item.id)}>
-                              Trả lời
-                            </Button>
-                          )}
-                        </div>
-                        <p className="text-text-secondary leading-relaxed pl-15 italic">
-                          {item.content}
-                        </p>
-                      </div>
-
-                      {item.type === 'comment' && (
-                        <div className="pl-12 mt-3 space-y-3">
-                          {childComments.filter(c => c.parentId === item.id).map(reply => (
-                            <div key={reply.id} className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl">
-                              <div className="flex items-center gap-2 mb-2">
-                                <p className="font-bold text-sm text-[#10b981]">{reply.user?.name || "Ẩn danh"}</p>
-                                <p className="text-[10px] text-slate-600 tracking-tighter uppercase font-bold">• {new Intl.DateTimeFormat("vi").format(new Date(reply.createdAt))}</p>
-                              </div>
-                              <p className="text-slate-400 text-sm">{reply.content}</p>
-                            </div>
-                          ))}
-
-                          {replyTo === item.id && (
-                            <div className="bg-white/[0.05] border border-[#10b981]/20 p-4 rounded-2xl flex flex-col gap-3">
-                              <textarea
-                                autoFocus
-                                placeholder={`Trả lời ${item.user?.name}...`}
-                                className="w-full bg-transparent border-none text-white text-sm focus:ring-0 resize-none"
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                              />
-                              <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="sm" className="text-slate-400" onClick={() => setReplyTo(null)}>Hủy</Button>
-                                <Button size="sm" className="bg-[#10b981] text-[#020617] font-bold" onClick={handleComment}>Gửi</Button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-
-                {reviews.length === 0 && rootComments.length === 0 && (
-                  <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
-                    <MessageCircle size={40} className="mx-auto mb-4 text-slate-700 opacity-30" />
-                    <p className="text-slate-500 font-medium tracking-tight">Trở thành người đầu tiên đánh giá & thảo luận về bộ truyện này!</p>
+                        );
+                      })
+                    )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Reviews Tab */}
+              {feedTab === 'reviews' && (
+                <div className="space-y-4">
+                  {/* Reviews List */}
+                  <div className="space-y-3">
+                    {reviews.length === 0 ? (
+                      <div className="py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl">
+                        <Star size={40} className="mx-auto mb-4 text-slate-400 opacity-30" />
+                        <p className="text-slate-500 font-medium">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+                      </div>
+                    ) : (
+                      reviews.map((review) => {
+                        const authorName = review.user?.isAnonymous
+                          ? "Người dùng"
+                          : review.user?.displayName || review.user?.username || review.user?.name || "Người dùng";
+                        const initial = authorName[0].toUpperCase();
+
+                        return (
+                          <div key={review.id} className="group">
+                            <div className="bg-[#F8F9FA]/95 border border-slate-200/60 p-5 rounded-2xl group-hover:bg-white transition-all shadow-sm">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
+                                    {review.user?.avatar && !review.user?.isAnonymous ? (
+                                      <img src={review.user.avatar} alt={authorName} className="w-full h-full object-cover" />
+                                    ) : (
+                                      initial
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <p className="font-bold text-slate-800 text-sm">{authorName}</p>
+                                      <div className="flex gap-1">
+                                        {[...Array(5)].map((_, i) => (
+                                          <Star key={i} size={12} className={i < review.rating ? "text-accent-brand" : "text-slate-300"} fill={i < review.rating ? "currentColor" : "none"} />
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 font-bold">{new Intl.DateTimeFormat("vi").format(new Date(review.createdAt))}</p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="border-t border-slate-200 my-2.5" />
+                              {review.content && (
+                                <p className="text-slate-700 font-medium text-sm leading-relaxed mt-1">
+                                  {review.content}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         </div>
@@ -764,58 +1091,55 @@ export default function StoryDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Review & Comment Dialog */}
+      {/* Review Dialog - Simple Star Rating */}
       <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-        <DialogContent className="bg-surface-brand border-border-brand text-text-primary rounded-[2rem] max-w-xl w-[95%] shadow-2xl p-0 overflow-hidden">
-          <div className="p-8 space-y-6">
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black text-text-primary">Đánh giá & Bình luận</h3>
-              <p className="text-text-muted font-medium">Chia sẻ cảm nhận của bạn về bộ truyện này</p>
+        <DialogContent className="bg-surface-brand border border-border-brand/40 text-text-primary rounded-2xl max-w-sm w-[90%] shadow-xl p-6 overflow-hidden">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-accent-brand/20 to-accent-brand/10 flex items-center justify-center">
+              <Star size={24} className="text-accent-brand" fill="currentColor" />
+            </div>
+            <h2 className="text-xl font-black text-text-primary">Đánh giá</h2>
+            <p className="text-sm text-text-muted">Chọn số sao và gửi đánh giá</p>
+
+            <div className="flex items-center justify-center gap-3">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setNewReviewRating(star)}
+                  className={cn(
+                    "rounded-lg p-2 transition-transform duration-150",
+                    star <= newReviewRating
+                      ? "scale-110"
+                      : "hover:scale-105"
+                  )}
+                >
+                  <Star
+                    size={34}
+                    className={cn(
+                      "transition-colors",
+                      star <= newReviewRating ? "text-accent-brand" : "text-border-brand/50"
+                    )}
+                    fill={star <= newReviewRating ? "currentColor" : "none"}
+                  />
+                </button>
+              ))}
             </div>
 
-            <div className="space-y-4">
-              <label className="text-xs font-black text-text-muted uppercase tracking-widest pl-1">Xếp hạng của bạn</label>
-              <div className="flex items-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <motion.button
-                    key={star}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setNewReviewRating(star)}
-                    className="p-1 focus:outline-none"
-                  >
-                    <Star
-                      size={32}
-                      className={cn(
-                        "transition-all duration-300",
-                        star <= newReviewRating ? "text-accent-brand drop-shadow-glow" : "text-border-brand"
-                      )}
-                      fill={star <= newReviewRating ? "currentColor" : "none"}
-                    />
-                  </motion.button>
-                ))}
-              </div>
-            </div>
+            <textarea
+              placeholder="Chia sẻ cảm nghĩ của bạn về truyện (tùy chọn)..."
+              className="w-full bg-surface-elevated border border-border-brand rounded-xl p-3 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary-brand text-sm resize-none min-h-[100px]"
+              value={newReviewContent}
+              onChange={(e) => setNewReviewContent(e.target.value)}
+            />
 
-            <div className="space-y-4">
-              <label className="text-xs font-black text-text-muted uppercase tracking-widest pl-1">Cảm nhận của bạn</label>
-              <textarea
-                placeholder="Bộ truyện này có gì hấp dẫn bạn? (tùy chọn)..."
-                className="w-full bg-surface-elevated border-2 border-border-brand rounded-2xl p-4 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-brand/30 transition-all resize-none min-h-[150px] shadow-inner"
-                value={newReviewContent}
-                onChange={(e) => setNewReviewContent(e.target.value)}
-              />
-            </div>
-
-            <div className="pt-2">
-              <Button
-                onClick={handleReview}
-                disabled={reviewLoading}
-                className="w-full h-14 bg-primary-brand hover:bg-primary-light text-white font-black text-lg rounded-2xl shadow-lg shadow-primary-glow"
-              >
-                {reviewLoading ? "ĐANG GỬI..." : "GỬI ĐÁNH GIÁ & BÌNH LUẬN"}
-              </Button>
-            </div>
+            <button
+              onClick={handleReview}
+              disabled={reviewLoading}
+              className="w-full h-12 bg-primary-brand hover:bg-primary-light text-white font-black rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {reviewLoading ? "ĐANG GỬI..." : "GỬI ĐÁNH GIÁ"}
+            </button>
           </div>
         </DialogContent>
       </Dialog>

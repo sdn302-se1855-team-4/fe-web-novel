@@ -25,7 +25,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-
 interface UserProfile {
   id: string;
   username: string;
@@ -37,6 +36,7 @@ interface UserProfile {
   bio: string | null;
   gender: "MALE" | "FEMALE" | "OTHER" | null;
   role: string;
+  isAnonymous: boolean;
 }
 
 export default function ProfileSettingsPage() {
@@ -56,6 +56,7 @@ export default function ProfileSettingsPage() {
     lastName: "",
     bio: "",
     gender: "OTHER",
+    isAnonymous: false,
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -79,6 +80,7 @@ export default function ProfileSettingsPage() {
           lastName: res.lastName || "",
           bio: res.bio || "",
           gender: res.gender || "OTHER",
+          isAnonymous: res.isAnonymous || false,
         });
       })
       .catch(() => {
@@ -101,6 +103,7 @@ export default function ProfileSettingsPage() {
           lastName: formData.lastName || undefined,
           bio: formData.bio || undefined,
           gender: formData.gender,
+          isAnonymous: formData.isAnonymous,
           ...(previewImage ? { avatar: previewImage } : {}),
         }),
       });
@@ -187,15 +190,13 @@ export default function ProfileSettingsPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-[850px] mx-auto bg-surface-brand/70 backdrop-blur-2xl border border-border-brand/50 p-6 sm:p-14 rounded-3xl shadow-2xl relative overflow-hidden"
+        className="container pb-16 min-h-[80vh] tracking-wide bg-[radial-gradient(at_0%_0%,rgba(16,185,129,0.05)_0px,transparent_50%),radial-gradient(at_100%_100%,rgba(79,70,229,0.05)_0px,transparent_50%)] flex justify-center w-full"
       >
-        {/* Top Decorative Line */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-emerald-500 to-blue-500" />
-
-        <div className="flex flex-col gap-12">
+        <main className="w-full max-w-[850px] flex flex-col gap-12 bg-surface-brand/70 backdrop-blur-[20px] border border-border-brand/50 p-8 md:p-14 rounded shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#10b981] to-[#3b82f6]" />
           {/* Avatar section */}
-          <section className="flex flex-col items-center gap-6">
-            <div className="relative group w-36 h-36 p-1 bg-linear-to-br from-emerald-500 to-blue-500 rounded-full shadow-xl shadow-emerald-500/20">
+          <section className="flex flex-col items-center gap-6 mb-4">
+            <div className="relative group w-[140px] h-[140px] p-1 bg-gradient-to-br from-[#10b981] to-[#3b82f6] shadow-lg shadow-emerald-500/30 rounded-full">
               <img
                 src={
                   previewImage ||
@@ -203,10 +204,11 @@ export default function ProfileSettingsPage() {
                   "https://api.dicebear.com/7.x/avataaars/svg?seed=" + user.username
                 }
                 alt={user.username}
-                className="w-full h-full object-cover border-4 border-surface-brand rounded-full transition-all duration-500 group-hover:brightness-50"
+                className="w-full h-full object-cover border-3 border-surface-brand rounded-full"
               />
               <div
-                className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-white"
+                className="absolute inset-1 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:backdrop-blur-sm transition-all duration-300 cursor-pointer text-white rounded-full"
+                title="Đổi ảnh đại diện"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Camera size={32} />
@@ -221,23 +223,23 @@ export default function ProfileSettingsPage() {
               className="hidden"
             />
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+            <div className="flex flex-col md:flex-row gap-3 items-center mt-2 w-full max-w-[320px]">
               <Button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 uppercase tracking-widest text-xs"
+                className="flex-1 text-xs px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-10 rounded flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 uppercase tracking-wider"
               >
                 <Upload size={18} /> Chọn hình
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowPasswordDialog(true)}
-                className="flex-1 h-11 border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-500 font-black rounded-xl flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+                className="flex-1 text-xs px-4 border-emerald-500/50 hover:bg-emerald-500/10 text-emerald-500 font-bold h-10 rounded flex items-center justify-center gap-2 uppercase tracking-wider"
               >
                 <Lock size={18} /> Đổi mật khẩu
               </Button>
             </div>
-            <p className="text-[10px] text-text-muted italic text-center max-w-sm font-medium opacity-80">
-              Lưu ý: Hình ảnh đại diện phải phù hợp với nội dung văn hóa và tiêu chuẩn cộng đồng.
+            <p className="text-xs text-text-muted italic text-center max-w-xs md:max-w-[400px] opacity-80">
+              Lưu ý: Hình ảnh đại diện phải phù hợp thuần phong mỹ tục.
             </p>
           </section>
 
@@ -247,14 +249,14 @@ export default function ProfileSettingsPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="space-y-6"
+              className="flex flex-col gap-8"
             >
-              <h2 className="text-lg font-black text-text-primary flex items-center gap-3 uppercase tracking-wider pb-3 border-b border-border-brand/30">
-                <ShieldCheck className="text-emerald-500" size={20} /> Thông tin tài khoản
+              <h2 className="text-lg font-black text-text-primary flex items-center gap-3 tracking-wider uppercase pb-3 border-b border-border-brand/30">
+                <ShieldCheck className="text-emerald-500" /> Thông tin tài khoản
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Tên đăng nhập</label>
+              <div className="grid grid-cols-1 gap-7">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Tên đăng nhập</label>
                   <div className="relative">
                     <Input
                       value={user.username}
@@ -267,8 +269,8 @@ export default function ProfileSettingsPage() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Địa chỉ Email</label>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Địa chỉ Email</label>
                   <div className="relative">
                     <Input
                       value={user.email}
@@ -290,15 +292,15 @@ export default function ProfileSettingsPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="space-y-6"
+              className="flex flex-col gap-8"
             >
-              <h2 className="text-lg font-black text-text-primary flex items-center gap-3 uppercase tracking-wider pb-3 border-b border-border-brand/30">
-                <Info className="text-blue-500" size={20} /> Thông tin cá nhân
+              <h2 className="text-lg font-black text-text-primary flex items-center gap-3 tracking-wider uppercase pb-3 border-b border-border-brand/30">
+                <Info className="text-blue-500" /> Thông tin cá nhân
               </h2>
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-7">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Họ</label>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Họ</label>
                     <Input
                       value={formData.lastName}
                       onChange={(e) =>
@@ -308,8 +310,8 @@ export default function ProfileSettingsPage() {
                       className="h-11 rounded-xl border-border-brand focus:border-emerald-500/50 bg-transparent focus:bg-surface-elevated/20 transition-all font-medium"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Tên</label>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Tên</label>
                     <Input
                       value={formData.firstName}
                       onChange={(e) =>
@@ -321,8 +323,8 @@ export default function ProfileSettingsPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Biệt danh (Tên hiển thị)</label>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Biệt danh (Hiển thị)</label>
                   <Input
                     value={formData.displayName}
                     onChange={(e) =>
@@ -332,12 +334,11 @@ export default function ProfileSettingsPage() {
                     className="h-11 border-border-brand focus:border-emerald-500/50 rounded-xl bg-transparent focus:bg-surface-elevated/20 transition-all font-medium"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Giới tính</label>
-                  <div className="flex gap-8 p-3 px-6 bg-surface-elevated/20 border border-border-brand/30 rounded-xl">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Giới tính</label>
+                  <div className="flex gap-8 p-3 bg-surface-elevated/30 border border-border-brand/30 rounded">
                     {(["MALE", "FEMALE", "OTHER"] as const).map((g) => (
-                      <label key={g} className="flex items-center gap-2 text-sm font-bold text-text-primary cursor-pointer hover:text-emerald-500 transition-colors">
+                      <label key={g} className="flex items-center gap-2 text-sm font-semibold text-text-primary cursor-pointer hover:text-emerald-500 transition-colors">
                         <input
                           type="radio"
                           name="gender"
@@ -346,16 +347,33 @@ export default function ProfileSettingsPage() {
                           onChange={() =>
                             setFormData((p) => ({ ...p, gender: g }))
                           }
-                          className="w-4 h-4 accent-emerald-500"
+                          className="w-[18px] h-[18px] accent-emerald-500"
                         />
                         {g === "MALE" ? "Nam" : g === "FEMALE" ? "Nữ" : "Khác"}
                       </label>
                     ))}
                   </div>
                 </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Chế độ ẩn danh</label>
+                  <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={formData.isAnonymous}
+                        onChange={(e) => setFormData(p => ({ ...p, isAnonymous: e.target.checked }))}
+                      />
+                      <div className="w-11 h-6 bg-surface-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </div>
+                    <span className="text-sm font-medium text-text-muted group-hover:text-text-primary transition-colors">
+                      {formData.isAnonymous ? "Đang bật (Tên sẽ hiển thị là 'Người dùng')" : "Đang tắt (Hiển thị tên công khai)"}
+                    </span>
+                  </label>
+                </div>
 
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Tiểu sử cá nhân</label>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Tiểu sử</label>
                   <textarea
                     className="w-full px-5 py-4 bg-transparent border border-border-brand/60 rounded-2xl text-text-primary placeholder:text-text-muted transition-all duration-300 outline-none focus:border-emerald-500/50 min-h-[140px] resize-none focus:bg-surface-elevated/20 text-sm leading-relaxed"
                     value={formData.bio}
@@ -404,9 +422,9 @@ export default function ProfileSettingsPage() {
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleChangePassword} className="space-y-6 mt-10">
-              <div className="space-y-2">
-                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Mật khẩu hiện tại</label>
+            <form onSubmit={handleChangePassword} className="space-y-6 mt-8">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Mật khẩu hiện tại</label>
                 <Input
                   type="password"
                   value={passwordData.currentPassword}
@@ -420,8 +438,8 @@ export default function ProfileSettingsPage() {
                   placeholder="••••••••"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Mật khẩu mới</label>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Mật khẩu mới</label>
                 <Input
                   type="password"
                   value={passwordData.newPassword}
@@ -435,8 +453,8 @@ export default function ProfileSettingsPage() {
                   placeholder="Tối thiểu 6 ký tự"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Xác nhận mật khẩu</label>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Xác nhận mật khẩu mới</label>
                 <Input
                   type="password"
                   value={passwordData.confirmPassword}

@@ -18,7 +18,6 @@ import {
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn, getUserRole } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
-
 interface WalletData {
   id: string;
   balance: number;
@@ -196,14 +195,14 @@ export default function WalletPage() {
   if (loading && !wallet) {
     return (
       <div className="container py-8">
-        <div className="mb-8">
+        <div className="mb-6 flex items-center justify-between">
           <div className="skeleton" style={{ height: 32, width: 200 }} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="skeleton p-8 rounded-3xl bg-surface-brand border border-border-brand shadow-sm flex flex-col gap-2"
+              className="skeleton p-8 rounded-3xl bg-surface-brand border border-border-brand shadow-sm flex flex-col gap-2 transition-all duration-300"
               style={{ height: 100 }}
             />
           ))}
@@ -224,33 +223,27 @@ export default function WalletPage() {
           </div>
           Quay lại
         </button>
-        <h1 className="flex items-center gap-3 text-2xl font-bold text-text-primary">
+        <h1 className="flex items-center gap-3 text-xl md:text-2xl font-bold text-text-primary mb-0">
           <Wallet size={24} /> Ví của tôi
         </h1>
       </div>
 
       {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="p-8 rounded-3xl bg-emerald-500 text-white shadow-xl shadow-emerald-500/20 flex flex-col gap-2 transition-all duration-300">
-          <span className="text-xs font-bold uppercase tracking-widest text-white/80">
-            Số dư hiện tại
-          </span>
+        <div className="p-8 rounded-3xl bg-emerald-500 text-white border-none shadow-xl shadow-emerald-500/20 flex flex-col gap-2 transition-all duration-300">
+          <span className="text-xs font-bold uppercase tracking-widest text-white/80">Số dư hiện tại</span>
           <span className="text-3xl font-black text-white flex items-center gap-2">
             <Coins size={20} /> {wallet?.balance?.toLocaleString("vi") || 0} xu
           </span>
         </div>
         <div className="p-8 rounded-3xl bg-surface-brand border border-border-brand shadow-sm flex flex-col gap-2 transition-all duration-300">
-          <span className="text-xs font-bold uppercase tracking-widest text-text-muted">
-            Tổng đã kiếm
-          </span>
+          <span className="text-xs font-bold uppercase tracking-widest text-text-muted">Tổng đã kiếm</span>
           <span className="text-3xl font-black text-text-primary flex items-center gap-2">
             {wallet?.totalEarned?.toLocaleString("vi") || 0} xu
           </span>
         </div>
         <div className="p-8 rounded-3xl bg-surface-brand border border-border-brand shadow-sm flex flex-col gap-2 transition-all duration-300">
-          <span className="text-xs font-bold uppercase tracking-widest text-text-muted">
-            Tổng đã chi
-          </span>
+          <span className="text-xs font-bold uppercase tracking-widest text-text-muted">Tổng đã chi</span>
           <span className="text-3xl font-black text-text-primary flex items-center gap-2">
             {wallet?.totalSpent?.toLocaleString("vi") || 0} xu
           </span>
@@ -271,10 +264,10 @@ export default function WalletPage() {
             <button
               key={pkg.vnd}
               type="button"
-              className={`px-5 py-3 rounded-2xl border font-bold text-sm transition-all duration-300 ${
-                selectedPackage === pkg.vnd
-                  ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20"
-                  : "border-border-brand bg-surface-elevated text-text-secondary hover:border-emerald-500/50 hover:text-emerald-500 hover:bg-emerald-500/5"
+              className={`px-5 py-3 rounded-2xl border border-border-brand bg-surface-elevated text-text-secondary font-bold text-sm transition-all duration-300 hover:border-emerald-500/50 hover:text-emerald-500 hover:bg-emerald-500/5 ${
+                selectedPackage === pkg.vnd 
+                  ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20" 
+                  : ""
               }`}
               onClick={() => setSelectedPackage(pkg.vnd)}
             >
@@ -322,8 +315,15 @@ export default function WalletPage() {
             Số dư: {wallet?.balance?.toLocaleString("vi")} xu. Tối thiểu 200 xu.
             Phí hệ thống: <strong>15%</strong>.
           </p>
-          <form onSubmit={handleWithdraw} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-4">
+          <form
+            onSubmit={handleWithdraw}
+            className="flex flex-col gap-6"
+            style={{ gap: "1rem" }}
+          >
+            <div
+              className="flex flex-col gap-4"
+              style={{ flexDirection: "column" }}
+            >
               <input
                 type="number"
                 min="200"
@@ -354,7 +354,7 @@ export default function WalletPage() {
                 placeholder="Tên ngân hàng (VD: Vietcombank)"
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
-                className="p-4 bg-surface-elevated border border-border-brand rounded-2xl text-text-primary font-medium text-base outline-none transition-all duration-200 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 focus:bg-surface-brand"
+                className="flex-1 p-4 bg-surface-elevated border border-border-brand rounded-2xl text-text-primary font-medium text-base outline-none transition-all duration-200 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 focus:bg-surface-brand"
                 required
               />
               <input
@@ -362,7 +362,7 @@ export default function WalletPage() {
                 placeholder="Số tài khoản"
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value)}
-                className="p-4 bg-surface-elevated border border-border-brand rounded-2xl text-text-primary font-medium text-base outline-none transition-all duration-200 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 focus:bg-surface-brand"
+                className="flex-1 p-4 bg-surface-elevated border border-border-brand rounded-2xl text-text-primary font-medium text-base outline-none transition-all duration-200 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 focus:bg-surface-brand"
                 required
               />
               <input
@@ -370,7 +370,7 @@ export default function WalletPage() {
                 placeholder="Tên chủ tài khoản"
                 value={accountName}
                 onChange={(e) => setAccountName(e.target.value)}
-                className="p-4 bg-surface-elevated border border-border-brand rounded-2xl text-text-primary font-medium text-base outline-none transition-all duration-200 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 focus:bg-surface-brand"
+                className="flex-1 p-4 bg-surface-elevated border border-border-brand rounded-2xl text-text-primary font-medium text-base outline-none transition-all duration-200 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 focus:bg-surface-brand"
                 required
               />
             </div>
@@ -391,22 +391,15 @@ export default function WalletPage() {
           <Clock size={18} /> Lịch sử giao dịch
         </h2>
         {transactions.length === 0 ? (
-          <p className="text-center py-16 text-text-muted italic font-medium">
-            Chưa có giao dịch nào
-          </p>
+          <p className="text-center py-16 text-text-muted italic font-medium">Chưa có giao dịch nào</p>
         ) : (
           <>
             <div className="flex flex-col gap-1">
               {transactions.map((tx) => (
-                <div
-                  key={tx.id}
-                  className="group flex items-center gap-6 p-4 rounded-2xl transition-all duration-300 hover:bg-surface-elevated"
-                >
+                <div key={tx.id} className="group flex items-center gap-6 p-4 rounded-2xl transition-all duration-300 hover:bg-surface-elevated">
                   <div
                     className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${
-                      tx.amount > 0
-                        ? "text-emerald-500 bg-emerald-500/10"
-                        : "text-rose-500 bg-rose-500/10"
+                      tx.amount > 0 ? "text-emerald-500 bg-emerald-500/10" : "text-rose-500 bg-rose-500/10"
                     }`}
                   >
                     {getTypeIcon(tx.type)}
@@ -415,15 +408,11 @@ export default function WalletPage() {
                     <span className="font-bold text-sm text-text-primary">
                       {getTypeLabel(tx.type)}
                     </span>
-                    <span className="text-xs text-text-muted line-clamp-1">
-                      {tx.description}
-                    </span>
+                    <span className="text-xs text-text-muted truncate">{tx.description}</span>
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <span
-                      className={`font-black text-sm ${
-                        tx.amount > 0 ? "text-emerald-500" : "text-rose-500"
-                      }`}
+                      className={`font-black text-sm ${tx.amount > 0 ? "text-emerald-500" : "text-rose-500"}`}
                     >
                       {tx.amount > 0 ? "+" : ""}
                       {tx.amount.toLocaleString("vi")} xu
