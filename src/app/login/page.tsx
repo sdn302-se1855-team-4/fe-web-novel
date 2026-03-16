@@ -44,7 +44,11 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       setTokens(data.accessToken, data.refreshToken, data.user?.role);
-      router.push("/");
+      if (data.user?.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Đăng nhập thất bại");
     } finally {
@@ -62,7 +66,11 @@ export default function LoginPage() {
         body: JSON.stringify({ idToken }),
       });
       setTokens(data.accessToken, data.refreshToken, data.user?.role);
-      router.push("/");
+      if (data.user?.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       // Ignore popup closed by user
       if (err instanceof Error && err.message.includes("popup-closed")) return;

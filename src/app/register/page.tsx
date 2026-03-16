@@ -58,7 +58,11 @@ export default function RegisterPage() {
         }),
       });
       setTokens(data.accessToken, data.refreshToken, data.user?.role);
-      router.push("/");
+      if (data.user?.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Đăng ký thất bại");
     } finally {
@@ -76,7 +80,11 @@ export default function RegisterPage() {
         body: JSON.stringify({ idToken }),
       });
       setTokens(data.accessToken, data.refreshToken, data.user?.role);
-      router.push("/");
+      if (data.user?.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       if (err instanceof Error && err.message.includes("popup-closed")) return;
       setError(err instanceof Error ? err.message : "Đăng ký Google thất bại");
