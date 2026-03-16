@@ -113,18 +113,7 @@ export default function StoryDetailPage() {
   const [expandedComments, setExpandedComments] = useState<string[]>([]);
   const [likedComments, setLikedComments] = useState<string[]>([]);
   const [feedTab, setFeedTab] = useState<"comments" | "reviews">("comments");
-  const [optimisticLikes, setOptimisticLikes] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("likedComments");
-      if (saved) setLikedComments(JSON.parse(saved));
-    } catch { }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("likedComments", JSON.stringify(likedComments));
-  }, [likedComments]);
+  const [originalLikes, setOriginalLikes] = useState<string[]>([]);
 
   // Donate modal state
   const [showDonate, setShowDonate] = useState(false);
@@ -139,21 +128,40 @@ export default function StoryDetailPage() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const { showToast } = useToast();
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
 
   useEffect(() => {
     Promise.all([
       apiFetch<Story>(`/stories/${storyId}`),
       apiFetch<Chapter[]>(`/stories/${storyId}/chapters`),
       apiFetch<{ data: Comment[] } | Comment[]>(`/stories/${storyId}/comments`),
+      isLoggedIn() ? apiFetch<string[]>(`/stories/${storyId}/my-likes`) : Promise.resolve([] as string[]),
+      isLoggedIn() ? apiFetch<any>("/auth/profile") : Promise.resolve(null)
     ])
-      .then(([storyData, chaptersData, commentsData]) => {
+      .then(([storyData, chaptersData, commentsData, likesData, profileData]) => {
         setStory(storyData);
         setChapters(Array.isArray(chaptersData) ? chaptersData : []);
         const rawComments = Array.isArray(commentsData)
           ? commentsData
           : (commentsData as { data: Comment[] }).data || [];
-        
-        setComments(rawComments);
+          
+        const flatComments: Comment[] = [];
+        rawComments.forEach((c: Comment) => {
+          flatComments.push(c);
+          if (c.replies && Array.isArray(c.replies)) {
+            c.replies.forEach((r: Comment) => {
+              flatComments.push({ ...r, parentId: c.id });
+            });
+          }
+        });
+        const likedIds = Array.isArray(likesData) ? likesData : [];
+        setLikedComments(likedIds);
+        setOriginalLikes(likedIds);
+        setComments(flatComments);
+        if (profileData) {
+          setCurrentUserProfile(profileData);
+        }
+        setLoading(false);
       })
       .catch(() => { })
       .finally(() => setLoading(false));
@@ -674,10 +682,16 @@ export default function StoryDetailPage() {
                   {/* Comment Input Form */}
                   <div className="bg-[#F8F9FA]/95 border border-slate-200/60 p-5 rounded-2xl">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white">
-                        A
+                      <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
+                        {currentUserProfile?.avatar ? (
+                          <img src={currentUserProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          currentUserProfile?.displayName?.[0]?.toUpperCase() || currentUserProfile?.username?.[0]?.toUpperCase() || "B"
+                        )}
                       </div>
-                      <p className="font-black text-slate-800 text-sm">{isLoggedIn() ? "Bạn" : "Đăng nhập để bình luận"}</p>
+                      <p className="font-black text-slate-800 text-sm">
+                        {isLoggedIn() ? (currentUserProfile?.displayName || "Bạn") : "Đăng nhập để bình luận"}
+                      </p>
                     </div>
                     <textarea
                       disabled={!isLoggedIn()}
@@ -723,8 +737,12 @@ export default function StoryDetailPage() {
                           <div key={comment.id} className="group">
                             <div className="bg-[#F8F9FA]/95 border border-slate-200/60 p-5 rounded-2xl group-hover:bg-white transition-all shadow-sm">
                               <div className="flex items-center gap-3 mb-3">
-                                <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white">
-                                  {initial}
+                                <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
+                                  {comment.user?.avatar && !comment.user?.isAnonymous ? (
+                                    <img src={comment.user.avatar} alt={authorName} className="w-full h-full object-cover" />
+                                  ) : (
+                                    initial
+                                  )}
                                 </div>
                                 <div>
                                   <p className="font-bold text-slate-800 text-sm">{authorName}</p>
@@ -742,25 +760,30 @@ export default function StoryDetailPage() {
                                     likedComments.includes(comment.id) ? "text-rose-500" : "text-slate-500 hover:text-rose-500"
                                   )}
                                   onClick={async () => {
+                                    if (!isLoggedIn()) {
+                                      showToast("Vui lòng đăng nhập để thích", "error");
+                                      return;
+                                    }
                                     const isLiked = likedComments.includes(comment.id);
                                     if (isLiked) {
                                       setLikedComments(prev => prev.filter(id => id !== comment.id));
+                                      try {
+                                        await apiFetch(`/comments/${comment.id}/like`, { method: "DELETE" });
+                                      } catch (err) {
+                                        setLikedComments(prev => [...prev, comment.id]);
+                                      }
                                     } else {
                                       setLikedComments(prev => [...prev, comment.id]);
-                                    }
-                                    if (isLoggedIn()) {
                                       try {
-                                        if (isLiked) {
-                                          await apiFetch(`/comments/${comment.id}/like`, { method: "DELETE" });
-                                        } else {
-                                          await apiFetch(`/comments/${comment.id}/like`, { method: "POST" });
-                                        }
-                                      } catch (err) {}
+                                        await apiFetch(`/comments/${comment.id}/like`, { method: "POST" });
+                                      } catch (err) {
+                                        setLikedComments(prev => prev.filter(id => id !== comment.id));
+                                      }
                                     }
                                   }}
                                 >
                                   <ThumbsUp size={12} fill={likedComments.includes(comment.id) ? "currentColor" : "none"} /> 
-                                  {(comment._count?.likes || 0) + (likedComments.includes(comment.id) && !isLoggedIn() ? 1 : 0)} Thích
+                                  {(comment._count?.likes || 0) + (originalLikes.includes(comment.id) && !likedComments.includes(comment.id) ? -1 : !originalLikes.includes(comment.id) && likedComments.includes(comment.id) ? 1 : 0)} Thích
                                 </button>
                                 <button 
                                   className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-primary-brand transition-colors"
@@ -816,25 +839,30 @@ export default function StoryDetailPage() {
                                               likedComments.includes(reply.id) ? "text-rose-500" : "text-slate-500 hover:text-rose-500"
                                             )}
                                             onClick={async () => {
+                                              if (!isLoggedIn()) {
+                                                showToast("Vui lòng đăng nhập để thích", "error");
+                                                return;
+                                              }
                                               const isLiked = likedComments.includes(reply.id);
                                               if (isLiked) {
                                                 setLikedComments(prev => prev.filter(id => id !== reply.id));
+                                                try {
+                                                  await apiFetch(`/comments/${reply.id}/like`, { method: "DELETE" });
+                                                } catch (err) {
+                                                  setLikedComments(prev => [...prev, reply.id]);
+                                                }
                                               } else {
                                                 setLikedComments(prev => [...prev, reply.id]);
-                                              }
-                                              if (isLoggedIn()) {
                                                 try {
-                                                  if (isLiked) {
-                                                    await apiFetch(`/comments/${reply.id}/like`, { method: "DELETE" });
-                                                  } else {
-                                                    await apiFetch(`/comments/${reply.id}/like`, { method: "POST" });
-                                                  }
-                                                } catch (err) {}
+                                                  await apiFetch(`/comments/${reply.id}/like`, { method: "POST" });
+                                                } catch (err) {
+                                                  setLikedComments(prev => prev.filter(id => id !== reply.id));
+                                                }
                                               }
                                             }}
                                           >
                                             <ThumbsUp size={10} fill={likedComments.includes(reply.id) ? "currentColor" : "none"} /> 
-                                            {(reply._count?.likes || 0) + (likedComments.includes(reply.id) && !isLoggedIn() ? 1 : 0)} Thích
+                                            {(reply._count?.likes || 0) + (originalLikes.includes(reply.id) && !likedComments.includes(reply.id) ? -1 : !originalLikes.includes(reply.id) && likedComments.includes(reply.id) ? 1 : 0)} Thích
                                           </button>
                                           <button 
                                             className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-primary-brand transition-colors"
@@ -914,8 +942,12 @@ export default function StoryDetailPage() {
                             <div className="bg-[#F8F9FA]/95 border border-slate-200/60 p-5 rounded-2xl group-hover:bg-white transition-all shadow-sm">
                               <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white">
-                                    {initial}
+                                  <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
+                                    {review.user?.avatar && !review.user?.isAnonymous ? (
+                                      <img src={review.user.avatar} alt={authorName} className="w-full h-full object-cover" />
+                                    ) : (
+                                      initial
+                                    )}
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">

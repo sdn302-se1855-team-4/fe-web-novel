@@ -282,7 +282,7 @@ export default function ChapterReaderPage() {
               className={
                 chapter.story?.type === "MANGA" || chapter.story?.type === "COMIC"
                   ? "flex flex-col items-center w-full max-w-[1000px] mx-auto [&_img]:max-w-full [&_img]:h-auto [&_img]:shadow-md [&_img]:mb-0.5"
-                  : "font-serif leading-relaxed break-words [&_p]:mb-6"
+                  : "font-serif leading-relaxed break-words whitespace-pre-wrap [&_p]:mb-6"
               }
               dangerouslySetInnerHTML={{ __html: chapter.content || "" }}
             />

@@ -92,6 +92,11 @@ export async function apiFetch<T>(
 
     // If 401 and we have a refresh token, try to refresh and retry
     if (res.status === 401) {
+      if (path === "/auth/login") {
+        const errorBody = await res.json().catch(() => ({}));
+        throw new ApiRequestError(parseErrorMessage(errorBody) || "Sai tài khoản hoặc mật khẩu", 401);
+      }
+
       const refreshed = await refreshAccessToken();
 
       if (refreshed) {

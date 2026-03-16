@@ -72,21 +72,14 @@ export default function Navbar() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [rankOpen, setRankOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchParams = useSearchParams();
 
-  const rankTabs = [
-    { key: "day", label: "Top Ngày" },
-    { key: "week", label: "Top Tuần" },
-    { key: "month", label: "Top Tháng" },
-  ];
 
   const genreRef = useRef<HTMLDivElement>(null);
-  const rankRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -180,9 +173,6 @@ export default function Navbar() {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
       }
-      if (rankRef.current && !rankRef.current.contains(e.target as Node)) {
-        setRankOpen(false);
-      }
       // Close search suggestions on click outside
       setShowSuggestions(false);
     };
@@ -192,9 +182,9 @@ export default function Navbar() {
 
   const handleLogout = () => {
     removeTokens();
-    setLoggedIn(false);
-    setUserMenuOpen(false);
-    router.push("/");
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
   };
 
   const handleSearch = (e: FormEvent) => {
@@ -442,7 +432,6 @@ export default function Navbar() {
               )}
               onClick={() => {
                 setGenreOpen((p) => !p);
-                setRankOpen(false);
               }}
             >
               Thể Loại
@@ -450,50 +439,6 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* Xếp Hạng Dropdown */}
-          <div className="relative" ref={rankRef}>
-            <button
-              className={cn(
-                "flex items-center gap-1.5 text-sm font-bold transition-all uppercase tracking-tight font-sans",
-                "text-white hover:text-white/90 dark:text-text-primary dark:hover:text-emerald-500",
-                (pathname.startsWith("/rankings") || rankOpen) && "underline decoration-2 underline-offset-4"
-              )}
-              onClick={() => {
-                setRankOpen((p) => !p);
-                setGenreOpen(false);
-              }}
-            >
-              Xếp hạng
-              <ChevronDown size={14} className={cn("transition-transform", rankOpen && "rotate-180")} />
-            </button>
-            
-            <AnimatePresence>
-              {rankOpen && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-48 bg-surface-brand border border-border-brand rounded-2xl shadow-2xl overflow-hidden py-2 z-50 px-1"
-                >
-                  {rankTabs.map((tab) => (
-                    <Link
-                      key={tab.key}
-                      href={`/rankings/${tab.key}`}
-                      className={cn(
-                        "flex items-center justify-center py-3 text-sm font-bold transition-all rounded-xl my-0.5",
-                        pathname === `/rankings/${tab.key}`
-                          ? "text-emerald-500 bg-emerald-500/5" 
-                          : "text-text-secondary hover:text-emerald-500 hover:bg-surface-elevated"
-                      )}
-                      onClick={() => setRankOpen(false)}
-                    >
-                      {tab.label}
-                    </Link>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
 
           {navLinks.map((link) => (
             <Link
