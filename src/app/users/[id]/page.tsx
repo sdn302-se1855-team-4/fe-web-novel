@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   User,
   BookOpen,
@@ -11,11 +11,11 @@ import {
   UserMinus,
   ChevronLeft,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import StoryCard from "@/components/StoryCard";
-import styles from "./profile.module.css";
 
 interface ProfileData {
   id: string;
@@ -109,8 +109,9 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className={`container ${styles.page}`}>
-        <div className={styles.profileHeader}>
+      <div className="container py-8">
+        <div className="flex flex-col items-center gap-6 text-center mb-8 p-12 bg-surface-brand border border-border-brand rounded-3xl shadow-lg relative overflow-hidden flex-col md:flex-row md:text-left md:p-12 md:gap-8">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
           <div
             className="skeleton"
             style={{ width: 96, height: 96, borderRadius: "50%" }}
@@ -122,6 +123,7 @@ export default function PublicProfilePage() {
               flexDirection: "column",
               gap: 8,
             }}
+            className="items-center md:items-start"
           >
             <div className="skeleton" style={{ height: 28, width: 200 }} />
             <div className="skeleton" style={{ height: 16, width: 300 }} />
@@ -133,8 +135,8 @@ export default function PublicProfilePage() {
 
   if (!profile) {
     return (
-      <div className={`container ${styles.page}`}>
-        <div className={styles.empty}>
+      <div className="container py-8">
+        <div className="flex flex-col items-center gap-4 py-24 text-text-muted text-center">
           <User size={48} />
           <p>Không tìm thấy người dùng</p>
         </div>
@@ -143,96 +145,132 @@ export default function PublicProfilePage() {
   }
 
   return (
-    <div className={`container ${styles.page}`}>
-      <div className="mb-6">
-        <button 
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-medium text-sm group"
+    <div className="page-wrapper min-h-screen bg-bg-brand overflow-x-hidden">
+      {/* decorative blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-5%] right-[-5%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-5%] left-[-5%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 relative z-10 pt-10">
+        <div className="mb-6">
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-bold text-sm group"
+          >
+            <div className="p-2 rounded-full bg-surface-elevated/80 backdrop-blur-sm group-hover:bg-emerald-500/10 border border-border-brand/40 transition-colors">
+              <ChevronLeft size={16} />
+            </div>
+            Quay lại
+          </button>
+        </div>
+
+        {/* Profile Header card */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-surface-brand/40 backdrop-blur-md border border-border-brand/50 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col md:flex-row gap-8 items-center md:items-start"
         >
-          <div className="p-1.5 rounded-full bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
-            <ChevronLeft size={16} />
-          </div>
-          Quay lại
-        </button>
-      </div>
-
-      {/* Profile Header */}
-      <div className={styles.profileHeader}>
-        <div className={styles.avatarWrap}>
-          {profile.avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={profile.avatar}
-              alt={profile.displayName || profile.username}
-              className={styles.avatar}
-            />
-          ) : (
-            <div className={styles.avatarFallback}>
-              <User size={40} />
-            </div>
-          )}
-        </div>
-        <div className={styles.headerInfo}>
-          <div className={styles.nameRow}>
-            <h1 className={styles.name}>
-              {profile.displayName || profile.username}
-            </h1>
-            <span className={styles.roleBadge}>{profile.role}</span>
-          </div>
-          <p className={styles.username}>@{profile.username}</p>
-          {profile.bio && <p className={styles.bio}>{profile.bio}</p>}
-          <div className={styles.statsRow}>
-            <div className={styles.stat}>
-              <span className={styles.statValue}>{profile._count.stories}</span>
-              <span className={styles.statLabel}>Truyện</span>
-            </div>
-            <div className={styles.stat}>
-              <span className={styles.statValue}>{profile._count.followers}</span>
-              <span className={styles.statLabel}>Người theo dõi</span>
-            </div>
-            <div className={styles.stat}>
-              <span className={styles.statValue}>{profile._count.following}</span>
-              <span className={styles.statLabel}>Đang theo dõi</span>
-            </div>
-            <div className={styles.stat}>
-              <span className={styles.statValue}>
-                {new Date(profile.createdAt).toLocaleDateString("vi", { month: 'short', year: 'numeric' })}
-              </span>
-              <span className={styles.statLabel}>Thành viên</span>
-            </div>
-          </div>
-          {loggedIn && currentUserId !== userId && (
-            <button
-              className={`btn ${following ? "btn-outline" : "btn-primary"} ${styles.followBtn}`}
-              onClick={toggleFollow}
-            >
-              {following ? (
-                <>
-                  <UserMinus size={16} /> Đang theo dõi
-                </>
+          {/* Avatar Area */}
+          <div className="relative group">
+            <div className="w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden border-2 border-emerald-500/30 p-1 bg-gradient-to-tr from-emerald-500/20 to-blue-500/20 shadow-2xl">
+              {profile.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.avatar} alt={profile.displayName || profile.username} className="w-full h-full object-cover rounded-full" />
               ) : (
-                <>
-                  <UserPlus size={16} /> Theo dõi
-                </>
+                <div className="w-full h-full bg-surface-elevated flex items-center justify-center text-primary-brand rounded-full">
+                  <User size={48} />
+                </div>
               )}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Stories */}
-      {profile.stories.length > 0 && (
-        <section className={styles.storiesSection}>
-          <h2 className={styles.sectionTitle}>
-            <BookOpen size={20} /> Truyện đã đăng ({profile.stories.length})
-          </h2>
-          <div className="grid-stories">
-            {profile.stories.map((story) => (
-              <StoryCard key={story.id} story={story} />
-            ))}
+            </div>
+            <div className="absolute inset-0 rounded-full bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-        </section>
-      )}
+
+          {/* Info Area */}
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
+              <h1 className="text-3xl font-black text-text-primary tracking-tight">
+                {profile.displayName || profile.username}
+              </h1>
+              <span className="px-3 py-1 bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-full text-[10px] font-black tracking-wider uppercase">
+                {profile.role}
+              </span>
+            </div>
+            
+            <p className="text-sm font-bold text-slate-500 mb-4">@{profile.username}</p>
+            
+            {profile.bio && (
+              <p className="text-text-secondary text-sm md:max-w-xl leading-relaxed mb-6 mx-auto md:mx-0">
+                {profile.bio}
+              </p>
+            )}
+
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-surface-elevated/40 backdrop-blur-sm border border-border-brand/30 rounded-2xl max-w-2xl mx-auto md:mx-0">
+              <div className="flex flex-col items-center">
+                <span className="text-xl font-black text-text-primary">{profile._count.stories}</span>
+                <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Truyện</span>
+              </div>
+              <div className="flex flex-col items-center border-l border-border-brand/20">
+                <span className="text-xl font-black text-text-primary">{profile._count.followers}</span>
+                <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Người theo dõi</span>
+              </div>
+              <div className="flex flex-col items-center border-l border-border-brand/20">
+                <span className="text-xl font-black text-text-primary">{profile._count.following}</span>
+                <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Đang theo</span>
+              </div>
+              <div className="flex flex-col items-center border-l border-border-brand/20">
+                <span className="text-xl font-black text-text-primary">
+                  {new Date(profile.createdAt).toLocaleDateString("vi", { year: 'numeric', month: 'short' })}
+                </span>
+                <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Tham gia</span>
+              </div>
+            </div>
+
+            {/* Action Group */}
+            {loggedIn && currentUserId !== userId && (
+              <div className="mt-6 flex justify-center md:justify-start">
+                <button
+                  onClick={toggleFollow}
+                  className={`h-11 px-8 rounded-xl font-black uppercase tracking-wider text-sm shadow-lg gap-2 flex items-center justify-center transition-all hover:scale-[1.02] border ${
+                    following 
+                      ? "border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 bg-transparent"
+                      : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20 border-transparent"
+                  }`}
+                >
+                  {following ? <UserMinus size={18} /> : <UserPlus size={18} />}
+                  {following ? "Đang theo dõi" : "Theo dõi"}
+                </button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Stories Listing */}
+        {profile.stories.length > 0 && (
+          <section className="mt-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                <BookOpen size={20} />
+              </div>
+              <h2 className="text-2xl font-black text-text-primary tracking-tight">
+                Truyện đã đăng <span className="text-emerald-500">({profile.stories.length})</span>
+              </h2>
+            </div>
+            
+            <motion.div 
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ delay: 0.1 }}
+               className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-4 gap-y-10"
+            >
+              {profile.stories.map((story) => (
+                <StoryCard key={story.id} story={story} />
+              ))}
+            </motion.div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

@@ -94,8 +94,8 @@ export default function LoginPage() {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="relative z-10 w-full max-w-md"
       >
-        <Link 
-          href="/" 
+        <Link
+          href="/"
           className="inline-flex items-center gap-2 text-text-muted hover:text-text-primary mb-8 group transition-colors"
         >
           <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />

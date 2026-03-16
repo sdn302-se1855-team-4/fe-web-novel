@@ -1,22 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
+  BookOpen,
   Facebook,
-  MessageSquare,
-  Send,
-  Lightbulb,
-  ChevronRight,
-  Github,
   Twitter,
   Instagram,
+  Github,
+  ChevronRight,
   Mail,
+  Send,
   Heart,
+  Lightbulb,
 } from "lucide-react";
-import { motion } from "framer-motion";
-import Logo from "./Logo";
 import { cn } from "@/lib/utils";
-
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -36,31 +34,23 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative bg-bg-brand border-t border-border-brand/50 pt-20 pb-10 overflow-hidden">
-      {/* Decorative Background Elements */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] -mr-64 -mb-64" />
-        <div className="absolute top-0 left-0 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] -ml-32 -mt-32" />
-      </div>
-
-      <div className="container max-w-7xl mx-auto px-4 relative z-10">
+    <footer className="bg-surface-brand border-t border-border py-12 mt-auto">
+      <div className="max-w-7xl mx-auto px-4">
         <motion.div
-          className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 mb-16"
+          className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
         >
-          {/* Brand Column */}
-          <motion.div
-            className="lg:col-span-4 space-y-6"
-            variants={itemVariants}
-          >
-            <Logo textSize="xl" showTagline />
-            <p className="text-text-muted text-sm leading-relaxed max-w-sm">
-              Nền tảng đọc truyện online hàng đầu với hàng ngàn tác phẩm hấp
-              dẫn, được chọn lọc kỹ lưỡng, cập nhật liên tục mỗi ngày để mang
-              lại trải nghiệm tốt nhất cho bạn.
+          {/* Brand & Mission */}
+          <motion.div className="space-y-4" variants={itemVariants}>
+            <div className="flex items-center gap-2 text-primary">
+              <BookOpen size={24} className="text-emerald-500" />
+              <span className="text-xl font-bold text-text-primary">BestNovelVN</span>
+            </div>
+            <p className="text-sm text-text-muted leading-relaxed">
+              Nền tảng đọc truyện online hàng đầu với hàng ngàn tác phẩm hấp dẫn, cập nhật liên tục mỗi ngày.
             </p>
             <div className="flex items-center gap-4">
               {[

@@ -92,6 +92,11 @@ export async function apiFetch<T>(
 
     // If 401 and we have a refresh token, try to refresh and retry
     if (res.status === 401) {
+      if (path === "/auth/login") {
+        const errorBody = await res.json().catch(() => ({}));
+        throw new ApiRequestError(parseErrorMessage(errorBody) || "Sai tài khoản hoặc mật khẩu", 401);
+      }
+
       const refreshed = await refreshAccessToken();
 
       if (refreshed) {
@@ -130,14 +135,18 @@ export async function apiFetch<T>(
     }
 
     if (!res.ok) {
-      const errorBody = await res.json().catch(() => ({
-        message: res.statusText,
-        statusCode: res.status,
-      }));
-      throw new ApiRequestError(
-        parseErrorMessage(errorBody) || "API Error",
-        res.status,
-      );
+      const rawText = await res.text().catch(() => "");
+      let errorBody: Record<string, unknown> = { message: res.statusText, statusCode: res.status };
+
+      try {
+        errorBody = JSON.parse(rawText);
+      } catch {
+        // keep original
+      }
+
+      const parsed = parseErrorMessage(errorBody);
+      const message = parsed || rawText || `${res.status} ${res.statusText}`;
+      throw new ApiRequestError(message, res.status);
     }
 
     const json = await res.json();

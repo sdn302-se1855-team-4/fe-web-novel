@@ -168,3 +168,55 @@
   padding: var(--spacing-3xl) 0;
   color: var(--color-text-muted);
 }
+
+.gridStories {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 640px) {
+  .gridStories {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns for mobile */
+    gap: var(--spacing-md);
+  }
+}
+
+@media (min-width: 768px) {
+  .profileHeader {
+    flex-direction: row !important;
+    text-align: left !important;
+    align-items: center !important;
+    padding: var(--spacing-3xl) !important;
+    gap: var(--spacing-2xl) !important;
+  }
+
+  .avatarWrap {
+    flex-shrink: 0;
+  }
+
+  .avatar {
+    width: 160px !important;
+    height: 160px !important;
+  }
+
+  .headerInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nameRow {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100%;
+  }
+
+  .statsRow {
+    justify-content: flex-start !important;
+    width: 100%;
+    margin-right: auto;
+  }
+}

@@ -3,7 +3,7 @@
 import { useEffect, useState, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Save, Plus, BookOpen, Trash2, Edit, RefreshCw, ChevronLeft, Info, FileText, LayoutList } from "lucide-react";
+import { Save, Plus, BookOpen, Trash2, Edit, RefreshCw, ChevronLeft, Info, LayoutList } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
@@ -94,6 +94,10 @@ export default function EditStoryPage() {
         }),
       });
       showToast("Cập nhật thành công!", "success");
+      // Navigate back to studio after successful save
+      setTimeout(() => {
+        router.push("/studio");
+      }, 500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Cập nhật thất bại");
       showToast("Cập nhật thất bại", "error");
@@ -136,25 +140,23 @@ export default function EditStoryPage() {
   if (!story) return null;
 
   return (
-    <div className="min-h-screen pb-20">
-      <div className="mb-8">
-        <button 
-          onClick={() => router.push("/studio")}
-          className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-bold text-sm group"
-        >
-          <div className="p-2 rounded-xl bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
-            <ChevronLeft size={18} />
-          </div>
-          Quay lại Studio
-        </button>
-      </div>
-
-      <div className="max-w-[850px] mx-auto">
-        <h1 className="text-3xl font-black text-text-primary italic uppercase tracking-tighter mb-10 flex items-center gap-4">
-          <Edit size={32} className="text-emerald-500" /> Chỉnh sửa tác phẩm
+    <div className="page-wrapper" style={{ paddingTop: 0 }}>
+      <div className="container" style={{ maxWidth: 800, marginTop: 0, paddingTop: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+          <button
+            onClick={() => router.push("/studio")}
+            className="btn btn-ghost btn-sm"
+            aria-label="Quay lại Writer Studio"
+            style={{ padding: "0.5rem 0.75rem" }}
+          >
+            <ChevronLeft size={18} /> Quay lại
+          </button>
+        </div>
+        <h1 className="section-title">
+          <Edit size={24} /> Chỉnh sửa: {story.title}
         </h1>
 
-        {/* Edit Form Card */}
+        {/* Edit Form */}
         <div className="bg-surface-brand border border-border-brand/50 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl shadow-black/5 mb-16 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] pointer-events-none" />
           
@@ -284,38 +286,35 @@ export default function EditStoryPage() {
 
           <div className="flex flex-col gap-4">
             {chapters.length > 0 ? (
-              chapters.map((ch, idx) => (
-                <div key={ch.id} className="group flex flex-col md:flex-row md:items-center gap-6 p-6 bg-surface-brand border border-border-brand/60 rounded-[1.5rem] md:rounded-[2.5rem] transition-all hover:bg-surface-elevated hover:border-blue-500/20 hover:shadow-xl hover:shadow-blue-500/5">
-                  <div className="w-14 h-14 rounded-2xl bg-surface-elevated border border-border-brand flex flex-col items-center justify-center shrink-0 group-hover:bg-blue-500/10 group-hover:border-blue-500/30 transition-all shadow-sm">
-                    <span className="text-[10px] font-black text-text-muted uppercase leading-none mb-1">Chương</span>
-                    <span className="text-lg font-black text-text-primary leading-none">{ch.chapterNumber}</span>
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-bold text-text-primary truncate transition-colors group-hover:text-blue-500">
-                      {ch.title}
+              chapters.map((ch) => (
+                <div key={ch.id} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[2rem] md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
+                  <div className="flex-1 min-w-0 flex flex-col gap-2">
+                    <h3 className="text-lg font-bold text-text-primary truncate">
+                      Chương {ch.chapterNumber}: {ch.title}
                     </h3>
-                    <div className="flex items-center gap-4 text-xs font-bold text-text-muted mt-1">
+                    <div className="flex items-center gap-4 flex-wrap text-sm font-medium">
                       {ch.isPremium && (
-                        <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] uppercase tracking-widest">Premium</span>
+                        <span className="badge badge-premium">Premium</span>
                       )}
                       {ch.createdAt && (
-                        <span className="opacity-60">Cập nhật: {new Intl.DateTimeFormat("vi").format(new Date(ch.createdAt))}</span>
+                        <span className="text-xs text-muted">
+                          {new Intl.DateTimeFormat("vi").format(
+                            new Date(ch.createdAt),
+                          )}
+                        </span>
                       )}
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-3 shrink-0 pt-4 md:pt-0 border-t md:border-t-0 border-border-brand/40 justify-end">
+                  <div className="flex items-center gap-3 flex-shrink-0 w-full md:w-auto justify-end pt-4 md:pt-0 border-t md:border-t-0 border-border-brand">
                     <Link
                       href={`/studio/${storyId}/chapters/${ch.chapterNumber}/edit`}
-                      className="btn btn-outline btn-sm border-blue-500/30 text-blue-500 hover:bg-blue-500/10 px-5 rounded-xl gap-2 active:scale-95"
+                      className="btn btn-outline btn-sm"
                     >
-                      <Edit size={14} /> Sửa
+                      <Plus size={18} /> Sửa chương
                     </Link>
                     <button
-                      className="p-2.5 rounded-xl text-text-muted hover:text-rose-500 hover:bg-rose-500/10 transition-all active:scale-95"
                       onClick={() => confirmDeleteChapter(ch.chapterNumber)}
-                      aria-label="Xóa chương"
+                      className="btn btn-ghost btn-sm text-rose-500"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -323,18 +322,8 @@ export default function EditStoryPage() {
                 </div>
               ))
             ) : (
-              <div className="py-24 text-center bg-surface-brand/40 border-2 border-dashed border-border-brand/60 rounded-[2.5rem] flex flex-col items-center gap-4">
-                 <FileText size={48} className="text-text-muted opacity-20" />
-                 <div>
-                   <h5 className="text-xl font-black text-text-muted uppercase tracking-tight">Chưa có chương truyện</h5>
-                   <p className="text-text-muted/60 font-bold mt-2">Bắt đầu hành trình sáng tác bằng cách thêm chương đầu tiên!</p>
-                 </div>
-                 <Link
-                    href={`/studio/${storyId}/chapters/create`}
-                    className="btn btn-outline border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/5 px-8 rounded-xl h-11 mt-2"
-                  >
-                    <Plus size={18} /> Thêm chương ngay
-                  </Link>
+              <div className="py-20 text-center border-2 border-dashed border-border-brand rounded-[2.5rem]">
+                <p className="text-text-muted font-bold">Chưa có chương nào.</p>
               </div>
             )}
           </div>

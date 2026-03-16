@@ -13,10 +13,10 @@ export default function CreateChapterPage() {
   const storyId = params.storyId as string;
 
   const [title, setTitle] = useState("");
-  const [chapterNumber, setChapterNumber] = useState(1);
+  const [chapterNumber, setChapterNumber] = useState("");
   const [content, setContent] = useState("");
   const [isPremium, setIsPremium] = useState(false);
-  const [price, setPrice] = useState(0);
+  const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,15 +37,27 @@ export default function CreateChapterPage() {
         .replace(/[\s_-]+/g, "-")
         .replace(/^-+|-+$/g, "");
 
+      const parsedChapterNumber = parseInt(chapterNumber, 10);
+      if (!parsedChapterNumber || parsedChapterNumber < 1) {
+        throw new Error("Số chương không hợp lệ. Vui lòng nhập số lớn hơn hoặc bằng 1.");
+      }
+
+      const parsedPrice = parseInt(price, 10);
+      if (isPremium) {
+        if (!parsedPrice || parsedPrice < 0) {
+          throw new Error("Giá chương không hợp lệ. Vui lòng nhập số lớn hơn hoặc bằng 0.");
+        }
+      }
+
       await apiFetch(`/stories/${storyId}/chapters`, {
         method: "POST",
         body: JSON.stringify({
           title,
           slug,
-          chapterNumber,
+          chapterNumber: parsedChapterNumber,
           content,
           isPremium,
-          price: isPremium ? price : 0,
+          price: isPremium ? parsedPrice : 0,
         }),
       });
       router.push(`/studio/${storyId}`);
@@ -110,28 +122,24 @@ export default function CreateChapterPage() {
                       min="1"
                       className="input h-14 rounded-2xl text-center font-bold"
                       value={chapterNumber}
-                      onChange={(e) => setChapterNumber(parseInt(e.target.value) || 1)}
+                      onChange={(e) => setChapterNumber(e.target.value)}
                       required
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <label htmlFor="content" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1 flex items-center gap-2">
-                    <Sparkles size={14} className="text-emerald-500" /> Nội dung chương truyện
+                    <Sparkles size={14} className="text-purple-500" /> Nội dung chương
                   </label>
                   <textarea
                     id="content"
-                    className="input min-h-[500px] py-6 px-8 rounded-3xl resize-none leading-relaxed text-lg"
+                    className="input min-h-[400px] py-4 rounded-2xl resize-none leading-relaxed"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     required
-                    placeholder="Bắt đầu sáng tác nội dung chương truyện tại đây..."
-                    style={{
-                      fontFamily: "var(--font-reader)",
-                    }}
+                    placeholder="Bắt đầu viết nội dung chương tại đây..."
                   />
-                  <p className="text-[10px] font-bold text-text-muted text-right px-2 italic uppercase">Đã viết: {content.length} ký tự</p>
                 </div>
 
                 <div className={cn(
@@ -159,27 +167,26 @@ export default function CreateChapterPage() {
                   </label>
 
                   {isPremium && (
-                    <div className="flex flex-col sm:flex-row items-center gap-6 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="w-full sm:w-1/3 space-y-2">
-                        <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest ml-1 flex items-center gap-1">
-                          <Coins size={12} /> Giá chương (Xu)
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          className="input h-12 rounded-xl font-black text-amber-500 border-amber-500/30 bg-amber-500/5 focus:border-amber-500 text-center"
-                          value={price}
-                          onChange={(e) => setPrice(parseInt(e.target.value) || 0)}
-                          placeholder="VD: 50"
-                          required={isPremium}
-                        />
-                      </div>
-                      <div className="flex-1 p-4 bg-amber-500/10 rounded-2xl">
-                         <p className="text-xs font-bold text-amber-600 leading-relaxed">
-                           <Info size={14} className="inline mr-1 -mt-0.5" /> 
-                           Chương Premium yêu cầu người đọc phải thanh toán số xu trên để mở khóa nội dung. Số xu này sẽ được cộng vào doanh thu của tác giả.
-                         </p>
-                      </div>
+                    <div className="space-y-4 pt-2">
+                       <label htmlFor="price" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1 flex items-center gap-2">
+                         <Coins size={14} className="text-amber-500" /> Giá chương (Số xu)
+                       </label>
+                       <div className="relative">
+                         <input
+                           id="price"
+                           type="number"
+                           min="0"
+                           className="input h-14 rounded-2xl pl-12"
+                           value={price}
+                           onChange={(e) => setPrice(e.target.value)}
+                           required={isPremium}
+                           placeholder="VD: 50"
+                         />
+                         <Coins className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500" size={18} />
+                       </div>
+                       <p className="text-[11px] font-medium text-text-muted ml-1 flex items-center gap-1.5">
+                         <Info size={12} /> Người đọc cần trả số xu này để mở khóa nội dung.
+                       </p>
                     </div>
                   )}
                 </div>

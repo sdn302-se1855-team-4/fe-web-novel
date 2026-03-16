@@ -22,14 +22,36 @@ import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-// Removed CSS module import as we've moved to Tailwind
+
+const THEMES = {
+  light: {
+    "--reader-bg": "#f9f7f2",
+    "--reader-text": "#1a1a1a",
+    "--reader-bar-bg": "rgba(255, 255, 255, 0.85)",
+    "--reader-border": "rgba(0, 0, 0, 0.08)",
+    "--reader-shadow": "rgba(0, 0, 0, 0.05)",
+    "--reader-btn-hover": "#f0ede5",
+    "--reader-accent": "#10b981",
+  },
+  dark: {
+    "--reader-bg": "#0f1117",
+    "--reader-text": "#e2e8f0",
+    "--reader-bar-bg": "rgba(23, 25, 35, 0.85)",
+    "--reader-border": "rgba(255, 255, 255, 0.1)",
+    "--reader-shadow": "rgba(0, 0, 0, 0.3)",
+    "--reader-btn-hover": "#171923",
+    "--reader-accent": "#10b981",
+  },
+  sepia: {
+    "--reader-bg": "#f1e7d0",
+    "--reader-text": "#433422",
+    "--reader-bar-bg": "rgba(234, 221, 192, 0.85)",
+    "--reader-border": "rgba(67, 52, 34, 0.15)",
+    "--reader-shadow": "rgba(67, 52, 34, 0.08)",
+    "--reader-btn-hover": "#e6d8b9",
+    "--reader-accent": "#8b4513",
+  },
+};
 
 interface Chapter {
   id: string;
@@ -112,7 +134,7 @@ export default function ChapterReaderPage() {
           setAllChapters(sortedChapters);
           setTotalChapters(sortedChapters.length);
 
-          if (isLoggedIn() && chData?.id) {
+          if (isLoggedIn() && chData?.id && !chData.isLocked) {
             apiFetch("/reading-history", {
               method: "POST",
               body: JSON.stringify({
@@ -185,9 +207,9 @@ export default function ChapterReaderPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f9f7f2] flex flex-col">
-        <div className="max-w-[800px] mx-auto w-full px-4 sm:px-8 pt-24 pb-32">
-          <div className="animate-pulse bg-black/5 h-10 w-3/4 rounded-xl mx-auto mb-10" />
+      <div className="min-h-screen bg-[var(--reader-bg)] text-[var(--reader-text)] font-sans flex flex-col transition-all duration-400" style={THEMES["light"] as any} data-reader-theme="light">
+        <div className="max-w-[800px] mx-auto px-6 py-16 md:py-20 w-full">
+          <div className="animate-pulse bg-gray-200/50 h-10 w-3/4 rounded-xl mx-auto mb-10" />
           {[...Array(12)].map((_, i) => (
             <div
               key={i}
@@ -238,84 +260,30 @@ export default function ChapterReaderPage() {
   const currentTheme = themes[readerTheme];
 
   return (
-    <div
-      className={cn(
-        "min-h-screen flex flex-col transition-colors duration-500",
-        currentTheme.bg,
-        currentTheme.text,
-      )}
-      onClick={toggleUI}
+    <div 
+      className="min-h-screen bg-[var(--reader-bg)] text-[var(--reader-text)] font-sans flex flex-col transition-all duration-400" 
+      style={THEMES[readerTheme] as any} 
+      data-reader-theme={readerTheme}
     >
       {/* Top Bar */}
-      <motion.div
-        initial={{ y: -60, opacity: 0 }}
-        animate={{
-          y: showControls ? 0 : -80,
-          opacity: showControls ? 1 : 0,
-        }}
-        transition={{ duration: 0.4, ease: "circOut" }}
-        className={cn(
-          "fixed top-0 left-0 right-0 z-100 h-16 flex items-center justify-between px-4 sm:px-8 border-b backdrop-blur-2xl",
-          currentTheme.bar,
-          currentTheme.border,
-          currentTheme.shadow,
-        )}
-        style={{ pointerEvents: showControls ? "auto" : "none" }}
+      <motion.div 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 bg-[var(--reader-bar-bg)] border-b border-[var(--reader-border)] backdrop-blur-md shadow-sm"
       >
-        <Link
-          href={`/stories/${storyId}`}
-          className="flex items-center gap-2 font-bold text-sm transition-transform hover:-translate-x-1 w-auto max-w-[30%] sm:max-w-[45%]"
-        >
-          <ChevronLeft
-            size={20}
-            className={cn(currentTheme.accent, "shrink-0")}
-          />
-          <span className="truncate tracking-tight hidden xs:block">
+        <Link href={`/stories/${storyId}`} className="flex items-center gap-3 text-[var(--reader-text)] no-underline font-bold text-sm hover:-translate-x-1 transition-transform max-w-[40%]">
+          <ChevronLeft size={18} />
+          <span className="truncate tracking-tight">
             {chapter.story?.title || "Trở lại"}
           </span>
         </Link>
-
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          <div className="flex items-center bg-black/5 dark:bg-white/5 rounded-xl p-0.5 scale-90 sm:scale-100">
-            <button
-              className={cn(
-                "p-1.5 sm:p-2 rounded-lg transition-all active:scale-90",
-                currentTheme.btn,
-              )}
-              onClick={() => changeFontSize(-2)}
-              aria-label="Giảm chữ"
-            >
-              <Minus size={14} className="sm:w-4 sm:h-4" />
-            </button>
-            <span className="w-8 sm:w-12 text-center text-[9px] sm:text-[10px] font-black opacity-60">
-              {fontSize}
-              <span className="hidden sm:inline">PX</span>
-            </span>
-            <button
-              className={cn(
-                "p-1.5 sm:p-2 rounded-lg transition-all active:scale-90",
-                currentTheme.btn,
-              )}
-              onClick={() => changeFontSize(2)}
-              aria-label="Tăng chữ"
-            >
-              <Plus size={14} className="sm:w-4 sm:h-4" />
-            </button>
-          </div>
-
-          <button
-            className={cn(
-              "p-1.5 sm:p-2 rounded-xl transition-all active:scale-90 border flex items-center justify-center scale-90 sm:scale-100",
-              currentTheme.btn,
-            )}
-            onClick={cycleTheme}
-            aria-label="Đổi nền"
-          >
-            {readerTheme === "dark" ? (
-              <Moon size={16} className="sm:w-[18px] sm:h-[18px]" />
-            ) : (
-              <Sun size={16} className="sm:w-[18px] sm:h-[18px]" />
-            )}
+        <div className="flex items-center gap-2">
+          <button className="btn-icon" onClick={() => changeFontSize(-2)} aria-label="Giảm chữ">
+            <Minus size={16} />
+          </button>
+          <span className="text-[10px] font-bold opacity-80 text-center min-w-[40px]">{fontSize}PX</span>
+          <button className="btn-icon" onClick={() => changeFontSize(2)} aria-label="Tăng chữ">
+            <Plus size={16} />
           </button>
 
           <div
@@ -342,158 +310,46 @@ export default function ChapterReaderPage() {
       <AnimatePresence mode="wait">
         <motion.article
           key={chapter.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-[800px] mx-auto w-full px-4 sm:px-8 pt-24 pb-32"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.02 }}
+          transition={{ duration: 0.3 }}
+          className="max-w-[800px] mx-auto px-6 py-16 md:py-20 w-full" 
           style={{ fontSize: `${fontSize}px` }}
         >
-          <header className="mb-8 sm:mb-12 text-center">
-            <h1
-              className={cn(
-                "text-2xl sm:text-4xl font-extrabold mb-4 leading-tight tracking-tight",
-                currentTheme.text,
-              )}
-            >
-              Chương {chapter.chapterNumber}: {chapter.title}
-            </h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center leading-tight">
+            Chương {chapter.chapterNumber}: {chapter.title}
             {chapter.isPremium && (
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/30">
-                <Coins size={14} /> Premium
-              </div>
+              <span className="inline-flex items-center gap-1.5 text-[10px] px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 text-white font-black tracking-wider ml-3 shadow-md">
+                <Coins size={14} /> PREMIUM
+              </span>
             )}
-          </header>
+            </h1>
 
           {/* Inline Navigation Bar */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-12 w-full">
-            <button
-              className={cn(
-                "w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl sm:rounded-2xl border transition-all active:scale-90 disabled:opacity-30 shrink-0",
-                currentTheme.btn,
-              )}
+          <div className="flex items-center justify-center gap-3 mb-10 w-full">
+            <button 
+              className="w-10 h-10 flex items-center justify-center rounded-xl border border-[var(--reader-border)] bg-[var(--reader-bar-bg)] text-[var(--reader-text)] cursor-pointer hover:not-disabled:bg-[var(--reader-btn-hover)] hover:not-disabled:border-[var(--reader-accent)] hover:not-disabled:text-[var(--reader-accent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all" 
               disabled={chapterNumber <= 1}
               onClick={() => navigateChapter(chapterNumber - 1)}
             >
               <ChevronLeft size={20} className="sm:w-[22px] sm:h-[22px]" />
             </button>
+            
+            <select 
+              className="bg-[var(--reader-bar-bg)] border border-[var(--reader-border)] text-[var(--reader-text)] px-4 h-10 rounded-xl font-semibold text-sm cursor-pointer outline-none backdrop-blur-md max-w-[280px]"
+              value={chapterNumber}
+              onChange={(e) => navigateChapter(Number(e.target.value))}
+            >
+              {allChapters.map(ch => (
+                <option key={ch.id} value={ch.chapterNumber}>
+                  Chương {ch.chapterNumber}: {ch.title}
+                </option>
+              ))}
+            </select>
 
-            <div className="flex-1 min-w-0 max-w-[400px]">
-              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogTrigger
-                  className={cn(
-                    "w-full h-9 sm:h-11 px-2.5 sm:px-4 rounded-xl sm:rounded-2xl border font-bold text-[11px] sm:text-sm flex items-center justify-between gap-1.5 sm:gap-3 group transition-all",
-                    currentTheme.bar,
-                    currentTheme.border,
-                    "hover:border-emerald-500/50",
-                  )}
-                >
-                  <div className="flex items-center gap-1.5 sm:gap-3 overflow-hidden min-w-0">
-                    <List
-                      size={15}
-                      className="text-emerald-500 shrink-0 group-hover:scale-110 transition-transform"
-                    />
-                    <span className="truncate opacity-90">
-                      {chapter
-                        ? `Chương ${chapter.chapterNumber}: ${chapter.title}`
-                        : "Chọn chương..."}
-                    </span>
-                  </div>
-                  <ChevronRight
-                    size={14}
-                    className="opacity-40 group-hover:translate-x-0.5 transition-transform shrink-0"
-                  />
-                </DialogTrigger>
-                <DialogContent
-                  showCloseButton={false}
-                  className={cn(
-                    "max-w-[450px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl",
-                    currentTheme.bar,
-                    currentTheme.text,
-                  )}
-                >
-                  <DialogHeader className="sr-only">
-                    <DialogTitle>Danh sách chương</DialogTitle>
-                  </DialogHeader>
-
-                  <div className={cn("p-5 pb-4 border-b", currentTheme.border)}>
-                    <div className="relative group">
-                      <Search
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 transition-transform group-focus-within:scale-110"
-                        size={20}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Tìm số chương hoặc tên..."
-                        className={cn(
-                          "w-full h-12 pl-12 pr-4 rounded-2xl border bg-transparent outline-none ring-offset-0 focus:ring-2 ring-emerald-500/25 font-semibold transition-all",
-                          currentTheme.border,
-                          currentTheme.text,
-                        )}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        autoFocus
-                      />
-                    </div>
-                  </div>
-
-                  <div className="max-h-[60vh] overflow-y-auto p-3 no-scrollbar space-y-1">
-                    {filteredChapters.length > 0 ? (
-                      filteredChapters.map((ch) => (
-                        <button
-                          key={ch.id}
-                          onClick={() => handleSelectChapter(ch.chapterNumber)}
-                          className={cn(
-                            "w-full px-5 py-3.5 rounded-2xl flex items-center justify-between group transition-all text-left",
-                            ch.chapterNumber === chapterNumber
-                              ? "bg-emerald-500/15 text-emerald-500"
-                              : cn(
-                                  "hover:bg-black/5 dark:hover:bg-white/5",
-                                  currentTheme.text,
-                                ),
-                          )}
-                        >
-                          <div className="flex items-center gap-5 overflow-hidden">
-                            <span
-                              className={cn(
-                                "font-bold shrink-0 min-w-[32px] text-lg",
-                                ch.chapterNumber === chapterNumber
-                                  ? "text-emerald-500"
-                                  : "opacity-30",
-                              )}
-                            >
-                              {ch.chapterNumber}
-                            </span>
-                            <span className="truncate font-semibold tracking-tight opacity-95">
-                              {ch.title}
-                            </span>
-                          </div>
-                          {ch.chapterNumber === chapterNumber && (
-                            <Check
-                              size={18}
-                              strokeWidth={3}
-                              className="text-emerald-500 animate-in fade-in zoom-in duration-300"
-                            />
-                          )}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="py-20 text-center">
-                        <p className="text-lg font-bold opacity-20">
-                          Ốp la! Không tìm thấy chương...
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <button
-              className={cn(
-                "w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl sm:rounded-2xl border transition-all active:scale-90 disabled:opacity-30 shrink-0",
-                currentTheme.btn,
-              )}
+            <button 
+              className="w-10 h-10 flex items-center justify-center rounded-xl border border-[var(--reader-border)] bg-[var(--reader-bar-bg)] text-[var(--reader-text)] cursor-pointer hover:not-disabled:bg-[var(--reader-btn-hover)] hover:not-disabled:border-[var(--reader-accent)] hover:not-disabled:text-[var(--reader-accent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all" 
               disabled={chapterNumber >= totalChapters}
               onClick={() => navigateChapter(chapterNumber + 1)}
             >
@@ -502,26 +358,12 @@ export default function ChapterReaderPage() {
           </div>
 
           {chapter.isPremium && chapter.isLocked ? (
-            <div
-              className={cn(
-                "flex flex-col items-center gap-6 p-8 sm:p-12 text-center rounded-[2.5rem] border shadow-2xl",
-                currentTheme.bar,
-                currentTheme.border,
-              )}
-            >
-              <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center border-4 border-amber-500/20">
-                <Lock size={48} className="text-amber-500" />
+            <div className="flex flex-col items-center gap-6 p-12 text-center bg-[var(--reader-bar-bg)] rounded-[2.5rem] border border-[var(--reader-border)] my-12 shadow-md">
+              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-4 border-2 border-amber-200">
+                <Lock size={40} className="text-amber-600" />
               </div>
-              <h2 className={cn("text-2xl font-black", currentTheme.text)}>
-                Mở khóa nội dung Premium
-              </h2>
-              <p className="text-lg opacity-80">
-                Chương này cần{" "}
-                <span className="font-bold text-amber-500">
-                  {chapter.price?.toLocaleString("vi") || 0} xu
-                </span>{" "}
-                để tiếp tục đọc.
-              </p>
+              <h2 className="text-xl font-bold">Mở khóa nội dung Premium</h2>
+              <p className="text-base opacity-80">Chương này cần <strong>{chapter.price?.toLocaleString("vi") || 0} xu</strong> để tiếp tục đọc.</p>
               <button
                 className="w-full max-w-sm h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 shadow-xl shadow-amber-500/30 text-white font-black text-lg transition-transform active:scale-95 disabled:opacity-50"
                 disabled={purchasing}
@@ -541,175 +383,53 @@ export default function ChapterReaderPage() {
               >
                 {purchasing ? "ĐANG XỬ LÝ..." : `MỞ KHÓA (${chapter.price} XU)`}
               </button>
-              <Link
-                href="/wallet"
-                className={cn(
-                  "text-sm font-bold underline underline-offset-4 decoration-2",
-                  currentTheme.accent,
-                )}
-              >
+              <Link href="/wallet" className="text-sm text-[var(--reader-accent)] font-bold">
                 Nạp thêm xu vào ví →
               </Link>
             </div>
           ) : (
             <div
-              className={cn(
-                "font-serif leading-[1.8] sm:leading-[2.2] wrap-break-word space-y-6 sm:space-y-8 select-text",
-                "content-renderer [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:mx-auto",
-                chapter.story?.type === "MANGA" ||
-                  chapter.story?.type === "COMIC"
-                  ? "flex flex-col items-center gap-1 sm:gap-2"
-                  : "",
-              )}
+              className={
+                chapter.story?.type === "MANGA" || chapter.story?.type === "COMIC"
+                  ? "flex flex-col items-center w-full max-w-[1000px] mx-auto [&_img]:max-w-full [&_img]:h-auto [&_img]:shadow-md [&_img]:mb-0.5"
+                  : "font-serif leading-relaxed break-words whitespace-pre-wrap [&_p]:mb-6"
+              }
               dangerouslySetInnerHTML={{ __html: chapter.content || "" }}
             />
           )}
         </motion.article>
       </AnimatePresence>
 
-      <footer className="max-w-[800px] mx-auto w-full px-4 sm:px-8 pb-32">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-          <button
-            className={cn(
-              "w-full sm:flex-1 h-12 sm:h-14 flex items-center justify-center gap-2 rounded-2xl border font-bold transition-all active:scale-95 disabled:opacity-30",
-              currentTheme.btn,
-            )}
-            disabled={chapterNumber <= 1}
-            onClick={() => navigateChapter(chapterNumber - 1)}
-          >
-            <ChevronLeft size={20} />
-            <span className="text-sm sm:text-base">Chương trước</span>
-          </button>
+      {/* Navigation */}
+      <nav className="flex items-center justify-center max-w-[800px] w-full mx-auto px-6 pb-16 gap-3">
+        <button 
+          className="w-10 h-10 flex items-center justify-center rounded-xl border border-[var(--reader-border)] bg-[var(--reader-bar-bg)] text-[var(--reader-text)] cursor-pointer hover:not-disabled:bg-[var(--reader-btn-hover)] hover:not-disabled:border-[var(--reader-accent)] hover:not-disabled:text-[var(--reader-accent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all" 
+          disabled={chapterNumber <= 1}
+          onClick={() => navigateChapter(chapterNumber - 1)}
+        >
+          <ChevronLeft size={20} />
+        </button>
+        
+        <select 
+          className="bg-[var(--reader-bar-bg)] border border-[var(--reader-border)] text-[var(--reader-text)] px-4 h-10 rounded-xl font-semibold text-sm cursor-pointer outline-none backdrop-blur-md max-w-[280px]"
+          value={chapterNumber}
+          onChange={(e) => navigateChapter(Number(e.target.value))}
+        >
+          {allChapters.map(ch => (
+            <option key={ch.id} value={ch.chapterNumber}>
+              Chương {ch.chapterNumber}: {ch.title}
+            </option>
+          ))}
+        </select>
 
-          <div className="w-full sm:w-[340px]">
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-              <DialogTrigger
-                className={cn(
-                  "w-full h-12 sm:h-14 px-4 sm:px-6 rounded-2xl border font-bold text-sm sm:text-base flex items-center justify-between gap-3 group transition-all",
-                  currentTheme.bar,
-                  currentTheme.border,
-                  "hover:border-emerald-500/50",
-                )}
-              >
-                <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
-                  <List
-                    size={20}
-                    className="text-emerald-500 shrink-0 group-hover:rotate-12 transition-transform"
-                  />
-                  <span className="truncate opacity-90 text-sm sm:text-base">
-                    {chapter
-                      ? `Chương ${chapter.chapterNumber}: ${chapter.title}`
-                      : "Chọn chương..."}
-                  </span>
-                </div>
-                <ChevronRight
-                  size={18}
-                  className="opacity-40 group-hover:translate-x-1 transition-transform shrink-0"
-                />
-              </DialogTrigger>
-              <DialogContent
-                showCloseButton={false}
-                className={cn(
-                  "max-w-[95vw] sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl",
-                  currentTheme.bar,
-                  currentTheme.text,
-                )}
-              >
-                <DialogHeader className="sr-only">
-                  <DialogTitle>Danh sách chương</DialogTitle>
-                </DialogHeader>
-
-                <div
-                  className={cn(
-                    "p-4 sm:p-5 pb-4 border-b",
-                    currentTheme.border,
-                  )}
-                >
-                  <div className="relative group">
-                    <Search
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 transition-transform group-focus-within:scale-110"
-                      size={20}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Tìm số chương hoặc tên..."
-                      className={cn(
-                        "w-full h-11 pl-12 pr-4 rounded-xl border bg-transparent outline-none focus:ring-2 ring-emerald-500/25 font-semibold transition-all text-sm sm:text-base",
-                        currentTheme.border,
-                        currentTheme.text,
-                      )}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
-                </div>
-
-                <div className="max-h-[60vh] overflow-y-auto p-2 sm:p-3 no-scrollbar space-y-1">
-                  {filteredChapters.length > 0 ? (
-                    filteredChapters.map((ch) => (
-                      <button
-                        key={ch.id}
-                        onClick={() => handleSelectChapter(ch.chapterNumber)}
-                        className={cn(
-                          "w-full px-4 sm:px-5 py-3 sm:py-4 rounded-2xl flex items-center justify-between group transition-all text-left",
-                          ch.chapterNumber === chapterNumber
-                            ? "bg-emerald-500/15 text-emerald-500"
-                            : cn(
-                                "hover:bg-black/5 dark:hover:bg-white/5",
-                                currentTheme.text,
-                              ),
-                        )}
-                      >
-                        <div className="flex items-center gap-4 sm:gap-5 overflow-hidden">
-                          <span
-                            className={cn(
-                              "font-bold shrink-0 min-w-[30px] sm:min-w-[35px] text-lg sm:text-xl",
-                              ch.chapterNumber === chapterNumber
-                                ? "text-emerald-500"
-                                : "opacity-30",
-                            )}
-                          >
-                            {ch.chapterNumber}
-                          </span>
-                          <span className="truncate font-semibold tracking-tight opacity-95 text-sm sm:text-base">
-                            {ch.title}
-                          </span>
-                        </div>
-                        {ch.chapterNumber === chapterNumber && (
-                          <Check
-                            size={18}
-                            strokeWidth={3}
-                            className="text-emerald-500 animate-in fade-in zoom-in duration-300"
-                          />
-                        )}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="py-20 text-center">
-                      <p className="text-lg font-bold opacity-20">
-                        Ốp la! Không tìm thấy chương...
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <button
-            className={cn(
-              "w-full sm:flex-1 h-12 sm:h-14 flex items-center justify-center gap-2 rounded-2xl border font-bold transition-all active:scale-95 disabled:opacity-30",
-              currentTheme.btn,
-            )}
-            disabled={chapterNumber >= totalChapters}
-            onClick={() => navigateChapter(chapterNumber + 1)}
-          >
-            <span className="text-sm sm:text-base">Chương sau</span>
-            <ChevronRight size={20} />
-          </button>
-        </div>
-      </footer>
+        <button 
+          className="w-10 h-10 flex items-center justify-center rounded-xl border border-[var(--reader-border)] bg-[var(--reader-bar-bg)] text-[var(--reader-text)] cursor-pointer hover:not-disabled:bg-[var(--reader-btn-hover)] hover:not-disabled:border-[var(--reader-accent)] hover:not-disabled:text-[var(--reader-accent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all" 
+          disabled={chapterNumber >= totalChapters}
+          onClick={() => navigateChapter(chapterNumber + 1)}
+        >
+          <ChevronRight size={20} />
+        </button>
+      </nav>
     </div>
   );
 }
