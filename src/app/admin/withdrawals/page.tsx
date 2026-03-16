@@ -78,8 +78,8 @@ export default function AdminWithdrawalsPage() {
 
   if (error) return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white flex items-center gap-2"><Wallet size={24} className="text-indigo-400" /> Quản lý Rút tiền</h1>
-      <div className="rounded-xl bg-slate-800/50 border border-rose-500/30 p-8 text-center text-rose-400 text-sm">{error}</div>
+      <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2"><Wallet size={24} className="text-indigo-500" /> Quản lý Rút tiền</h1>
+      <div className="rounded-xl bg-surface-brand border border-rose-500/30 p-8 text-center text-rose-500 text-sm">{error}</div>
     </div>
   );
 
@@ -93,56 +93,75 @@ export default function AdminWithdrawalsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white flex items-center gap-2"><Wallet size={24} className="text-indigo-400" /> Quản lý Rút tiền</h1>
+      <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2"><Wallet size={24} className="text-indigo-500" /> Quản lý Rút tiền</h1>
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input type="text" placeholder="Tìm kiếm tác giả..." className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+          <input type="text" placeholder="Tìm kiếm tác giả..." className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-surface-elevated border border-border-brand text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <div className="flex bg-slate-800/60 rounded-lg p-1 border border-slate-700/50">
+        <div className="flex bg-surface-elevated rounded-lg p-1 border border-border-brand">
           {(["all", "PENDING", "COMPLETED", "FAILED"] as const).map((s) => (
-            <button key={s} onClick={() => setFilter(s)} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${filter === s ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}>
+            <button key={s} onClick={() => setFilter(s)} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${filter === s ? "bg-surface-brand text-text-primary shadow-sm border border-border-brand" : "text-text-secondary hover:text-text-primary"}`}>
               {tabLabel(s)} ({counts[s]})
             </button>
           ))}
         </div>
       </div>
-
-      <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
-        {loading ? <div className="h-72 animate-pulse bg-slate-800/40" /> : (
+      
+      <div className="rounded-xl bg-surface-brand border border-border-brand overflow-hidden shadow-sm">
+        {loading ? <div className="h-72 animate-pulse bg-surface-brand" /> : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-700/50">
-                  {["Tác giả", "Chi tiết", "Số xu", "Trạng thái", "Thời gian", "Thao tác"].map((h) => (
-                    <th key={h} className={`px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 ${h === "Thao tác" ? "text-right" : ""}`}>{h}</th>
-                  ))}
+                <tr className="border-b border-border-brand bg-surface-elevated/50">
+                  <th className="w-[20%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Tác giả</th>
+                  <th className="w-[30%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Chi tiết</th>
+                  <th className="w-[15%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Số xu</th>
+                  <th className="w-[15%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Trạng thái</th>
+                  <th className="w-[10%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Thời gian</th>
+                  <th className="w-[10%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/30">
+              <tbody className="divide-y divide-border-brand">
                 {filtered.map((w) => (
-                  <tr key={w.id} className="hover:bg-slate-700/20 transition-colors">
-                    <td className="px-5 py-3">
-                      <div className="text-sm font-semibold text-white">{w.wallet.user.displayName}</div>
-                      <div className="text-xs text-slate-500">{w.wallet.user.email}</div>
+                  <tr key={w.id} className="hover:bg-surface-elevated transition-colors">
+                    <td className="px-5 py-4 align-middle">
+                      <div className="text-sm font-semibold text-text-primary leading-tight">{w.wallet.user.displayName}</div>
+                      <div className="text-xs text-text-muted mt-0.5">{w.wallet.user.email}</div>
                     </td>
-                    <td className="px-5 py-3 text-xs text-slate-400 max-w-[240px] truncate">{w.description}</td>
-                    <td className="px-5 py-3 text-sm font-bold text-rose-400">{Math.abs(w.amount).toLocaleString("vi")} xu</td>
-                    <td className="px-5 py-3">{statusBadge(w.status)}</td>
-                    <td className="px-5 py-3 text-sm text-slate-500">{new Date(w.createdAt).toLocaleString("vi-VN")}</td>
-                    <td className="px-5 py-3 text-right">
+                    <td className="px-5 py-4 align-middle text-xs text-text-secondary max-w-[240px] truncate">{w.description}</td>
+                    <td className="px-5 py-4 align-middle text-left text-sm font-bold text-rose-500">
+                      {Math.abs(w.amount).toLocaleString("vi")} xu
+                    </td>
+                    <td className="px-5 py-4 align-middle text-left">{statusBadge(w.status)}</td>
+                    <td className="px-5 py-4 align-middle text-left text-sm text-text-muted">
+                      {new Date(w.createdAt).toLocaleString("vi-VN")}
+                    </td>
+                    <td className="px-5 py-4 align-middle text-left">
                       {w.status === "PENDING" && (
-                        <div className="flex gap-2 justify-end">
-                          <button className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-colors disabled:opacity-40 cursor-pointer" onClick={() => setConfirmModal({ open: true, id: w.id, name: w.wallet.user.displayName })} disabled={processingId === w.id}>Duyệt</button>
-                          <button className="px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-400 text-xs font-semibold hover:bg-rose-500/20 transition-colors disabled:opacity-40 cursor-pointer" onClick={() => setRejectModal({ open: true, id: w.id, name: w.wallet.user.displayName })} disabled={processingId === w.id}>Từ chối</button>
+                        <div className="flex gap-2 justify-start">
+                          <button
+                            className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-colors disabled:opacity-40 cursor-pointer"
+                            onClick={() => setConfirmModal({ open: true, id: w.id, name: w.wallet.user.displayName })}
+                            disabled={processingId === w.id}
+                          >
+                            Duyệt
+                          </button>
+                          <button
+                            className="px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-400 text-xs font-semibold hover:bg-rose-500/20 transition-colors disabled:opacity-40 cursor-pointer"
+                            onClick={() => setRejectModal({ open: true, id: w.id, name: w.wallet.user.displayName })}
+                            disabled={processingId === w.id}
+                          >
+                            Từ chối
+                          </button>
                         </div>
                       )}
                     </td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={6} className="px-5 py-12 text-center text-slate-500"><Wallet size={28} className="mx-auto mb-2 opacity-30" /><p className="text-sm">Không có yêu cầu rút tiền nào.</p></td></tr>
+                  <tr><td colSpan={6} className="px-5 py-12 text-center text-text-muted"><Wallet size={28} className="mx-auto mb-2 opacity-30" /><p className="text-sm">Không có yêu cầu rút tiền nào.</p></td></tr>
                 )}
               </tbody>
             </table>

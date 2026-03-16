@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
-import { UserCircle, Shield, Pen, Search, Users, Ban, UserCheck, ShieldAlert, Loader2 } from "lucide-react";
+import { UserCircle, Search, Users, Ban, UserCheck, Loader2 } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
 
@@ -24,8 +24,6 @@ export default function AdminUsersPage() {
   const { showToast } = useToast();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [blockModal, setBlockModal] = useState<{ open: boolean; id: string; name: string; isBlocked: boolean }>({ open: false, id: "", name: "", isBlocked: false });
-  const [roleModal, setRoleModal] = useState<{ open: boolean; id: string; name: string; currentRole: string }>({ open: false, id: "", name: "", currentRole: "" });
-  const [selectedRole, setSelectedRole] = useState<string>("");
 
   const fetchUsers = () => {
     setLoading(true);
@@ -58,29 +56,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleRoleChange = async () => {
-    const { id } = roleModal;
-    if (!selectedRole || selectedRole === roleModal.currentRole) {
-      setRoleModal({ ...roleModal, open: false });
-      return;
-    }
-    setRoleModal({ ...roleModal, open: false });
-    setActionLoading(id);
-    try {
-      await apiFetch(`/admin/users/${id}/role`, {
-        method: "PUT",
-        body: JSON.stringify({ role: selectedRole })
-      });
-      showToast("Cập nhật vai trò thành công", "success");
-      fetchUsers();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Thao tác thất bại";
-      showToast(msg, "error");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
   const filtered = users.filter((u) => {
     const matchSearch =
       !search ||
@@ -99,15 +74,15 @@ export default function AdminUsersPage() {
   };
 
   const roleBadge = (role: string) => {
-    const map: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
-      ADMIN: { label: "Admin", icon: <Shield size={12} />, cls: "bg-rose-500/10 text-rose-400" },
-      WRITER: { label: "Tác giả", icon: <Pen size={12} />, cls: "bg-amber-500/10 text-amber-400" },
-      READER: { label: "Độc giả", icon: <UserCircle size={12} />, cls: "bg-indigo-500/10 text-indigo-400" },
+    const map: Record<string, { label: string; cls: string }> = {
+      ADMIN: { label: "Admin", cls: "bg-rose-500/10 text-rose-400" },
+      WRITER: { label: "Tác giả", cls: "bg-amber-500/10 text-amber-400" },
+      READER: { label: "Độc giả", cls: "bg-indigo-500/10 text-indigo-400" },
     };
     const m = map[role] || map.READER;
     return (
       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${m.cls}`}>
-        {m.icon} {m.label}
+        {m.label}
       </span>
     );
   };
@@ -116,31 +91,31 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-        <Users size={24} className="text-indigo-400" /> Quản lý Người dùng
+      <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">
+        <Users size={24} className="text-indigo-500" /> Quản lý Người dùng
       </h1>
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
           <input
             type="text"
             placeholder="Tìm kiếm người dùng..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all"
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-surface-elevated border border-border-brand text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex bg-slate-800/60 rounded-lg p-1 border border-slate-700/50">
+        <div className="flex bg-surface-elevated rounded-lg p-1 border border-border-brand">
           {(["all", "ADMIN", "WRITER", "READER"] as const).map((r) => (
             <button
               key={r}
               onClick={() => setRoleFilter(r)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
                 roleFilter === r
-                  ? "bg-slate-700 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-surface-brand text-text-primary shadow-sm border border-border-brand"
+                  : "text-text-secondary hover:text-text-primary"
               }`}
             >
               {tabLabel(r)} ({counts[r]})
@@ -150,66 +125,63 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
+      <div className="rounded-xl bg-surface-brand border border-border-brand overflow-hidden shadow-sm">
         {loading ? (
-          <div className="h-72 animate-pulse bg-slate-800/40" />
+          <div className="h-72 animate-pulse bg-surface-brand" />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-700/50">
-                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Người dùng</th>
-                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Email</th>
-                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Vai trò</th>
-                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Ngày tham gia</th>
-                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-right">Thao tác</th>
+                <tr className="border-b border-border-brand bg-surface-elevated/50">
+                  <th className="w-[30%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Người dùng</th>
+                  <th className="w-[30%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Email</th>
+                  <th className="w-[15%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Vai trò</th>
+                  <th className="w-[15%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Ngày tham gia</th>
+                  <th className="w-[10%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/30">
+              <tbody className="divide-y divide-border-brand">
                 {filtered.map((user) => (
-                  <tr key={user.id} className={`hover:bg-slate-700/20 transition-colors ${user.isBlocked ? "opacity-60 bg-rose-500/2" : ""}`}>
-                    <td className="px-5 py-3">
+                  <tr key={user.id} className={`hover:bg-surface-elevated transition-colors ${user.isBlocked ? "opacity-60 bg-rose-500/5" : ""}`}>
+                    <td className="px-5 py-4 align-middle text-left">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-400 shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-muted shrink-0 border border-border-brand">
                           <UserCircle size={18} />
                         </div>
                         <div>
-                          <div className="text-sm font-semibold text-white">{user.displayName || user.username}</div>
-                          <div className="text-xs text-slate-500">@{user.username}</div>
+                          <div className="text-sm font-semibold text-text-primary leading-tight">{user.displayName || user.username}</div>
+                          <div className="text-xs text-text-muted mt-0.5">@{user.username}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-sm text-slate-300">{user.email}</td>
-                    <td className="px-5 py-3">{roleBadge(user.role)}</td>
-                    <td className="px-5 py-3 text-sm text-slate-500">{new Date(user.createdAt).toLocaleDateString("vi")}</td>
-                    <td className="px-5 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button 
-                          onClick={() => {
-                            setRoleModal({ open: true, id: user.id, name: user.displayName || user.username, currentRole: user.role });
-                            setSelectedRole(user.role);
-                          }}
-                          disabled={actionLoading === user.id}
-                          className="p-2 rounded-lg hover:bg-indigo-500/10 text-slate-400 hover:text-indigo-400 transition-colors cursor-pointer disabled:opacity-40"
-                          title="Đổi vai trò"
-                        >
-                          {actionLoading === user.id ? <Loader2 size={16} className="animate-spin" /> : <ShieldAlert size={16} />}
-                        </button>
-                        <button 
-                          onClick={() => setBlockModal({ open: true, id: user.id, name: user.displayName || user.username, isBlocked: !!user.isBlocked })}
-                          disabled={actionLoading === user.id}
-                          className={`p-2 rounded-lg transition-colors cursor-pointer disabled:opacity-40 ${user.isBlocked ? "hover:bg-emerald-500/10 text-emerald-500" : "hover:bg-rose-500/10 text-slate-400 hover:text-rose-400"}`}
-                          title={user.isBlocked ? "Mở khóa" : "Khóa tài khoản"}
-                        >
-                          {actionLoading === user.id ? <Loader2 size={16} className="animate-spin" /> : (user.isBlocked ? <UserCheck size={16} /> : <Ban size={16} />)}
-                        </button>
-                      </div>
+                    <td className="px-5 py-4 align-middle text-sm text-text-secondary text-left">{user.email}</td>
+                    <td className="px-5 py-4 align-middle text-left">{roleBadge(user.role)}</td>
+                    <td className="px-5 py-4 align-middle text-left text-sm text-text-muted">{new Date(user.createdAt).toLocaleDateString("vi")}</td>
+                    <td className="px-5 py-4 align-middle text-left">
+                      <button
+                        onClick={() => setBlockModal({ open: true, id: user.id, name: user.displayName || user.username, isBlocked: !!user.isBlocked })}
+                        disabled={actionLoading === user.id}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-40 border ${
+                          user.isBlocked
+                            ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10 hover:border-emerald-500/50"
+                            : "text-rose-500 border-rose-500/30 hover:bg-rose-500/10 hover:border-rose-500/50"
+                        }`}
+                        title={user.isBlocked ? "Mở khóa" : "Khóa tài khoản"}
+                      >
+                        {actionLoading === user.id ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : user.isBlocked ? (
+                          <><UserCheck size={13} /> Mở khóa</>
+                        ) : (
+                          <><Ban size={13} /> Khóa</>
+                        )}
+                      </button>
                     </td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-5 py-12 text-center text-slate-500">
+                    <td colSpan={5} className="px-5 py-12 text-center text-text-muted">
                       <UserCircle size={28} className="mx-auto mb-2 opacity-30" />
                       <p className="text-sm">Không tìm thấy người dùng nào.</p>
                     </td>
@@ -221,7 +193,7 @@ export default function AdminUsersPage() {
         )}
       </div>
 
-      {/* Modals */}
+      {/* Block/Unblock Modal */}
       <ConfirmModal 
         isOpen={blockModal.open}
         title={blockModal.isBlocked ? "Mở khóa tài khoản" : "Khóa tài khoản"}
@@ -232,44 +204,6 @@ export default function AdminUsersPage() {
         onConfirm={handleBlock}
         onCancel={() => setBlockModal({ ...blockModal, open: false })}
       />
-
-      <ConfirmModal 
-        isOpen={roleModal.open}
-        title="Thay đổi vai trò"
-        message={`Chọn vai trò mới cho người dùng "${roleModal.name}":`}
-        confirmText="Lưu thay đổi"
-        cancelText="Hủy"
-        onConfirm={handleRoleChange}
-        onCancel={() => setRoleModal({ ...roleModal, open: false })}
-      >
-        <div className="grid grid-cols-3 gap-3 mt-5 mb-6">
-          {(["READER", "WRITER", "ADMIN"] as const).map((r) => {
-            const isSel = selectedRole === r;
-            const config = {
-              READER: { label: "Độc giả", icon: <UserCircle size={14} />, activeCls: "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/30", hoverCls: "hover:border-indigo-500/50 hover:bg-indigo-500/5" },
-              WRITER: { label: "Tác giả", icon: <Pen size={14} />, activeCls: "bg-amber-500 border-amber-400 text-white shadow-lg shadow-amber-500/30", hoverCls: "hover:border-amber-500/50 hover:bg-amber-500/5" },
-              ADMIN: { label: "Admin", icon: <Shield size={14} />, activeCls: "bg-rose-500 border-rose-400 text-white shadow-lg shadow-rose-500/30", hoverCls: "hover:border-rose-500/50 hover:bg-rose-500/5" },
-            }[r];
-
-            return (
-              <button
-                key={r}
-                onClick={() => setSelectedRole(r)}
-                className={`flex flex-col items-center gap-2 px-3 py-3.5 rounded-xl border text-[11px] font-bold transition-all duration-300 cursor-pointer group ${
-                  isSel
-                    ? config.activeCls
-                    : `bg-slate-900/40 border-slate-700/50 text-slate-400 ${config.hoverCls} hover:text-slate-200 hover:-translate-y-0.5`
-                }`}
-              >
-                <div className={`p-1.5 rounded-lg transition-colors ${isSel ? "bg-white/20" : "bg-slate-800 group-hover:bg-slate-700"}`}>
-                  {config.icon}
-                </div>
-                {config.label}
-              </button>
-            );
-          })}
-        </div>
-      </ConfirmModal>
     </div>
   );
 }
