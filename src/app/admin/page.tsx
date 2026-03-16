@@ -3,7 +3,33 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import Link from "next/link";
-import { Users, BookOpen, Layers, Edit3, Settings } from "lucide-react";
+import {
+  Users,
+  BookOpen,
+  Layers,
+  Wallet,
+  TrendingUp,
+  Clock,
+  ArrowUpRight,
+  ArrowRight,
+  Eye,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 interface AdminStats {
   users: number;
@@ -11,200 +37,361 @@ interface AdminStats {
   chapters: number;
 }
 
+interface PendingStory {
+  id: string;
+  title: string;
+  isPublished?: boolean;
+  author: { displayName: string; username: string };
+  createdAt: string;
+}
+
+interface PendingWithdrawal {
+  id: string;
+  amount: number;
+  status?: string;
+  wallet: { user: { displayName: string; email: string } };
+  createdAt: string;
+}
+
+interface AdminExtendedStats {
+  summary: {
+    userGrowth: number;
+    storyGrowth: number;
+    chapterGrowth: number;
+    revenueGrowth?: number;
+  };
+  monthlyData: { name: string; users: number; stories: number; revenue?: number }[];
+}
+
+
+interface RoleDistribution {
+  name: string;
+  value: number;
+  color?: string;
+}
+
+interface ContentTypeStat {
+  name: string;
+  count: number;
+}
+
+// Colors for pie chart
+const PIE_COLORS = ["#6366f1", "#f59e0b", "#ef4444", "#10b981", "#8b5cf6"];
+
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<AdminStats>({
-    users: 0,
-    stories: 0,
-    chapters: 0,
-  });
+  const [stats, setStats] = useState<AdminStats>({ users: 0, stories: 0, chapters: 0 });
+  const [pendingStories, setPendingStories] = useState<PendingStory[]>([]);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState<PendingWithdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Real API states
+  const [summary, setSummary] = useState<Partial<AdminExtendedStats["summary"]>>({});
+  const [monthlyData, setMonthlyData] = useState<AdminExtendedStats["monthlyData"]>([]);
+  const [roleData, setRoleData] = useState<RoleDistribution[]>([]);
+  const [contentData, setContentData] = useState<ContentTypeStat[]>([]);
 
   useEffect(() => {
-    apiFetch<AdminStats>("/admin/stats")
-      .then((res) => setStats(res))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      apiFetch<AdminStats>("/admin/stats").catch(() => ({ users: 0, stories: 0, chapters: 0 })),
+      apiFetch<PendingStory[]>("/admin/stories").catch(() => []),
+      apiFetch<PendingWithdrawal[]>("/admin/withdrawals").catch(() => []),
+      apiFetch<AdminExtendedStats>("/admin/stats/extended").catch(() => ({ summary: { userGrowth: 0, storyGrowth: 0, chapterGrowth: 0 }, monthlyData: [] })),
+      apiFetch<RoleDistribution[]>("/admin/stats/role-distribution").catch(() => []),
+      apiFetch<ContentTypeStat[]>("/admin/stats/content-types").catch(() => [])
+    ]).then(([s, stories, withdrawals, ext, roles, contents]) => {
+      setStats(s);
+      setPendingStories(stories.filter((st) => !st.isPublished).slice(0, 5));
+      setPendingWithdrawals(withdrawals.filter((w) => w.status === "PENDING").slice(0, 5));
+      
+      if (ext?.summary) setSummary(ext.summary);
+      if (ext?.monthlyData) setMonthlyData(ext.monthlyData);
+      
+      if (roles && Array.isArray(roles)) {
+        setRoleData(roles.map((r, i) => ({ ...r, color: PIE_COLORS[i % PIE_COLORS.length] })));
+      }
+      if (contents && Array.isArray(contents)) {
+        setContentData(contents);
+      }
+      
+      setLoading(false);
+    });
   }, []);
 
+  const statCards = [
+    {
+      label: "Tổng người dùng",
+      value: stats.users,
+      icon: Users,
+      trend: `${(summary.userGrowth || 0) > 0 ? "+" : ""}${summary.userGrowth || 0}%`,
+      trendUp: (summary.userGrowth || 0) >= 0,
+      gradient: "from-indigo-500 to-indigo-600",
+      shadow: "shadow-indigo-500/20",
+      iconBg: "bg-indigo-500/10",
+      iconColor: "text-indigo-400",
+    },
+    {
+      label: "Tổng truyện",
+      value: stats.stories,
+      icon: BookOpen,
+      trend: `${(summary.storyGrowth || 0) > 0 ? "+" : ""}${summary.storyGrowth || 0}%`,
+      trendUp: (summary.storyGrowth || 0) >= 0,
+      gradient: "from-emerald-500 to-emerald-600",
+      shadow: "shadow-emerald-500/20",
+      iconBg: "bg-emerald-500/10",
+      iconColor: "text-emerald-400",
+    },
+    {
+      label: "Tổng chương",
+      value: stats.chapters,
+      icon: Layers,
+      trend: `${(summary.chapterGrowth || 0) > 0 ? "+" : ""}${summary.chapterGrowth || 0}%`,
+      trendUp: (summary.chapterGrowth || 0) >= 0,
+      gradient: "from-amber-500 to-amber-600",
+      shadow: "shadow-amber-500/20",
+      iconBg: "bg-amber-500/10",
+      iconColor: "text-amber-400",
+    },
+    {
+      label: "Chờ xử lý",
+      value: pendingStories.length + pendingWithdrawals.length,
+      icon: Clock,
+      trend: "Cần duyệt",
+      trendUp: false,
+      gradient: "from-rose-500 to-rose-600",
+      shadow: "shadow-rose-500/20",
+      iconBg: "bg-rose-500/10",
+      iconColor: "text-rose-400",
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 rounded-xl bg-slate-800/50 animate-pulse" />
+          ))}
+        </div>
+        <div className="h-80 rounded-xl bg-slate-800/50 animate-pulse" />
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <h1 className="section-title">Tổng quan hệ thống</h1>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <TrendingUp size={24} className="text-emerald-400" />
+            Dashboard
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">Tổng quan hệ thống Web Novel Platform</p>
+        </div>
+      </div>
 
-      {loading ? (
-        <div className="skeleton" style={{ height: "150px" }} />
-      ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: "1rem",
-          }}
-        >
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {statCards.map((card) => (
           <div
-            className="card"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              padding: "1.5rem",
-            }}
+            key={card.label}
+            className="relative overflow-hidden rounded-xl bg-slate-800/50 border border-slate-700/50 p-5 hover:border-slate-600/50 transition-all duration-300 group"
           >
-            <div
-              style={{
-                padding: "1rem",
-                background: "rgba(var(--color-primary-rgb), 0.1)",
-                borderRadius: "50%",
-                color: "var(--color-primary)",
-              }}
-            >
-              <Users size={32} />
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">{card.label}</p>
+                <p className="text-3xl font-extrabold text-white mt-2">{card.value.toLocaleString("vi")}</p>
+                <div className={`flex items-center gap-1 mt-2 text-xs font-semibold ${card.trendUp ? "text-emerald-400" : "text-amber-400"}`}>
+                  {card.trendUp && <ArrowUpRight size={14} />}
+                  {card.trend}
+                </div>
+              </div>
+              <div className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center`}>
+                <card.icon size={20} className={card.iconColor} />
+              </div>
             </div>
-            <div>
-              <p style={{ margin: 0, fontSize: "0.875rem", opacity: 0.7 }}>
-                Tổng người dùng
-              </p>
-              <h2 style={{ margin: 0, fontSize: "2rem" }}>{stats.users}</h2>
-            </div>
+            {/* Decorative gradient */}
+            <div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full bg-linear-to-br ${card.gradient} opacity-5 group-hover:opacity-10 transition-opacity`} />
           </div>
+        ))}
+      </div>
 
-          <div
-            className="card"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              padding: "1.5rem",
-            }}
-          >
-            <div
-              style={{
-                padding: "1rem",
-                background: "rgba(16, 185, 129, 0.1)",
-                borderRadius: "50%",
-                color: "#10b981",
-              }}
-            >
-              <BookOpen size={32} />
-            </div>
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Area Chart - Growth */}
+        <div className="lg:col-span-2 rounded-xl bg-slate-800/50 border border-slate-700/50 p-5">
+          <div className="flex items-center justify-between mb-5">
             <div>
-              <p style={{ margin: 0, fontSize: "0.875rem", opacity: 0.7 }}>
-                Tổng truyện
-              </p>
-              <h2 style={{ margin: 0, fontSize: "2rem" }}>{stats.stories}</h2>
+              <h3 className="text-sm font-bold text-white">Tăng trưởng nền tảng</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Người dùng & truyện theo tháng</p>
             </div>
+            <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400">
+              6 tháng gần nhất
+            </span>
           </div>
+          <ResponsiveContainer width="100%" height={240}>
+            <AreaChart data={monthlyData}>
+              <defs>
+                <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorStories" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <XAxis dataKey="name" stroke="#475569" fontSize={12} />
+              <YAxis stroke="#475569" fontSize={12} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  borderRadius: "0.75rem",
+                  fontSize: "0.8125rem",
+                }}
+                labelStyle={{ color: "#94a3b8" }}
+              />
+              <Area type="monotone" dataKey="users" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorUsers)" name="Người dùng" />
+              <Area type="monotone" dataKey="stories" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorStories)" name="Truyện" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
 
-          <div
-            className="card"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              padding: "1.5rem",
-            }}
-          >
-            <div
-              style={{
-                padding: "1rem",
-                background: "rgba(245, 158, 11, 0.1)",
-                borderRadius: "50%",
-                color: "#f59e0b",
-              }}
-            >
-              <Layers size={32} />
-            </div>
-            <div>
-              <p style={{ margin: 0, fontSize: "0.875rem", opacity: 0.7 }}>
-                Tổng chương
-              </p>
-              <h2 style={{ margin: 0, fontSize: "2rem" }}>{stats.chapters}</h2>
-            </div>
+        {/* Pie Chart - Roles */}
+        <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 p-5">
+          <h3 className="text-sm font-bold text-white mb-1">Phân bổ vai trò</h3>
+          <p className="text-xs text-slate-500 mb-4">Tỷ lệ người dùng theo vai trò</p>
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie
+                data={roleData}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={75}
+                paddingAngle={4}
+                dataKey="value"
+              >
+                {roleData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  borderRadius: "0.75rem",
+                  fontSize: "0.8125rem",
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="flex justify-center gap-4 mt-2">
+            {roleData.map((item) => (
+              <div key={item.name} className="flex items-center gap-1.5 text-xs text-slate-400">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                {item.name}
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Quick Actions */}
-      <h2
-        className="section-title"
-        style={{ marginTop: "2rem", fontSize: "1.25rem" }}
-      >
-        Truy cập nhanh
-      </h2>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: "1rem",
-        }}
-      >
-        <Link
-          href="/admin/stories"
-          className="card"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-            padding: "1.5rem",
-            textDecoration: "none",
-            color: "inherit",
-            transition: "transform 0.2s",
-          }}
-        >
-          <div
-            style={{
-              padding: "1rem",
-              background: "rgba(16, 185, 129, 0.1)",
-              borderRadius: "var(--radius-lg)",
-              color: "#10b981",
-            }}
-          >
-            <Edit3 size={24} />
-          </div>
+      {/* Bar Chart - Content Types */}
+      <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 p-5">
+        <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}>
-              Quản lý Truyện
+            <h3 className="text-sm font-bold text-white">Phân bổ nội dung</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Số lượng truyện theo loại</p>
+          </div>
+        </div>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={contentData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+            <XAxis dataKey="name" stroke="#475569" fontSize={12} />
+            <YAxis stroke="#475569" fontSize={12} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#1e293b",
+                border: "1px solid #334155",
+                borderRadius: "0.75rem",
+                fontSize: "0.8125rem",
+              }}
+            />
+            <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} name="Số truyện" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Pending Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Pending Stories */}
+        <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <AlertCircle size={16} className="text-amber-400" />
+              Truyện chờ duyệt
             </h3>
-            <p
-              style={{ margin: "4px 0 0", fontSize: "0.875rem", opacity: 0.7 }}
-            >
-              Duyệt nội dung, gỡ xuất bản
-            </p>
+            <Link href="/admin/stories" className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer">
+              Xem tất cả <ArrowRight size={12} />
+            </Link>
           </div>
-        </Link>
-        <Link
-          href="/admin/users"
-          className="card"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-            padding: "1.5rem",
-            textDecoration: "none",
-            color: "inherit",
-            transition: "transform 0.2s",
-          }}
-        >
-          <div
-            style={{
-              padding: "1rem",
-              background: "rgba(245, 158, 11, 0.1)",
-              borderRadius: "var(--radius-lg)",
-              color: "#f59e0b",
-            }}
-          >
-            <Settings size={24} />
-          </div>
-          <div>
-            <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}>
-              Quản lý Người dùng
+          {pendingStories.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-slate-500">
+              <CheckCircle size={28} className="mb-2 opacity-40" />
+              <p className="text-sm">Không có truyện nào chờ duyệt</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-700/50">
+              {pendingStories.map((story) => (
+                <div key={story.id} className="flex items-center justify-between px-5 py-3 hover:bg-slate-700/20 transition-colors">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{story.title}</p>
+                    <p className="text-xs text-slate-500">{story.author?.displayName || story.author?.username}</p>
+                  </div>
+                  <Link href={`/stories/${story.id}`} className="p-2 rounded-lg hover:bg-slate-700/40 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0">
+                    <Eye size={16} />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Pending Withdrawals */}
+        <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Wallet size={16} className="text-indigo-400" />
+              Rút tiền chờ duyệt
             </h3>
-            <p
-              style={{ margin: "4px 0 0", fontSize: "0.875rem", opacity: 0.7 }}
-            >
-              Phân quyền hệ thống
-            </p>
+            <Link href="/admin/withdrawals" className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer">
+              Xem tất cả <ArrowRight size={12} />
+            </Link>
           </div>
-        </Link>
+          {pendingWithdrawals.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-slate-500">
+              <CheckCircle size={28} className="mb-2 opacity-40" />
+              <p className="text-sm">Không có yêu cầu rút tiền nào</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-700/50">
+              {pendingWithdrawals.map((w) => (
+                <div key={w.id} className="flex items-center justify-between px-5 py-3 hover:bg-slate-700/20 transition-colors">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white">{w.wallet.user.displayName}</p>
+                    <p className="text-xs text-slate-500">{w.wallet.user.email}</p>
+                  </div>
+                  <span className="text-sm font-bold text-rose-400 shrink-0">
+                    {Math.abs(w.amount).toLocaleString("vi")} xu
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

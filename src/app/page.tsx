@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import {
   BookOpen,
@@ -24,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { apiFetch } from "@/lib/api";
-import { isLoggedIn } from "@/lib/auth";
+import { isLoggedIn, getUserRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import StoryCard from "@/components/StoryCard";
 import { type CarouselApi } from "@/components/ui/carousel";
@@ -83,6 +84,7 @@ const cardVariant: Variants = {
 };
 
 export default function HomePage() {
+  const router = useRouter();
   const [loggedIn, setLoggedIn] = useState(false);
   const [latestStories, setLatestStories] = useState<Story[]>([]);
   const [topViewedStories, setTopViewedStories] = useState<Story[]>([]);
@@ -101,7 +103,13 @@ export default function HomePage() {
 
   useEffect(() => {
     const logged = isLoggedIn();
+    const role = getUserRole();
     Promise.resolve().then(() => setLoggedIn(logged));
+
+    if (logged && role === "ADMIN") {
+      router.push("/admin");
+      return;
+    }
 
     const fetches: Promise<void>[] = [
       apiFetch<{ data: Story[] } | Story[]>("/stories?limit=8&sort=latest")
