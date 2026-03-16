@@ -115,6 +115,7 @@ export default function StoryDetailPage() {
   const [feedTab, setFeedTab] = useState<"comments" | "reviews">("comments");
   const [originalLikes, setOriginalLikes] = useState<string[]>([]);
   const [readChapterIds, setReadChapterIds] = useState<string[]>([]);
+  const [likingIds, setLikingIds] = useState<string[]>([]);
 
   // Donate modal state
   const [showDonate, setShowDonate] = useState(false);
@@ -136,11 +137,10 @@ export default function StoryDetailPage() {
       apiFetch<Story>(`/stories/${storyId}`),
       apiFetch<Chapter[]>(`/stories/${storyId}/chapters`),
       apiFetch<{ data: Comment[] } | Comment[]>(`/stories/${storyId}/comments`),
-      isLoggedIn() ? apiFetch<string[]>(`/stories/${storyId}/my-likes`) : Promise.resolve([] as string[]),
       isLoggedIn() ? apiFetch<any>("/auth/profile") : Promise.resolve(null),
       isLoggedIn() ? apiFetch<string[]>(`/reading-history/story/${storyId}`) : Promise.resolve([] as string[])
     ])
-      .then(([storyResult, chaptersResult, commentsResult, likesResult, profileResult, historyResult]) => {
+      .then(([storyResult, chaptersResult, commentsResult, profileResult, historyResult]) => {
         // Story is critical — if it fails, show not found
         if (storyResult.status === 'fulfilled') {
           setStory(storyResult.value);
@@ -159,19 +159,19 @@ export default function StoryDetailPage() {
             ? commentsData
             : (commentsData as { data: Comment[] }).data || [];
           const flatComments: Comment[] = [];
-          rawComments.forEach((c: Comment) => {
+          const likedIds: string[] = [];
+
+          rawComments.forEach((c: any) => {
             flatComments.push(c);
+            if (c.isLiked) likedIds.push(c.id);
             if (c.replies && Array.isArray(c.replies)) {
-              c.replies.forEach((r: Comment) => {
+              c.replies.forEach((r: any) => {
                 flatComments.push({ ...r, parentId: c.id });
+                if (r.isLiked) likedIds.push(r.id);
               });
             }
           });
           setComments(flatComments);
-        }
-
-        if (likesResult.status === 'fulfilled') {
-          const likedIds = Array.isArray(likesResult.value) ? likesResult.value : [];
           setLikedComments(likedIds);
           setOriginalLikes(likedIds);
         }
@@ -261,6 +261,44 @@ export default function StoryDetailPage() {
       showToast((err as Error).message || "Không thể gửi bình luận", "error");
     } finally {
       setCommentLoading(false);
+    }
+  };
+
+  const toggleLike = async (commentId: string) => {
+    if (!isLoggedIn()) {
+      showToast("Vui lòng đăng nhập để thực hiện hành động này", "error");
+      router.push("/login");
+      return;
+    }
+
+    if (likingIds.includes(commentId)) return;
+
+    setLikingIds((prev) => [...prev, commentId]);
+    const isLiked = likedComments.includes(commentId);
+
+    // Optimistic update
+    if (isLiked) {
+      setLikedComments((prev) => prev.filter((id) => id !== commentId));
+    } else {
+      setLikedComments((prev) => [...prev, commentId]);
+    }
+
+    try {
+      if (isLiked) {
+        await apiFetch(`/comments/${commentId}/like`, { method: "DELETE" });
+      } else {
+        await apiFetch(`/comments/${commentId}/like`, { method: "POST" });
+      }
+    } catch (err) {
+      // Revert optimistic update
+      if (isLiked) {
+        setLikedComments((prev) => [...prev, commentId]);
+      } else {
+        setLikedComments((prev) => prev.filter((id) => id !== commentId));
+      }
+      showToast("Không thể thực hiện hành động. Vui lòng thử lại.", "error");
+    } finally {
+      setLikingIds((prev) => prev.filter((id) => id !== commentId));
     }
   };
 
@@ -801,33 +839,17 @@ export default function StoryDetailPage() {
                                 <button 
                                   className={cn(
                                     "flex items-center gap-1 text-xs font-bold transition-colors",
-                                    likedComments.includes(comment.id) ? "text-rose-500" : "text-slate-500 hover:text-rose-500"
+                                    likedComments.includes(comment.id) ? "text-red-500 scale-110" : "text-slate-500 hover:text-red-500"
                                   )}
-                                  onClick={async () => {
-                                    if (!isLoggedIn()) {
-                                      showToast("Vui lòng đăng nhập để thích", "error");
-                                      return;
-                                    }
-                                    const isLiked = likedComments.includes(comment.id);
-                                    if (isLiked) {
-                                      setLikedComments(prev => prev.filter(id => id !== comment.id));
-                                      try {
-                                        await apiFetch(`/comments/${comment.id}/like`, { method: "DELETE" });
-                                      } catch (err) {
-                                        setLikedComments(prev => [...prev, comment.id]);
-                                      }
-                                    } else {
-                                      setLikedComments(prev => [...prev, comment.id]);
-                                      try {
-                                        await apiFetch(`/comments/${comment.id}/like`, { method: "POST" });
-                                      } catch (err) {
-                                        setLikedComments(prev => prev.filter(id => id !== comment.id));
-                                      }
-                                    }
-                                  }}
+                                  onClick={() => toggleLike(comment.id)}
+                                  disabled={likingIds.includes(comment.id)}
                                 >
-                                  <ThumbsUp size={12} fill={likedComments.includes(comment.id) ? "currentColor" : "none"} /> 
-                                  {(comment._count?.likes || 0) + (originalLikes.includes(comment.id) && !likedComments.includes(comment.id) ? -1 : !originalLikes.includes(comment.id) && likedComments.includes(comment.id) ? 1 : 0)} Thích
+                                  <ThumbsUp size={14} fill={likedComments.includes(comment.id) ? "#ef4444" : "none"} stroke={likedComments.includes(comment.id) ? "#ef4444" : "currentColor"} /> 
+                                  <span className="ml-1">
+                                    {(comment._count?.likes || 0) + 
+                                      (originalLikes.includes(comment.id) && !likedComments.includes(comment.id) ? -1 : 
+                                      !originalLikes.includes(comment.id) && likedComments.includes(comment.id) ? 1 : 0)}
+                                  </span>
                                 </button>
                                 <button 
                                   className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-primary-brand transition-colors"
@@ -879,34 +901,18 @@ export default function StoryDetailPage() {
                                         <div className="flex items-center gap-2">
                                           <button 
                                             className={cn(
-                                              "flex items-center gap-0.5 text-[10px] font-bold transition-colors",
-                                              likedComments.includes(reply.id) ? "text-rose-500" : "text-slate-500 hover:text-rose-500"
+                                              "flex items-center gap-0.5 text-[10px] font-bold transition-all duration-200",
+                                              likedComments.includes(reply.id) ? "text-red-500 scale-110" : "text-slate-500 hover:text-red-500"
                                             )}
-                                            onClick={async () => {
-                                              if (!isLoggedIn()) {
-                                                showToast("Vui lòng đăng nhập để thích", "error");
-                                                return;
-                                              }
-                                              const isLiked = likedComments.includes(reply.id);
-                                              if (isLiked) {
-                                                setLikedComments(prev => prev.filter(id => id !== reply.id));
-                                                try {
-                                                  await apiFetch(`/comments/${reply.id}/like`, { method: "DELETE" });
-                                                } catch (err) {
-                                                  setLikedComments(prev => [...prev, reply.id]);
-                                                }
-                                              } else {
-                                                setLikedComments(prev => [...prev, reply.id]);
-                                                try {
-                                                  await apiFetch(`/comments/${reply.id}/like`, { method: "POST" });
-                                                } catch (err) {
-                                                  setLikedComments(prev => prev.filter(id => id !== reply.id));
-                                                }
-                                              }
-                                            }}
+                                            onClick={() => toggleLike(reply.id)}
+                                            disabled={likingIds.includes(reply.id)}
                                           >
-                                            <ThumbsUp size={10} fill={likedComments.includes(reply.id) ? "currentColor" : "none"} /> 
-                                            {(reply._count?.likes || 0) + (originalLikes.includes(reply.id) && !likedComments.includes(reply.id) ? -1 : !originalLikes.includes(reply.id) && likedComments.includes(reply.id) ? 1 : 0)} Thích
+                                            <ThumbsUp size={12} fill={likedComments.includes(reply.id) ? "#ef4444" : "none"} stroke={likedComments.includes(reply.id) ? "#ef4444" : "currentColor"} /> 
+                                            <span className="ml-0.5">
+                                              {(reply._count?.likes || 0) + 
+                                                (originalLikes.includes(reply.id) && !likedComments.includes(reply.id) ? -1 : 
+                                                !originalLikes.includes(reply.id) && likedComments.includes(reply.id) ? 1 : 0)}
+                                            </span>
                                           </button>
                                           <button 
                                             className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-primary-brand transition-colors"

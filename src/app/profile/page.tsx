@@ -405,7 +405,7 @@ export default function ProfileSettingsPage() {
               </div>
             </motion.form>
           </div>
-        </div>
+        </main>
       </motion.div>
 
       {/* Change Password Dialog */}

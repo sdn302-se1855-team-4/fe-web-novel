@@ -122,26 +122,25 @@ export default function CreateChapterPage() {
                       min="1"
                       className="input h-14 rounded-2xl text-center font-bold"
                       value={chapterNumber}
-                      onChange={(e) => setChapterNumber(parseInt(e.target.value) || 1)}
+                      onChange={(e) => setChapterNumber(e.target.value)}
                       required
                     />
                   </div>
                 </div>
 
-        <div className="form-group">
-          <label htmlFor="chapterNumber" className="label">
-            Số chương *
-          </label>
-          <input
-            id="chapterNumber"
-            type="number"
-            min="1"
-            className="input"
-            value={chapterNumber}
-            onChange={(e) => setChapterNumber(e.target.value)}
-            required
-          />
-        </div>
+                <div className="space-y-4">
+                  <label htmlFor="content" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1 flex items-center gap-2">
+                    <Sparkles size={14} className="text-purple-500" /> Nội dung chương
+                  </label>
+                  <textarea
+                    id="content"
+                    className="input min-h-[400px] py-4 rounded-2xl resize-none leading-relaxed"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    required
+                    placeholder="Bắt đầu viết nội dung chương tại đây..."
+                  />
+                </div>
 
                 <div className={cn(
                   "p-6 rounded-3xl border-2 transition-all duration-300 space-y-4",
@@ -167,60 +166,30 @@ export default function CreateChapterPage() {
                     </span>
                   </label>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-            padding: "1rem",
-            background: "var(--color-surface)",
-            borderRadius: "var(--radius-md)",
-            border: "1px solid var(--color-border)",
-          }}
-        >
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={isPremium}
-              onChange={(e) => setIsPremium(e.target.checked)}
-              style={{
-                width: "1.25rem",
-                height: "1.25rem",
-                accentColor: "var(--color-primary)",
-              }}
-            />
-            Bật kiếm tiền (Premium)
-          </label>
-
-          {isPremium && (
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="label">Giá chương (Xu)</label>
-              <input
-                type="number"
-                min="0"
-                className="input"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="VD: 50"
-                required={isPremium}
-              />
-              <p
-                className="text-xs text-muted"
-                style={{ marginTop: "0.5rem" }}
-              >
-                Người đọc phải trả số xu này để mở khóa chương.
-              </p>
-            </div>
-          )}
-        </div>
+                  {isPremium && (
+                    <div className="space-y-4 pt-2">
+                       <label htmlFor="price" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1 flex items-center gap-2">
+                         <Coins size={14} className="text-amber-500" /> Giá chương (Số xu)
+                       </label>
+                       <div className="relative">
+                         <input
+                           id="price"
+                           type="number"
+                           min="0"
+                           className="input h-14 rounded-2xl pl-12"
+                           value={price}
+                           onChange={(e) => setPrice(e.target.value)}
+                           required={isPremium}
+                           placeholder="VD: 50"
+                         />
+                         <Coins className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500" size={18} />
+                       </div>
+                       <p className="text-[11px] font-medium text-text-muted ml-1 flex items-center gap-1.5">
+                         <Info size={12} /> Người đọc cần trả số xu này để mở khóa nội dung.
+                       </p>
+                    </div>
+                  )}
+                </div>
 
                 <button 
                   type="submit" 

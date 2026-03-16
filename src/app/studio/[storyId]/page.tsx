@@ -3,11 +3,12 @@
 import { useEffect, useState, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Save, Plus, BookOpen, Trash2, Edit, RefreshCw, ChevronLeft } from "lucide-react";
+import { Save, Plus, BookOpen, Trash2, Edit, RefreshCw, ChevronLeft, Info, LayoutList } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
+import { cn } from "@/lib/utils";
 
 interface Story {
   id: string;
@@ -156,24 +157,6 @@ export default function EditStoryPage() {
         </h1>
 
         {/* Edit Form */}
-        <form
-          onSubmit={handleSave}
-          className="flex flex-col gap-md"
-          style={{ marginBottom: "var(--spacing-2xl)" }}
-        >
-          <div className="p-2 rounded-xl bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
-            <ChevronLeft size={18} />
-          </div>
-          Quay lại Studio
-        </button>
-      </div>
-
-      <div className="max-w-[850px] mx-auto">
-        <h1 className="text-3xl font-black text-text-primary italic uppercase tracking-tighter mb-10 flex items-center gap-4">
-          <Edit size={32} className="text-emerald-500" /> Chỉnh sửa tác phẩm
-        </h1>
-
-        {/* Edit Form Card */}
         <div className="bg-surface-brand border border-border-brand/50 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl shadow-black/5 mb-16 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] pointer-events-none" />
           
@@ -301,47 +284,46 @@ export default function EditStoryPage() {
             </Link>
           </div>
 
-        {/* Chapter Management */}
-        <div className="flex items-center justify-between gap-6 mb-8 flex-wrap">
-          <h2 className="section-title">
-            <BookOpen size={22} /> Danh sách chương ({chapters.length})
-          </h2>
-          <Link
-            href={`/studio/${storyId}/chapters/create`}
-            className="btn btn-primary btn-sm"
-          >
-            <Plus size={16} /> Thêm chương
-          </Link>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          {chapters.length > 0 ? (
-            chapters.map((ch) => (
-              <div key={ch.id} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[2rem] md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
-                <div className="flex-1 min-w-0 flex flex-col gap-2">
-                  <h3 className="text-lg font-bold text-text-primary truncate">
-                    Chương {ch.chapterNumber}: {ch.title}
-                  </h3>
-                  <div className="flex items-center gap-4 flex-wrap text-sm font-medium">
-                    {ch.isPremium && (
-                      <span className="badge badge-premium">Premium</span>
-                    )}
-                    {ch.createdAt && (
-                      <span className="text-xs text-muted">
-                        {new Intl.DateTimeFormat("vi").format(
-                          new Date(ch.createdAt),
-                        )}
-                      </span>
-                    )}
+          <div className="flex flex-col gap-4">
+            {chapters.length > 0 ? (
+              chapters.map((ch) => (
+                <div key={ch.id} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[2rem] md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
+                  <div className="flex-1 min-w-0 flex flex-col gap-2">
+                    <h3 className="text-lg font-bold text-text-primary truncate">
+                      Chương {ch.chapterNumber}: {ch.title}
+                    </h3>
+                    <div className="flex items-center gap-4 flex-wrap text-sm font-medium">
+                      {ch.isPremium && (
+                        <span className="badge badge-premium">Premium</span>
+                      )}
+                      {ch.createdAt && (
+                        <span className="text-xs text-muted">
+                          {new Intl.DateTimeFormat("vi").format(
+                            new Date(ch.createdAt),
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0 w-full md:w-auto justify-end pt-4 md:pt-0 border-t md:border-t-0 border-border-brand">
+                    <Link
+                      href={`/studio/${storyId}/chapters/${ch.chapterNumber}/edit`}
+                      className="btn btn-outline btn-sm"
+                    >
+                      <Plus size={18} /> Sửa chương
+                    </Link>
+                    <button
+                      onClick={() => confirmDeleteChapter(ch.chapterNumber)}
+                      className="btn btn-ghost btn-sm text-rose-500"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0 w-full md:w-auto justify-end pt-4 md:pt-0 border-t md:border-t-0 border-border-brand">
-                  <Link
-                    href={`/studio/${storyId}/chapters/${ch.chapterNumber}/edit`}
-                    className="btn btn-outline btn-sm"
-                  >
-                    <Plus size={18} /> Thêm chương ngay
-                  </Link>
+              ))
+            ) : (
+              <div className="py-20 text-center border-2 border-dashed border-border-brand rounded-[2.5rem]">
+                <p className="text-text-muted font-bold">Chưa có chương nào.</p>
               </div>
             )}
           </div>

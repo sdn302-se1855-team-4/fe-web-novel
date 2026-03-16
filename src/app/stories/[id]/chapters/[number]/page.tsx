@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
+import { cn } from "@/lib/utils";
 
 const THEMES = {
   light: {
@@ -323,7 +324,7 @@ export default function ChapterReaderPage() {
                 <Coins size={14} /> PREMIUM
               </span>
             )}
-          </header>
+            </h1>
 
           {/* Inline Navigation Bar */}
           <div className="flex items-center justify-center gap-3 mb-10 w-full">

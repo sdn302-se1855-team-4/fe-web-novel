@@ -1,7 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Facebook, MessageSquare, Send, Lightbulb } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  BookOpen,
+  Facebook,
+  Twitter,
+  Instagram,
+  Github,
+  ChevronRight,
+  Mail,
+  Send,
+  Heart,
+  Lightbulb,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -23,9 +36,15 @@ export default function Footer() {
   return (
     <footer className="bg-surface-brand border-t border-border py-12 mt-auto">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+        >
           {/* Brand & Mission */}
-          <div className="space-y-4">
+          <motion.div className="space-y-4" variants={itemVariants}>
             <div className="flex items-center gap-2 text-primary">
               <BookOpen size={24} className="text-emerald-500" />
               <span className="text-xl font-bold text-text-primary">BestNovelVN</span>

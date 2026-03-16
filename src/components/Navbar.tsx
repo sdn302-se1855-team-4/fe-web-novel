@@ -76,11 +76,20 @@ export default function Navbar() {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [rankOpen, setRankOpen] = useState(false);
+
+  const rankTabs = [
+    { key: "viewCount", label: "Xem nhiều nhất" },
+    { key: "rating", label: "Đánh giá cao" },
+    { key: "updatedAt", label: "Mới cập nhật" },
+    { key: "chapters", label: "Số chương" },
+  ];
 
 
   const genreRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+  const rankRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -183,6 +192,9 @@ export default function Navbar() {
       }
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
+      }
+      if (rankRef.current && !rankRef.current.contains(e.target as Node)) {
+        setRankOpen(false);
       }
       // Close search suggestions on click outside
       setShowSuggestions(false);
