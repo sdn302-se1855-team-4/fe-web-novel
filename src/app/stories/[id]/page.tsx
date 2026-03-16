@@ -137,7 +137,7 @@ export default function StoryDetailPage() {
       apiFetch<Story>(`/stories/${storyId}`),
       apiFetch<Chapter[]>(`/stories/${storyId}/chapters`),
       apiFetch<{ data: Comment[] } | Comment[]>(`/stories/${storyId}/comments`),
-      isLoggedIn() ? apiFetch<any>("/auth/profile") : Promise.resolve(null),
+      isLoggedIn() ? apiFetch<any>("/users/me") : Promise.resolve(null),
       isLoggedIn() ? apiFetch<string[]>(`/reading-history/story/${storyId}`) : Promise.resolve([] as string[])
     ])
       .then(([storyResult, chaptersResult, commentsResult, profileResult, historyResult]) => {
@@ -413,7 +413,7 @@ export default function StoryDetailPage() {
   }
 
   return (
-<div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden -mt-(--navbar-height)">
+<div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden">
         {/* Immersive Background Header */}
         <div className="relative h-[20vh] md:h-[25vh] w-full overflow-hidden">
           {story.coverImage && (

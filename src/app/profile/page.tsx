@@ -71,7 +71,7 @@ export default function ProfileSettingsPage() {
       return;
     }
 
-    apiFetch<UserProfile>("/auth/profile")
+    apiFetch<UserProfile>("/users/me")
       .then((res) => {
         setUser(res);
         setFormData({
@@ -94,7 +94,7 @@ export default function ProfileSettingsPage() {
     setSaving(true);
 
     try {
-      const updated = await apiFetch<UserProfile>("/auth/profile", {
+      const updated = await apiFetch<UserProfile>("/users/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -104,7 +104,6 @@ export default function ProfileSettingsPage() {
           bio: formData.bio || undefined,
           gender: formData.gender,
           isAnonymous: formData.isAnonymous,
-          ...(previewImage ? { avatar: previewImage } : {}),
         }),
       });
 
@@ -126,19 +125,40 @@ export default function ProfileSettingsPage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
         showToast("Kích thước ảnh không được vượt quá 2MB", "error");
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result as string);
-        showToast("Đã chọn ảnh mới. Nhấn Lưu để cập nhật.", "success");
-      };
-      reader.readAsDataURL(file);
+      setSaving(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await apiFetch<{ avatar: string }>("/users/me/avatar", {
+          method: "PATCH",
+          body: formData,
+        });
+
+        setPreviewImage(res.avatar);
+        setUser((prev) => (prev ? { ...prev, avatar: res.avatar } : prev));
+        showToast("Cập nhật ảnh đại diện thành công", "success");
+
+        window.dispatchEvent(
+          new CustomEvent("user-profile-updated", {
+            detail: {
+              avatar: res.avatar,
+              displayName: user?.displayName,
+            },
+          })
+        );
+      } catch {
+        showToast("Không thể tải ảnh lên, vui lòng thử lại", "error");
+      } finally {
+        setSaving(false);
+      }
     }
   };
 

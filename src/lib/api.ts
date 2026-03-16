@@ -76,9 +76,12 @@ export async function apiFetch<T>(
   const token = providedToken ?? getAccessToken();
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...((fetchOptions.headers as Record<string, string>) ?? {}),
   };
+
+  if (!(typeof FormData !== "undefined" && fetchOptions.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -86,6 +89,7 @@ export async function apiFetch<T>(
 
   try {
     const res = await fetch(`${API_BASE}${path}`, {
+      cache: "no-store",
       ...fetchOptions,
       headers,
     });

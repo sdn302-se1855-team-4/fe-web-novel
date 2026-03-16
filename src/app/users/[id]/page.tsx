@@ -70,7 +70,7 @@ export default function PublicProfilePage() {
         .catch(() => {});
 
       // Get current user ID to hide follow button on own profile
-      apiFetch<{ id: string }>("/auth/profile")
+      apiFetch<{ id: string }>("/users/me")
         .then((res) => setCurrentUserId(res.id))
         .catch(() => {});
     }
