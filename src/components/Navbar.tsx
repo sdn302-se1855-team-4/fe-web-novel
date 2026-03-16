@@ -91,7 +91,7 @@ export default function Navbar() {
 
   const fetchUserProfile = () => {
     if (!isLoggedIn()) return;
-    apiFetch<UserProfile>("/auth/profile")
+    apiFetch<UserProfile>("/users/me")
       .then((res) => setUserProfile(res))
       .catch(() => {});
   };
@@ -262,6 +262,7 @@ export default function Navbar() {
               onClick={toggleTheme}
               className="p-2 sm:p-2.5 rounded-full bg-surface-elevated text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-500/10 shrink-0"
               aria-label="Toggle Theme"
+              suppressHydrationWarning
             >
               {theme === "dark" ? <Lightbulb size={18} /> : <Sun size={18} />}
             </button>
@@ -278,10 +279,12 @@ export default function Navbar() {
                 onFocus={() =>
                   searchQuery.length >= 2 && setShowSuggestions(true)
                 }
+                suppressHydrationWarning
               />
               <button
                 type="submit"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-brand"
+                suppressHydrationWarning
               >
                 <Search size={18} strokeWidth={2.5} />
               </button>
@@ -484,6 +487,7 @@ export default function Navbar() {
                   genreOpen && "underline decoration-2 underline-offset-4",
                 )}
                 onClick={() => setGenreOpen((p) => !p)}
+                suppressHydrationWarning
               >
                 Thể loại
                 <ChevronDown
