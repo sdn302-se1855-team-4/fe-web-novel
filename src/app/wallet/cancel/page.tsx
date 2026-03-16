@@ -8,9 +8,20 @@ export default function DepositCancelPage() {
 
   return (
     <div className="container py-8">
-      <div className="max-w-[480px] mx-auto my-8 text-center px-8 py-12 rounded-xl bg-surface-elevated border border-border-brand shadow-lg">
-        <XCircle size={56} className="text-red-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-text-primary">
+      <div
+        style={{
+          maxWidth: 480,
+          margin: "2rem auto",
+          textAlign: "center",
+          padding: "3rem 2rem",
+          borderRadius: "var(--radius-xl)",
+          background: "var(--color-surface-elevated)",
+          border: "1px solid var(--color-border)",
+          boxShadow: "var(--shadow-lg)",
+        }}
+      >
+        <XCircle size={56} style={{ color: "#ef4444", marginBottom: "1rem" }} />
+        <h2 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
           Đã huỷ thanh toán
         </h2>
         <p className="text-text-muted mt-2 text-sm">

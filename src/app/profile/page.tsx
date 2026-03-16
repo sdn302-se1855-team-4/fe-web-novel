@@ -25,6 +25,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+
 interface UserProfile {
   id: string;
   username: string;
@@ -186,17 +187,19 @@ export default function ProfileSettingsPage() {
   if (!user) return null;
 
   return (
-    <div className="page-wrapper min-h-screen overflow-x-hidden">
+    <div className="page-wrapper min-h-screen pt-4 pb-16 px-4 sm:px-6 bg-linear-to-br from-emerald-500/5 via-transparent to-blue-500/5">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="container pb-16 min-h-[80vh] tracking-wide bg-[radial-gradient(at_0%_0%,rgba(16,185,129,0.05)_0px,transparent_50%),radial-gradient(at_100%_100%,rgba(79,70,229,0.05)_0px,transparent_50%)] flex justify-center w-full"
+        className="max-w-[850px] mx-auto bg-surface-brand/70 backdrop-blur-2xl border border-border-brand/50 p-6 sm:p-14 rounded-3xl shadow-2xl relative overflow-hidden"
       >
-        <main className="w-full max-w-[850px] flex flex-col gap-12 bg-surface-brand/70 backdrop-blur-[20px] border border-border-brand/50 p-8 md:p-14 rounded shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#10b981] to-[#3b82f6]" />
+        {/* Top Decorative Line */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-emerald-500 to-blue-500" />
+
+        <div className="flex flex-col gap-12">
           {/* Avatar section */}
-          <section className="flex flex-col items-center gap-6 mb-4">
-            <div className="relative group w-[140px] h-[140px] p-1 bg-gradient-to-br from-[#10b981] to-[#3b82f6] shadow-lg shadow-emerald-500/30 rounded-full">
+          <section className="flex flex-col items-center gap-6">
+            <div className="relative group w-36 h-36 p-1 bg-linear-to-br from-emerald-500 to-blue-500 rounded-full shadow-xl shadow-emerald-500/20">
               <img
                 src={
                   previewImage ||
@@ -204,11 +207,10 @@ export default function ProfileSettingsPage() {
                   "https://api.dicebear.com/7.x/avataaars/svg?seed=" + user.username
                 }
                 alt={user.username}
-                className="w-full h-full object-cover border-3 border-surface-brand rounded-full"
+                className="w-full h-full object-cover border-4 border-surface-brand rounded-full transition-all duration-500 group-hover:brightness-50"
               />
               <div
-                className="absolute inset-1 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:backdrop-blur-sm transition-all duration-300 cursor-pointer text-white rounded-full"
-                title="Đổi ảnh đại diện"
+                className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-white"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Camera size={32} />
@@ -223,23 +225,23 @@ export default function ProfileSettingsPage() {
               className="hidden"
             />
 
-            <div className="flex flex-col md:flex-row gap-3 items-center mt-2 w-full max-w-[320px]">
+            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
               <Button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 text-xs px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-10 rounded flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 uppercase tracking-wider"
+                className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 uppercase tracking-widest text-xs"
               >
                 <Upload size={18} /> Chọn hình
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowPasswordDialog(true)}
-                className="flex-1 text-xs px-4 border-emerald-500/50 hover:bg-emerald-500/10 text-emerald-500 font-bold h-10 rounded flex items-center justify-center gap-2 uppercase tracking-wider"
+                className="flex-1 h-11 border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-500 font-black rounded-xl flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
               >
                 <Lock size={18} /> Đổi mật khẩu
               </Button>
             </div>
-            <p className="text-xs text-text-muted italic text-center max-w-xs md:max-w-[400px] opacity-80">
-              Lưu ý: Hình ảnh đại diện phải phù hợp thuần phong mỹ tục.
+            <p className="text-[10px] text-text-muted italic text-center max-w-sm font-medium opacity-80">
+              Lưu ý: Hình ảnh đại diện phải phù hợp với nội dung văn hóa và tiêu chuẩn cộng đồng.
             </p>
           </section>
 
@@ -249,19 +251,19 @@ export default function ProfileSettingsPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="flex flex-col gap-8"
+              className="space-y-6"
             >
-              <h2 className="text-lg font-black text-text-primary flex items-center gap-3 tracking-wider uppercase pb-3 border-b border-border-brand/30">
-                <ShieldCheck className="text-emerald-500" /> Thông tin tài khoản
+              <h2 className="text-lg font-black text-text-primary flex items-center gap-3 uppercase tracking-wider pb-3 border-b border-border-brand/30">
+                <ShieldCheck className="text-emerald-500" size={20} /> Thông tin tài khoản
               </h2>
-              <div className="grid grid-cols-1 gap-7">
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Tên đăng nhập</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Tên đăng nhập</label>
                   <div className="relative">
                     <Input
                       value={user.username}
                       readOnly
-                      className="bg-emerald-500/5 border-emerald-500/20 pl-12 h-10 rounded font-bold text-text-muted cursor-default"
+                      className="bg-emerald-500/5 border-emerald-500/20 pl-12 h-11 rounded-xl font-bold text-text-muted cursor-default"
                     />
                     <UserIcon
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500"
@@ -269,13 +271,13 @@ export default function ProfileSettingsPage() {
                     />
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Địa chỉ Email</label>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Địa chỉ Email</label>
                   <div className="relative">
                     <Input
                       value={user.email}
                       readOnly
-                      className="bg-emerald-500/5 border-emerald-500/20 pl-12 h-10 rounded font-bold text-text-muted cursor-default"
+                      className="bg-emerald-500/5 border-emerald-500/20 pl-12 h-11 rounded-xl font-bold text-text-muted cursor-default"
                     />
                     <Mail
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500"
@@ -292,53 +294,54 @@ export default function ProfileSettingsPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex flex-col gap-8"
+              className="space-y-6"
             >
-              <h2 className="text-lg font-black text-text-primary flex items-center gap-3 tracking-wider uppercase pb-3 border-b border-border-brand/30">
-                <Info className="text-blue-500" /> Thông tin cá nhân
+              <h2 className="text-lg font-black text-text-primary flex items-center gap-3 uppercase tracking-wider pb-3 border-b border-border-brand/30">
+                <Info className="text-blue-500" size={20} /> Thông tin cá nhân
               </h2>
-              <div className="grid grid-cols-1 gap-7">
+              <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Họ</label>
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Họ</label>
                     <Input
                       value={formData.lastName}
                       onChange={(e) =>
                         setFormData((p) => ({ ...p, lastName: e.target.value }))
                       }
                       placeholder="Họ của bạn"
-                      className="h-10 rounded border-border-brand focus:border-emerald-500/50 bg-transparent"
+                      className="h-11 rounded-xl border-border-brand focus:border-emerald-500/50 bg-transparent focus:bg-surface-elevated/20 transition-all font-medium"
                     />
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Tên</label>
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Tên</label>
                     <Input
                       value={formData.firstName}
                       onChange={(e) =>
                         setFormData((p) => ({ ...p, firstName: e.target.value }))
                       }
                       placeholder="Tên của bạn"
-                      className="h-10 rounded border-border-brand focus:border-emerald-500/50 bg-transparent"
+                      className="h-11 rounded-xl border-border-brand focus:border-emerald-500/50 bg-transparent focus:bg-surface-elevated/20 transition-all font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Biệt danh (Hiển thị)</label>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Biệt danh (Tên hiển thị)</label>
                   <Input
                     value={formData.displayName}
                     onChange={(e) =>
                       setFormData((p) => ({ ...p, displayName: e.target.value }))
                     }
-                    placeholder="Tên hiển thị công khai"
-                    className="h-10 border-border-brand focus:border-emerald-500/50 rounded bg-transparent"
+                    placeholder="Tên hiển thị công khai trên ứng dụng"
+                    className="h-11 border-border-brand focus:border-emerald-500/50 rounded-xl bg-transparent focus:bg-surface-elevated/20 transition-all font-medium"
                   />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Giới tính</label>
-                  <div className="flex gap-8 p-3 bg-surface-elevated/30 border border-border-brand/30 rounded">
+
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Giới tính</label>
+                  <div className="flex gap-8 p-3 px-6 bg-surface-elevated/20 border border-border-brand/30 rounded-xl">
                     {(["MALE", "FEMALE", "OTHER"] as const).map((g) => (
-                      <label key={g} className="flex items-center gap-2 text-sm font-semibold text-text-primary cursor-pointer hover:text-emerald-500 transition-colors">
+                      <label key={g} className="flex items-center gap-2 text-sm font-bold text-text-primary cursor-pointer hover:text-emerald-500 transition-colors">
                         <input
                           type="radio"
                           name="gender"
@@ -347,7 +350,7 @@ export default function ProfileSettingsPage() {
                           onChange={() =>
                             setFormData((p) => ({ ...p, gender: g }))
                           }
-                          className="w-[18px] h-[18px] accent-emerald-500"
+                          className="w-4 h-4 accent-emerald-500"
                         />
                         {g === "MALE" ? "Nam" : g === "FEMALE" ? "Nữ" : "Khác"}
                       </label>
@@ -372,30 +375,30 @@ export default function ProfileSettingsPage() {
                   </label>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Tiểu sử</label>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Tiểu sử cá nhân</label>
                   <textarea
-                    className="w-full px-4 py-3 bg-transparent border border-border-brand rounded text-text-primary placeholder:text-text-muted transition-all duration-200 outline-none focus:border-emerald-500/50 min-h-[140px] resize-none"
+                    className="w-full px-5 py-4 bg-transparent border border-border-brand/60 rounded-2xl text-text-primary placeholder:text-text-muted transition-all duration-300 outline-none focus:border-emerald-500/50 min-h-[140px] resize-none focus:bg-surface-elevated/20 text-sm leading-relaxed"
                     value={formData.bio}
                     onChange={(e) =>
                       setFormData((p) => ({ ...p, bio: e.target.value }))
                     }
-                    placeholder="Hãy viết vài dòng giới thiệu về bản thân bạn..."
+                    placeholder="Hãy viết vài dòng giới thiệu về bản thân bạn để mọi người biết thêm nhé..."
                   />
                 </div>
               </div>
 
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center pt-6">
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-black h-12 px-12 rounded transition-all hover:scale-[1.02] active:scale-95 shadow-2xl shadow-emerald-600/20 uppercase text-lg tracking-widest flex items-center gap-3"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-black h-14 px-14 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-2xl shadow-emerald-600/20 uppercase text-lg tracking-widest flex items-center gap-3 border-none"
                 >
                   {saving ? (
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 1 }}
-                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                      className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full"
                     />
                   ) : (
                     <CheckCircle2 size={24} />
@@ -405,26 +408,26 @@ export default function ProfileSettingsPage() {
               </div>
             </motion.form>
           </div>
-        </main>
+        </div>
       </motion.div>
 
       {/* Change Password Dialog */}
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent className="bg-surface-brand border-border-brand text-text-primary rounded max-w-md w-[95%] shadow-2xl p-0 overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-rose-500 to-emerald-500" />
-          <div className="p-8">
+        <DialogContent className="bg-surface-brand/95 backdrop-blur-3xl border-border-brand text-text-primary rounded-[2rem] max-w-md w-[95%] shadow-2xl p-0 overflow-hidden">
+          <div className="h-2 bg-linear-to-r from-rose-500 to-emerald-500" />
+          <div className="p-8 sm:p-10">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black flex items-center gap-2 uppercase tracking-tighter">
-                <Lock className="text-rose-500" /> ĐỔI MẬT KHẨU
+              <DialogTitle className="text-2xl font-black flex items-center gap-3 uppercase tracking-tighter">
+                <Lock className="text-rose-500" size={24} /> ĐỐI MẬT KHẨU
               </DialogTitle>
-              <DialogDescription className="text-text-muted mt-2">
-                Để bảo mật, vui lòng không chia sẻ mật khẩu mới với bất kỳ ai.
+              <DialogDescription className="text-text-muted mt-2 font-medium">
+                Để bảo mật tốt nhất, vui lòng sử dụng mật khẩu mạnh và không chia sẻ với bất kỳ ai.
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleChangePassword} className="space-y-6 mt-8">
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Mật khẩu hiện tại</label>
+            <form onSubmit={handleChangePassword} className="space-y-6 mt-10">
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Mật khẩu hiện tại</label>
                 <Input
                   type="password"
                   value={passwordData.currentPassword}
@@ -434,12 +437,12 @@ export default function ProfileSettingsPage() {
                       currentPassword: e.target.value,
                     }))
                   }
-                  className="h-10 rounded border-border-brand focus:border-rose-500/50 bg-surface-elevated/50"
+                  className="h-11 rounded-xl border-border-brand focus:border-rose-500/50 bg-surface-elevated/40 px-4 transition-all"
                   placeholder="••••••••"
                 />
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Mật khẩu mới</label>
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Mật khẩu mới</label>
                 <Input
                   type="password"
                   value={passwordData.newPassword}
@@ -449,12 +452,12 @@ export default function ProfileSettingsPage() {
                       newPassword: e.target.value,
                     }))
                   }
-                  className="h-10 rounded border-border-brand focus:border-emerald-500/50 bg-surface-elevated/50"
+                  className="h-11 rounded-xl border-border-brand focus:border-emerald-500/50 bg-surface-elevated/40 px-4 transition-all"
                   placeholder="Tối thiểu 6 ký tự"
                 />
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-extrabold text-text-muted uppercase tracking-widest pl-0.5">Xác nhận mật khẩu mới</label>
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Xác nhận mật khẩu</label>
                 <Input
                   type="password"
                   value={passwordData.confirmPassword}
@@ -464,21 +467,21 @@ export default function ProfileSettingsPage() {
                       confirmPassword: e.target.value,
                     }))
                   }
-                  className="h-10 rounded border-border-brand focus:border-emerald-500/50 bg-surface-elevated/50"
+                  className="h-11 rounded-xl border-border-brand focus:border-emerald-500/50 bg-surface-elevated/40 px-4 transition-all"
                   placeholder="Nhập lại mật khẩu mới"
                 />
               </div>
-              <div className="flex justify-center pt-4">
+              <div className="flex justify-center pt-6">
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-lg rounded transition-all shadow-lg shadow-emerald-600/20 uppercase flex items-center justify-center gap-2"
+                  className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-emerald-600/20 uppercase flex items-center justify-center gap-3 border-none"
                 >
                   {saving && (
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 1 }}
-                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                      className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full"
                     />
                   )}
                   {saving ? "ĐANG CẬP NHẬT..." : "XÁC NHẬN THAY ĐỔI"}

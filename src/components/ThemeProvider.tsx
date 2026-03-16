@@ -30,13 +30,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const stored = localStorage.getItem("theme") as Theme | null;
-    Promise.resolve().then(() => {
-      if (stored === "dark" || stored === "light") {
-        setTheme(stored);
-        document.documentElement.setAttribute("data-theme", stored);
-      }
-      setMounted(true);
-    });
+    if (stored === "dark" || stored === "light") {
+      setTheme(stored);
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+    setMounted(true);
   }, []);
 
   const toggleTheme = useCallback(() => {

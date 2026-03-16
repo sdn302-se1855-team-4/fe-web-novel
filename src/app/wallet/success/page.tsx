@@ -75,7 +75,8 @@ function SuccessContent() {
         <>
           <CheckCircle
             size={56}
-            className="text-green-500 mb-4 mx-auto"
+            style={{ color: "#22c55e", marginBottom: "1rem" }}
+            className="mx-auto"
           />
           <h2 className="text-2xl font-bold">
             Nạp xu thành công! 🎉
@@ -121,7 +122,18 @@ function SuccessContent() {
 export default function DepositSuccessPage() {
   return (
     <div className="container py-8">
-      <div className="max-w-[480px] mx-auto my-8 text-center px-8 py-12 rounded-xl bg-surface-elevated border border-border-brand shadow-lg">
+      <div
+        style={{
+          maxWidth: 480,
+          margin: "2rem auto",
+          textAlign: "center",
+          padding: "3rem 2rem",
+          borderRadius: "var(--radius-xl)",
+          background: "var(--color-surface-elevated)",
+          border: "1px solid var(--color-border)",
+          boxShadow: "var(--shadow-lg)",
+        }}
+      >
         <Suspense
           fallback={
             <>

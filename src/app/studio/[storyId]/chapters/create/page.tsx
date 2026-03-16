@@ -2,9 +2,10 @@
 
 import { useState, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, BookOpen, ChevronLeft } from "lucide-react";
+import { Plus, BookOpen, ChevronLeft, LayoutPanelTop, Coins, FileText, Sparkles, Info } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
 export default function CreateChapterPage() {
   const params = useParams();
@@ -59,7 +60,7 @@ export default function CreateChapterPage() {
           price: isPremium ? parsedPrice : 0,
         }),
       });
-      router.push(`/studio`);
+      router.push(`/studio/${storyId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Tạo chương thất bại");
     } finally {
@@ -68,7 +69,7 @@ export default function CreateChapterPage() {
   };
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto" }}>
+    <div className="min-h-screen pb-20">
       <div className="mb-8">
         <button 
           onClick={() => router.back()}
@@ -77,131 +78,142 @@ export default function CreateChapterPage() {
           <div className="p-2 rounded-xl bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
             <ChevronLeft size={18} />
           </div>
-          Quay lại
+          Quay lại tác phẩm
         </button>
       </div>
 
-      <h1 className="section-title">
-        <Plus size={24} className="text-emerald-500" /> Thêm chương mới
-      </h1>
+      <div className="max-w-[900px] mx-auto">
+        <h1 className="text-3xl font-black text-text-primary italic uppercase tracking-tighter mb-10 flex items-center gap-4">
+          <Plus size={32} className="text-emerald-500" /> Thêm chương mới
+        </h1>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-lg pb-12">
-        {error && <div className="error-text">{error}</div>}
-
-        <div className="form-group">
-          <label htmlFor="title" className="label">
-            Tiêu đề chương *
-          </label>
-          <input
-            id="title"
-            className="input"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            placeholder="Nhập tiêu đề chương"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="chapterNumber" className="label">
-            Số chương *
-          </label>
-          <input
-            id="chapterNumber"
-            type="number"
-            min="1"
-            className="input"
-            value={chapterNumber}
-            onChange={(e) => setChapterNumber(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="content" className="label">
-            Nội dung chương *
-          </label>
-          <textarea
-            id="content"
-            className="input textarea"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-            placeholder="Viết nội dung chương tại đây..."
-            rows={20}
-            style={{
-              fontFamily: "var(--font-reader)",
-              lineHeight: "var(--reader-line-height)",
-              minHeight: 400,
-            }}
-          />
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-            padding: "1rem",
-            background: "var(--color-surface)",
-            borderRadius: "var(--radius-md)",
-            border: "1px solid var(--color-border)",
-          }}
-        >
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={isPremium}
-              onChange={(e) => setIsPremium(e.target.checked)}
-              style={{
-                width: "1.25rem",
-                height: "1.25rem",
-                accentColor: "var(--color-primary)",
-              }}
-            />
-            Bật kiếm tiền (Premium)
-          </label>
-
-          {isPremium && (
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="label">Giá chương (Xu)</label>
-              <input
-                type="number"
-                min="0"
-                className="input"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="VD: 50"
-                required={isPremium}
-              />
-              <p
-                className="text-xs text-muted"
-                style={{ marginTop: "0.5rem" }}
-              >
-                Người đọc phải trả số xu này để mở khóa chương.
-              </p>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {error && (
+            <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-sm font-bold text-center">
+              {error}
             </div>
           )}
-        </div>
 
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? (
-            "Đang tạo..."
-          ) : (
-            <>
-              <BookOpen size={18} /> Đăng chương
-            </>
-          )}
-        </button>
-      </form>
+          <div className="bg-surface-brand border border-border-brand/50 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl shadow-black/5 relative overflow-hidden">
+             <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-500/5 blur-[100px] pointer-events-none" />
+             
+             <div className="space-y-8 relative">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="md:col-span-3 space-y-2">
+                    <label htmlFor="title" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1 flex items-center gap-2">
+                      <FileText size={14} className="text-emerald-500" /> Tiêu đề chương
+                    </label>
+                    <input
+                      id="title"
+                      className="input h-14 rounded-2xl"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      required
+                      placeholder="VD: Khởi đầu mới..."
+                    />
+                  </div>
+                  <div className="md:col-span-1 space-y-2">
+                    <label htmlFor="chapterNumber" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1 flex items-center gap-2">
+                      <LayoutPanelTop size={14} className="text-blue-500" /> Số chương
+                    </label>
+                    <input
+                      id="chapterNumber"
+                      type="number"
+                      min="1"
+                      className="input h-14 rounded-2xl text-center font-bold"
+                      value={chapterNumber}
+                      onChange={(e) => setChapterNumber(parseInt(e.target.value) || 1)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="content" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1 flex items-center gap-2">
+                    <Sparkles size={14} className="text-emerald-500" /> Nội dung chương truyện
+                  </label>
+                  <textarea
+                    id="content"
+                    className="input min-h-[500px] py-6 px-8 rounded-3xl resize-none leading-relaxed text-lg"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    required
+                    placeholder="Bắt đầu sáng tác nội dung chương truyện tại đây..."
+                    style={{
+                      fontFamily: "var(--font-reader)",
+                    }}
+                  />
+                  <p className="text-[10px] font-bold text-text-muted text-right px-2 italic uppercase">Đã viết: {content.length} ký tự</p>
+                </div>
+
+                <div className={cn(
+                  "p-6 rounded-3xl border-2 transition-all duration-300 space-y-4",
+                  isPremium 
+                    ? "bg-amber-500/5 border-amber-500/20 shadow-lg shadow-amber-500/5" 
+                    : "bg-surface-elevated/50 border-border-brand/40"
+                )}>
+                  <label className="flex items-center gap-3 cursor-pointer group select-none">
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={isPremium}
+                        onChange={(e) => setIsPremium(e.target.checked)}
+                        className="peer h-6 w-11 cursor-pointer appearance-none rounded-full bg-surface-elevated border-2 border-border-brand transition-colors checked:bg-amber-500 checked:border-amber-500"
+                      />
+                      <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-text-muted transition-transform peer-checked:translate-x-5 peer-checked:bg-white" />
+                    </div>
+                    <span className={cn(
+                      "text-sm font-black uppercase tracking-wider transition-colors",
+                      isPremium ? "text-amber-500" : "text-text-muted group-hover:text-text-primary"
+                    )}>
+                      Thiết lập chương Premium (Trả phí)
+                    </span>
+                  </label>
+
+                  {isPremium && (
+                    <div className="flex flex-col sm:flex-row items-center gap-6 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="w-full sm:w-1/3 space-y-2">
+                        <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest ml-1 flex items-center gap-1">
+                          <Coins size={12} /> Giá chương (Xu)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          className="input h-12 rounded-xl font-black text-amber-500 border-amber-500/30 bg-amber-500/5 focus:border-amber-500 text-center"
+                          value={price}
+                          onChange={(e) => setPrice(parseInt(e.target.value) || 0)}
+                          placeholder="VD: 50"
+                          required={isPremium}
+                        />
+                      </div>
+                      <div className="flex-1 p-4 bg-amber-500/10 rounded-2xl">
+                         <p className="text-xs font-bold text-amber-600 leading-relaxed">
+                           <Info size={14} className="inline mr-1 -mt-0.5" /> 
+                           Chương Premium yêu cầu người đọc phải thanh toán số xu trên để mở khóa nội dung. Số xu này sẽ được cộng vào doanh thu của tác giả.
+                         </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="btn btn-primary w-full h-18 text-xl uppercase tracking-widest font-black italic shadow-2xl shadow-emerald-500/20 mt-8" 
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <div className="flex items-center gap-4">
+                      <BookOpen size={24} className="group-hover:rotate-6 transition-transform" /> 
+                      Xuất bản chương truyện
+                    </div>
+                  )}
+                </button>
+             </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
