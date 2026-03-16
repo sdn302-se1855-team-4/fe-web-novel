@@ -92,7 +92,7 @@ export default function ChapterReaderPage() {
           setAllChapters(sortedChapters);
           setTotalChapters(sortedChapters.length);
 
-          if (isLoggedIn() && chData?.id) {
+          if (isLoggedIn() && chData?.id && !chData.isLocked) {
             apiFetch("/reading-history", {
               method: "POST",
               body: JSON.stringify({

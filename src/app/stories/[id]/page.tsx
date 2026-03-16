@@ -114,6 +114,7 @@ export default function StoryDetailPage() {
   const [likedComments, setLikedComments] = useState<string[]>([]);
   const [feedTab, setFeedTab] = useState<"comments" | "reviews">("comments");
   const [originalLikes, setOriginalLikes] = useState<string[]>([]);
+  const [readChapterIds, setReadChapterIds] = useState<string[]>([]);
 
   // Donate modal state
   const [showDonate, setShowDonate] = useState(false);
@@ -131,40 +132,61 @@ export default function StoryDetailPage() {
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       apiFetch<Story>(`/stories/${storyId}`),
       apiFetch<Chapter[]>(`/stories/${storyId}/chapters`),
       apiFetch<{ data: Comment[] } | Comment[]>(`/stories/${storyId}/comments`),
       isLoggedIn() ? apiFetch<string[]>(`/stories/${storyId}/my-likes`) : Promise.resolve([] as string[]),
-      isLoggedIn() ? apiFetch<any>("/auth/profile") : Promise.resolve(null)
+      isLoggedIn() ? apiFetch<any>("/auth/profile") : Promise.resolve(null),
+      isLoggedIn() ? apiFetch<string[]>(`/reading-history/story/${storyId}`) : Promise.resolve([] as string[])
     ])
-      .then(([storyData, chaptersData, commentsData, likesData, profileData]) => {
-        setStory(storyData);
-        setChapters(Array.isArray(chaptersData) ? chaptersData : []);
-        const rawComments = Array.isArray(commentsData)
-          ? commentsData
-          : (commentsData as { data: Comment[] }).data || [];
-          
-        const flatComments: Comment[] = [];
-        rawComments.forEach((c: Comment) => {
-          flatComments.push(c);
-          if (c.replies && Array.isArray(c.replies)) {
-            c.replies.forEach((r: Comment) => {
-              flatComments.push({ ...r, parentId: c.id });
-            });
-          }
-        });
-        const likedIds = Array.isArray(likesData) ? likesData : [];
-        setLikedComments(likedIds);
-        setOriginalLikes(likedIds);
-        setComments(flatComments);
-        if (profileData) {
-          setCurrentUserProfile(profileData);
+      .then(([storyResult, chaptersResult, commentsResult, likesResult, profileResult, historyResult]) => {
+        // Story is critical — if it fails, show not found
+        if (storyResult.status === 'fulfilled') {
+          setStory(storyResult.value);
+        } else {
+          setLoading(false);
+          return;
         }
+
+        if (chaptersResult.status === 'fulfilled') {
+          setChapters(Array.isArray(chaptersResult.value) ? chaptersResult.value : []);
+        }
+
+        if (commentsResult.status === 'fulfilled') {
+          const commentsData = commentsResult.value;
+          const rawComments = Array.isArray(commentsData)
+            ? commentsData
+            : (commentsData as { data: Comment[] }).data || [];
+          const flatComments: Comment[] = [];
+          rawComments.forEach((c: Comment) => {
+            flatComments.push(c);
+            if (c.replies && Array.isArray(c.replies)) {
+              c.replies.forEach((r: Comment) => {
+                flatComments.push({ ...r, parentId: c.id });
+              });
+            }
+          });
+          setComments(flatComments);
+        }
+
+        if (likesResult.status === 'fulfilled') {
+          const likedIds = Array.isArray(likesResult.value) ? likesResult.value : [];
+          setLikedComments(likedIds);
+          setOriginalLikes(likedIds);
+        }
+
+        if (profileResult.status === 'fulfilled' && profileResult.value) {
+          setCurrentUserProfile(profileResult.value);
+        }
+
+        if (historyResult.status === 'fulfilled') {
+          setReadChapterIds(historyResult.value || []);
+        }
+
         setLoading(false);
       })
-      .catch(() => { })
-      .finally(() => setLoading(false));
+      .catch(() => setLoading(false));
 
     // Fetch reviews
     apiFetch<{ data: Review[] }>(`/reviews/story/${storyId}`)
@@ -182,6 +204,18 @@ export default function StoryDetailPage() {
         .catch(() => { });
     }
   }, [storyId]);
+  const markAsRead = async (chapterId: string) => {
+    if (!isLoggedIn() || readChapterIds.includes(chapterId)) return;
+    setReadChapterIds(prev => [...prev, chapterId]);
+    try {
+      await apiFetch("/reading-history", {
+        method: "POST",
+        body: JSON.stringify({ storyId, chapterId }),
+      });
+    } catch (err) {
+      console.error("Failed to save reading history optimistically:", err);
+    }
+  };
 
   const handleBookmark = async () => {
     if (!isLoggedIn()) {
@@ -503,7 +537,10 @@ export default function StoryDetailPage() {
               <div className="pt-2 flex flex-wrap gap-2">
                 {chapters.length > 0 && (
                   <Button
-                    onClick={() => router.push(`/stories/${story.id}/chapters/${chapters[0]?.chapterNumber || 1}`)}
+                    onClick={() => {
+                      if (chapters[0]?.id) markAsRead(chapters[0].id);
+                      router.push(`/stories/${story.id}/chapters/${chapters[0]?.chapterNumber || 1}`);
+                    }}
                     className="h-10 px-6 bg-[#8ac94e] hover:bg-[#7ab343] text-white font-black rounded-lg gap-2 shadow-md transition-all hover:scale-105 active:scale-95 text-xs border-none"
                   >
                     <BookOpen size={16} />
@@ -580,7 +617,11 @@ export default function StoryDetailPage() {
                         >
                           <Link
                             href={`/stories/${story.id}/chapters/${ch.chapterNumber}`}
-                            className="group block relative p-5 bg-surface-brand/40 border border-border-brand/50 rounded-2xl hover:bg-surface-elevated hover:border-primary-brand/30 transition-all duration-300 backdrop-blur-sm overflow-hidden"
+                            onClick={() => markAsRead(ch.id)}
+                            className={cn(
+                              "group block relative p-5 bg-surface-brand/40 border border-border-brand/50 rounded-2xl hover:bg-surface-elevated hover:border-primary-brand/30 transition-all duration-300 backdrop-blur-sm overflow-hidden",
+                              readChapterIds.includes(ch.id) && "opacity-60 bg-surface-brand/20"
+                            )}
                           >
                             <div className="flex items-center gap-6">
                               {/* Chapter Number Badge */}
@@ -593,7 +634,10 @@ export default function StoryDetailPage() {
                               {/* Title and Info section */}
                               <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="space-y-1">
-                                  <h4 className="text-base md:text-lg font-black text-text-primary group-hover:text-primary-brand transition-colors truncate">
+                                  <h4 className={cn(
+                                    "text-base md:text-lg font-black transition-colors truncate",
+                                    readChapterIds.includes(ch.id) ? "text-text-muted" : "text-text-primary group-hover:text-primary-brand"
+                                  )}>
                                     {ch.title}
                                   </h4>
                                   <div className="flex items-center gap-4 text-xs font-bold text-text-muted">
