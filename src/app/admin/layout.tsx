@@ -10,14 +10,30 @@ import {
   Wallet,
   Tag,
   Layers,
-  ArrowLeft,
   Shield,
   Menu,
   X,
+  User,
+  LogOut,
+  type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { removeTokens } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
-const navSections = [
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  exact?: boolean;
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
   {
     label: "TỔNG QUAN",
     items: [
@@ -43,7 +59,13 @@ const navSections = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleLogout = () => {
+    removeTokens();
+    router.push("/login");
+  };
 
   return (
     <RoleGuard allowedRoles={["ADMIN"]}>
@@ -64,7 +86,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         >
           {/* Brand Header */}
           <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-800">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <div className="w-9 h-9 rounded-lg bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
               <Shield size={18} className="text-white" />
             </div>
             <div>
@@ -119,21 +141,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-slate-800 p-3">
+          <div className="border-t border-slate-800 p-3 space-y-1">
             <Link
-              href="/"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:text-white hover:bg-slate-800/60 transition-colors duration-200 cursor-pointer"
+              href="/profile"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors duration-200 cursor-pointer"
             >
-              <ArrowLeft size={18} />
-              Về trang chủ
+              <User size={18} className="text-slate-500" />
+              Hồ sơ
             </Link>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors duration-200 cursor-pointer"
+            >
+              <LogOut size={18} />
+              Đăng xuất
+            </button>
           </div>
         </aside>
 
         {/* Main Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Top Bar */}
-          <header className="h-14 flex items-center px-6 border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm flex-shrink-0">
+          <header className="h-14 flex items-center px-6 border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm shrink-0">
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-slate-800 text-slate-400 mr-3 cursor-pointer"
               onClick={() => setSidebarOpen(true)}

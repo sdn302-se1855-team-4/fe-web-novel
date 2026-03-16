@@ -130,7 +130,7 @@ export default function AdminStoriesPage() {
               </thead>
               <tbody className="divide-y divide-slate-700/30">
                 {filtered.map((story) => (
-                  <tr key={story.id} className={`hover:bg-slate-700/20 transition-colors ${!story.isPublished ? "bg-amber-500/[0.02]" : ""}`}>
+                  <tr key={story.id} className={`hover:bg-slate-700/20 transition-colors ${!story.isPublished ? "bg-amber-500/2" : ""}`}>
                     <td className="px-5 py-3">
                       <div className="text-sm font-semibold text-white">{story.title}</div>
                       {story.description && (

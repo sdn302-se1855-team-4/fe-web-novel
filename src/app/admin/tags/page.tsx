@@ -136,7 +136,7 @@ export default function AdminTagsPage() {
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-400 cursor-help transition-colors">
               <HelpCircle size={14} />
-              <div className="absolute top-full right-0 mt-2 w-64 p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] text-slate-300 shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100] leading-relaxed">
+              <div className="absolute top-full right-0 mt-2 w-64 p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] text-slate-300 shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-100 leading-relaxed">
                 <span className="font-bold text-white block mb-1">
                   Slug là gì?
                 </span>
