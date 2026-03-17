@@ -133,13 +133,13 @@ export default function LoginPage() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-text-secondary text-sm font-semibold ml-1">Email</Label>
+                  <Label htmlFor="email" className="text-text-secondary text-sm font-semibold ml-1">Email hoặc Username</Label>
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-emerald-500 transition-colors" size={18} />
                     <Input
                       id="email"
-                      type="email"
-                      placeholder="you@example.com"
+                      type="text"
+                      placeholder="you@example.com hoặc username"
                       className="pl-12 h-14 bg-surface-elevated border-border-brand hover:border-emerald-500/30 transition-all rounded-2xl text-text-primary placeholder:text-text-muted"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -151,7 +151,7 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between ml-1">
                     <Label htmlFor="password" className="text-text-secondary text-sm font-semibold">Mật khẩu</Label>
-                    <Link href="#" className="text-xs font-semibold text-emerald-500 hover:text-emerald-400 transition-colors">
+                    <Link href="/forgot-password" className="text-xs font-semibold text-emerald-500 hover:text-emerald-400 transition-colors">
                       Quên mật khẩu?
                     </Link>
                   </div>
