@@ -527,11 +527,13 @@ export default function HomePage() {
                       <h4 className="font-bold text-text-primary group-hover:text-emerald-500 transition-colors line-clamp-2 leading-tight text-base">
                         {story.title}
                       </h4>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[10px] font-black text-emerald-500 uppercase bg-emerald-500/5 px-2 py-0.5 rounded-md border border-emerald-500/10">
-                          {story.genres?.[0]?.name}
-                        </span>
-                      </div>
+                      {story.genres?.[0]?.name && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[10px] font-black text-emerald-500 uppercase bg-emerald-500/5 px-2 py-0.5 rounded-md border border-emerald-500/10">
+                            {story.genres?.[0]?.name}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-4 mt-4">
                         <div className="flex items-center gap-1.5">
                           <Eye size={14} className="text-text-muted" />
@@ -625,9 +627,11 @@ export default function HomePage() {
                         <Star size={10} fill="currentColor" />{" "}
                         {story.rating?.toFixed(1)}
                       </div>
-                      <span className="text-[10px] text-white/50 font-black uppercase tracking-widest truncate">
-                        {story.genres?.[0]?.name}
-                      </span>
+                      {story.genres?.[0]?.name && (
+                        <span className="text-[10px] text-white/50 font-black uppercase tracking-widest truncate">
+                          {story.genres?.[0]?.name}
+                        </span>
+                      )}
                     </div>
                     <h4
                       className={cn(

@@ -18,7 +18,10 @@ export default function RootLayout({
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/register";
   const isReaderPage = /^\/stories\/[^\/]+\/chapters\/[^\/]+$/.test(pathname);
-  const hideNavbar = isAuthPage || isReaderPage;
+  const isAdminPage = pathname.startsWith("/admin");
+  const isStudioPage = pathname.startsWith("/studio");
+  
+  const hideNavbar = isAuthPage || isReaderPage || isAdminPage || isStudioPage;
 
   useEffect(() => {
     window.scrollTo(0, 0);

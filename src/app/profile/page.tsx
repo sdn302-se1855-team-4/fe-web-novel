@@ -172,10 +172,10 @@ export default function ProfileSettingsPage() {
     setSaving(true);
     try {
       await apiFetch("/auth/change-password", {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
+          oldPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword,
           confirmPassword: passwordData.confirmPassword,
         }),

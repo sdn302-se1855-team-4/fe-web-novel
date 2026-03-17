@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Star, BookOpen } from "lucide-react";
+import { Star, BookOpen, Eye } from "lucide-react";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
@@ -83,31 +84,47 @@ export default function StoryCard({ story }: { story: Story }) {
           </div>
         )}
 
-        {/* Overlay Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
-          <Badge className="bg-black/60 backdrop-blur-md text-white border-none rounded-lg px-2 py-1 text-[10px] font-bold group-hover:bg-emerald-500 transition-colors">
-            {formatTimeAgo(story.updatedAt)}
-          </Badge>
+        {/* Status Badges Overlay (Top Left) */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 z-20">
+          {(story.status === "COMPLETED" || !story.status) && (
+            <Badge className={cn(
+              "border-none rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-tight shadow-lg",
+              story.status === "COMPLETED" 
+                ? "bg-blue-600/90 text-white" 
+                : "bg-emerald-500/90 text-white"
+            )}>
+              {story.status === "COMPLETED" ? "Full" : "New"}
+            </Badge>
+          )}
           {hot && (
-            <Badge className="bg-rose-500 text-white border-none rounded-lg px-2 py-1 text-[10px] font-black uppercase tracking-wider animate-pulse">
+            <Badge className="bg-rose-500/90 text-white border-none rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-tight shadow-lg animate-pulse">
               Hot
             </Badge>
           )}
         </div>
 
+        {/* Time Ago Overlay (Top Right) */}
+        <div className="absolute top-2 right-2 z-20">
+          <div className="bg-black/40 backdrop-blur-md text-white/90 px-2 py-0.5 rounded-md text-[9px] font-bold ring-1 ring-white/10 shadow-sm">
+            {formatTimeAgo(story.updatedAt)}
+          </div>
+        </div>
 
-        {/* Subtle Rating overlay if needed */}
-        {story.rating !== undefined && story.rating > 0 && (
-          <>
-            <div className="absolute bottom-2 left-3 flex items-center gap-1 text-[10px] text-amber-500 font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+        {/* Bottom Stats Overlay */}
+        <div className="absolute bottom-2 inset-x-2 flex items-center justify-between z-20">
+          {story.rating !== undefined && story.rating > 0 && (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/40 backdrop-blur-sm text-[10px] text-amber-500 font-black ring-1 ring-white/10">
               <Star size={10} fill="currentColor" />
               {story.rating.toFixed(1)}
             </div>
-            <div className="bg-emerald-500/90 backdrop-blur-sm text-[10px] font-black text-white px-2 py-0.5 rounded-md">
-              {story.status === "COMPLETED" ? "Full" : "New"}
+          )}
+          {story.viewCount !== undefined && story.viewCount > 0 && (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/40 backdrop-blur-sm text-[10px] text-emerald-400 font-black ring-1 ring-white/10">
+              <Eye size={10} />
+              {Intl.NumberFormat("vi", { notation: "compact" }).format(story.viewCount)}
             </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Info Content */}
