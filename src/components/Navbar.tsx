@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -12,13 +13,13 @@ import {
   User as UserIcon,
   LogOut,
   Pen,
-  Shield,
-  Search,
-  Clock,
   ChevronDown,
   Wallet,
   Bell,
   Lightbulb,
+  Clock,
+  Shield,
+  Search,
 } from "lucide-react";
 import Logo from "./Logo";
 import { useTheme } from "./ThemeProvider";
@@ -30,13 +31,6 @@ import { cn } from "@/lib/utils";
 interface Genre {
   id: string;
   name: string;
-}
-
-interface Notification {
-  id: string;
-  message: string;
-  isRead: boolean;
-  createdAt: string;
 }
 
 interface UserProfile {
@@ -68,9 +62,6 @@ export default function Navbar() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [genreOpen, setGenreOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -80,7 +71,6 @@ export default function Navbar() {
   const genreRef = useRef<HTMLDivElement>(null);
   const genrePanelRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const notifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -101,7 +91,7 @@ export default function Navbar() {
   }, [loggedIn]);
 
   useEffect(() => {
-    const handleProfileUpdate = (e: any) => {
+    const handleProfileUpdate = (e: CustomEvent<{ avatar?: string; displayName?: string; id?: string; username?: string }>) => {
       if (e.detail) {
         setUserProfile(
           (prev) =>
@@ -148,7 +138,7 @@ export default function Navbar() {
           `/stories?search=${encodeURIComponent(searchQuery)}&limit=5`,
         );
         setSuggestions(res.data || []);
-      } catch (err) {
+      } catch {
         setSuggestions([]);
       } finally {
         setIsSearching(false);
@@ -159,15 +149,7 @@ export default function Navbar() {
   }, [searchQuery]);
 
   useEffect(() => {
-    if (!isLoggedIn()) return;
-    apiFetch<{ data: Notification[]; unreadCount: number }>(
-      "/notifications?limit=5",
-    )
-      .then((res) => {
-        setNotifications(res.data || []);
-        setUnreadCount(res.unreadCount || 0);
-      })
-      .catch(() => {});
+    // Notifications logic removed as unused in UI
   }, [pathname]);
 
   useEffect(() => {
@@ -183,9 +165,6 @@ export default function Navbar() {
         !userMenuRef.current.contains(e.target as Node)
       ) {
         setUserMenuOpen(false);
-      }
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setNotifOpen(false);
       }
 // Close search suggestions on click outside
       setShowSuggestions(false);
@@ -317,18 +296,16 @@ export default function Navbar() {
                             className="flex items-center gap-3 p-2 hover:bg-surface-elevated rounded-lg transition-colors group"
                             onClick={() => setShowSuggestions(false)}
                           >
-                            <div className="w-10 h-14 rounded-md overflow-hidden bg-surface-elevated shrink-0 border border-border-brand/50">
-                              <img
+                            <div className="w-10 h-14 rounded-md overflow-hidden bg-surface-elevated shrink-0 border border-border-brand/50 relative">
+                              <Image
                                 src={
                                   story.coverImage ||
                                   "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop"
                                 }
                                 alt={story.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                onError={(e) =>
-                                  (e.currentTarget.src =
-                                    "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop")
-                                }
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform"
+                                unoptimized
                               />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -384,11 +361,15 @@ export default function Navbar() {
                 >
                   <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 overflow-hidden shrink-0 border border-emerald-500/10">
                     {userProfile?.avatar ? (
-                      <img
-                        src={userProfile.avatar}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                      />
+                      <div className="w-full h-full relative">
+                        <Image
+                          src={userProfile.avatar}
+                          alt="Avatar"
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
                     ) : (
                       <UserIcon size={14} />
                     )}

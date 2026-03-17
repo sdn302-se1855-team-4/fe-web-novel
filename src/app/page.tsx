@@ -2,19 +2,16 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import {
   BookOpen,
   Star,
   ChevronRight,
   ChevronLeft,
   Eye,
-  Flame,
-  Award,
-  Heart,
   Clock,
-  ArrowRight,
 } from "lucide-react";
 import {
   Carousel,
@@ -23,7 +20,6 @@ import {
 } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn, getUserRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -61,12 +57,6 @@ interface HistoryItem {
 const DEFAULT_COVER =
   "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop";
 
-const RANK_TABS = [
-  { key: "views", label: "Thịnh hành", icon: Flame },
-  { key: "rating", label: "Đánh giá cao", icon: Award },
-  { key: "bookmarks", label: "Yêu thích nhất", icon: Heart },
-] as const;
-
 // Animation variants - properly typed for Framer Motion
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 32 },
@@ -94,12 +84,7 @@ export default function HomePage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [api, setApi] = useState<CarouselApi>();
   const [loading, setLoading] = useState(true);
-  const [rankTab, setRankTab] = useState<"views" | "rating" | "bookmarks">(
-    "views",
-  );
   const [carouselIdx, setCarouselIdx] = useState(0);
-  const [canScrollNext, setCanScrollNext] = useState(true);
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
 
   useEffect(() => {
     const logged = isLoggedIn();
@@ -111,68 +96,49 @@ export default function HomePage() {
       return;
     }
 
-    const fetches: Promise<void>[] = [
-      apiFetch<{ data: Story[] } | Story[]>("/stories?limit=8&sort=latest")
-        .then((res) => {
-          setLatestStories(
-            Array.isArray(res) ? res : (res as { data: Story[] }).data || [],
-          );
-        })
-        .catch(() => {}),
-      apiFetch<{ data: Story[] } | Story[]>(
-        "/stories?limit=10&sortBy=viewCount&sortOrder=desc",
-      )
-        .then((res) => {
-          setTopViewedStories(
-            Array.isArray(res) ? res : (res as { data: Story[] }).data || [],
-          );
-        })
-        .catch(() => {}),
-      apiFetch<{ data: Story[] } | Story[]>("/stories?limit=8&status=COMPLETED")
-        .then((res) => {
-          setCompletedStories(
-            Array.isArray(res) ? res : (res as { data: Story[] }).data || [],
-          );
-        })
-        .catch(() => {}),
-      apiFetch<{ data: Story[] } | Story[]>(
-        "/stories?limit=6&sortBy=rating&sortOrder=desc",
-      )
-        .then((res) => {
-          const data = Array.isArray(res)
-            ? res
-            : (res as { data: Story[] }).data || [];
-          setTopRatedStories(data);
-          if (data.length === 0 && latestStories.length > 0) {
-            // Fallback to latest but skip first 5 (hero)
-            setTopRatedStories(latestStories.slice(5, 11));
-          }
-        })
-        .catch(() => {}),
-      apiFetch<{ data: Story[] } | Story[]>("/stories?limit=6&sort=trending")
-        .then((res) => {
-          const data = Array.isArray(res)
-            ? res
-            : (res as { data: Story[] }).data || [];
-          setExclusiveStories(data);
-          // If exclusive is empty, fallback to some trending data
-          if (data.length === 0) {
-            setExclusiveStories(topViewedStories.slice(0, 6));
-          }
-        })
-        .catch(() => {}),
-    ];
+    const fetchHomeData = async () => {
+      try {
+        const [latestRes, topViewedRes, completedRes, topRatedRes, exclusiveRes] = await Promise.all([
+          apiFetch<{ data: Story[] } | Story[]>("/stories?limit=8&sort=latest"),
+          apiFetch<{ data: Story[] } | Story[]>("/stories?limit=10&sortBy=viewCount&sortOrder=desc"),
+          apiFetch<{ data: Story[] } | Story[]>("/stories?limit=8&status=COMPLETED"),
+          apiFetch<{ data: Story[] } | Story[]>("/stories?limit=6&sortBy=rating&sortOrder=desc"),
+          apiFetch<{ data: Story[] } | Story[]>("/stories?limit=6&sort=trending")
+        ]);
 
-    if (logged) {
-      fetches.push(
-        apiFetch<HistoryItem[]>("/reading-history/me?limit=5")
-          .then((res) => setHistory(Array.isArray(res) ? res : []))
-          .catch(() => {}),
-      );
-    }
+        const latest = Array.isArray(latestRes) ? latestRes : latestRes.data || [];
+        const topViewed = Array.isArray(topViewedRes) ? topViewedRes : topViewedRes.data || [];
+        const completed = Array.isArray(completedRes) ? completedRes : completedRes.data || [];
+        let topRated = Array.isArray(topRatedRes) ? topRatedRes : topRatedRes.data || [];
+        let exclusive = Array.isArray(exclusiveRes) ? exclusiveRes : exclusiveRes.data || [];
 
-    Promise.all(fetches).finally(() => setLoading(false));
-  }, []);
+        setLatestStories(latest);
+        setTopViewedStories(topViewed);
+        setCompletedStories(completed);
+
+        if (topRated.length === 0 && latest.length > 0) {
+          topRated = latest.slice(5, 11);
+        }
+        setTopRatedStories(topRated);
+
+        if (exclusive.length === 0) {
+          exclusive = topViewed.slice(0, 6);
+        }
+        setExclusiveStories(exclusive);
+
+        if (logged) {
+          const historyRes = await apiFetch<HistoryItem[]>("/reading-history/me?limit=5");
+          setHistory(Array.isArray(historyRes) ? historyRes : []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch homepage data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomeData();
+  }, [router]);
 
   const featuredStories = latestStories.slice(0, 5);
 
@@ -181,8 +147,6 @@ export default function HomePage() {
     if (!api) return;
     const onSelect = () => {
       setCarouselIdx(api.selectedScrollSnap());
-      setCanScrollNext(api.canScrollNext());
-      setCanScrollPrev(api.canScrollPrev());
     };
     api.on("select", onSelect);
     onSelect();
@@ -217,21 +181,8 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, [featuredStories.length, nextSlide]);
 
-  const handleImageError = (
-    e: React.SyntheticEvent<HTMLImageElement, Event>,
-  ) => {
-    const target = e.target as HTMLImageElement;
-    if (target.src !== DEFAULT_COVER) target.src = DEFAULT_COVER;
-  };
 
-  const getRankedStories = () => {
-    const copy = [...topViewedStories];
-    if (rankTab === "rating")
-      copy.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    return copy.slice(0, 10);
-  };
-
-  const currentFeatured = featuredStories[carouselIdx];
+  // Sections removed: getRankedStories (unused), currentFeatured (unused)
 
   return (
     <div className="min-h-screen bg-bg-brand text-text-primary overflow-x-hidden pb-20">
@@ -243,16 +194,17 @@ export default function HomePage() {
           <div className="relative group">
             <Carousel setApi={setApi} className="w-full">
               <CarouselContent>
-                {latestStories.slice(0, 5).map((story, index) => (
+                {latestStories.slice(0, 5).map((story) => (
                   <CarouselItem key={story.id}>
                     <Link href={`/stories/${story.id}`}>
                       <div className="relative h-[320px] sm:h-[400px] lg:h-[480px] w-full overflow-hidden rounded-2xl sm:rounded-3xl cursor-pointer">
                         {/* Background Image with blur effect */}
-                        <img
+                        <Image
                           src={story.coverImage || DEFAULT_COVER}
                           alt={story.title}
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                          onError={handleImageError}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-700"
+                          unoptimized
                         />
                         {/* Overlay Gradient - Darker on mobile for better text contrast */}
                         <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent sm:from-black/80 sm:via-black/20" />
@@ -379,17 +331,18 @@ export default function HomePage() {
               <Link
                 key={item.id}
                 href={`/stories/${item.story.id}/chapters/${item.chapter.chapterNumber}`}
-                className="flex-shrink-0 flex gap-4 items-center w-[280px] sm:w-[320px] snap-start
+                className="shrink-0 flex gap-4 items-center w-[280px] sm:w-[320px] snap-start
                            bg-surface-brand border border-border-brand/60 p-4 rounded-2xl
                            hover:border-emerald-500/30 hover:bg-surface-elevated hover:shadow-lg
                            transition-all duration-300 cursor-pointer group"
               >
                 <div className="relative w-16 h-24 sm:w-20 sm:h-28 shrink-0 rounded-xl overflow-hidden shadow-md">
-                  <img
+                  <Image
                     src={item.story.coverImage || DEFAULT_COVER}
                     alt={item.story.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    onError={handleImageError}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    unoptimized
                   />
                 </div>
                 <div className="min-w-0 flex-1 flex flex-col justify-center gap-1.5">
@@ -485,11 +438,13 @@ export default function HomePage() {
             {/* Main Highlight Card */}
             <div className="lg:col-span-8 group">
               <Link href={`/stories/${topViewedStories[0].id}`}>
-                <div className="relative aspect-3/4 sm:aspect-video lg:aspect-auto lg:h-[550px] overflow-hidden rounded-[2rem] sm:rounded-[3rem] border border-border-brand/40 bg-surface-elevated shadow-2xl">
-                  <img
+                <div className="relative aspect-3/4 sm:aspect-video lg:aspect-auto lg:h-[550px] overflow-hidden rounded-4xl sm:rounded-[3rem] border border-border-brand/40 bg-surface-elevated shadow-2xl">
+                  <Image
                     src={topViewedStories[0].coverImage || DEFAULT_COVER}
                     alt={topViewedStories[0].title}
-                    className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110"
+                    fill
+                    className="object-cover transition-transform duration-[2s] group-hover:scale-110"
+                    unoptimized
                   />
                   <div className="absolute inset-0 bg-linear-to-t from-black/95 via-black/30 to-transparent sm:via-transparent" />
 
@@ -557,10 +512,12 @@ export default function HomePage() {
                     className="flex gap-4 p-4 rounded-3xl bg-surface-brand border border-border-brand/60 hover:border-emerald-500/40 hover:bg-surface-elevated hover:shadow-xl transition-all duration-500 group relative overflow-hidden"
                   >
                     <div className="relative w-24 h-32 shrink-0 rounded-2xl overflow-hidden shadow-lg ring-1 ring-border-brand/40">
-                      <img
+                      <Image
                         src={story.coverImage || DEFAULT_COVER}
                         alt={story.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        unoptimized
                       />
                       <div className="absolute top-2 left-2 w-8 h-8 bg-black/70 backdrop-blur-md rounded-xl flex items-center justify-center text-white text-xs font-black ring-1 ring-white/10 shadow-xl">
                         #{idx + 2}
@@ -636,7 +593,7 @@ export default function HomePage() {
                 key={story.id}
                 variants={cardVariant}
                 className={cn(
-                  "relative group rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden border border-border-brand/50 bg-surface-brand shadow-sm hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_20px_40px_-10px_rgba(16,185,129,0.15)] transition-all duration-700",
+                  "relative group rounded-[1.5rem] sm:rounded-4xl overflow-hidden border border-border-brand/50 bg-surface-brand shadow-sm hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_20px_40px_-10px_rgba(16,185,129,0.15)] transition-all duration-700",
                   i === 0
                     ? "col-span-2 row-span-3 md:row-span-3 lg:row-span-4"
                     : i === 1
@@ -648,10 +605,12 @@ export default function HomePage() {
                   href={`/stories/${story.id}`}
                   className="block h-full w-full relative"
                 >
-                  <img
+                  <Image
                     src={story.coverImage || DEFAULT_COVER}
                     alt={story.title}
-                    className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                    fill
+                    className="object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                    unoptimized
                   />
 
                   {/* Premium Glass Content Overlay */}
@@ -728,14 +687,16 @@ export default function HomePage() {
                   key={story.id}
                   variants={cardVariant}
                   whileHover={{ y: -10 }}
-                  className="group relative bg-surface-brand rounded-[2.5rem] p-4 border border-border-brand/60 shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-500/30 transition-all duration-500"
+                  className="group relative bg-surface-brand rounded-4xl p-4 border border-border-brand/60 shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-500/30 transition-all duration-500"
                 >
                   <Link href={`/stories/${story.id}`}>
-                    <div className="relative aspect-4/5 rounded-[2rem] overflow-hidden mb-6 shadow-2xl">
-                      <img
+                    <div className="relative aspect-4/5 rounded-4xl overflow-hidden mb-6 shadow-2xl">
+                      <Image
                         src={story.coverImage || DEFAULT_COVER}
                         alt={story.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        unoptimized
                       />
                       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/80 to-transparent" />
                       <div className="absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg">
@@ -844,7 +805,7 @@ function SectionHeader({
       {href && linkLabel && (
         <Link
           href={href}
-          className="group flex items-center gap-2 self-start sm:self-auto text-[9px] sm:text-xs font-black text-text-muted uppercase tracking-[0.1em] sm:tracking-[0.2em] hover:text-emerald-500 transition-all duration-300 bg-surface-elevated/50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-border-brand hover:border-emerald-500/20 shadow-sm"
+          className="group flex items-center gap-2 self-start sm:self-auto text-[9px] sm:text-xs font-black text-text-muted uppercase tracking-widest sm:tracking-widest hover:text-emerald-500 transition-all duration-300 bg-surface-elevated/50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-border-brand hover:border-emerald-500/20 shadow-sm"
         >
           {linkLabel}
           <div className="p-0.5 sm:p-1 rounded-full bg-emerald-500/10 group-hover:bg-emerald-500 text-emerald-500 group-hover:text-white transition-all">

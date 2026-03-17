@@ -2,15 +2,12 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import {
-  Search,
   Filter,
   Activity,
-  Layers,
   SortAsc,
   BookOpen,
-  Star,
+  Search,
   Tags,
   RotateCcw,
   Flame,
@@ -103,24 +100,30 @@ function StoriesContent() {
   useEffect(() => {
     const genre = searchParams.get("genre") || searchParams.get("genreId");
     if (genre) {
-      setSelectedGenres([genre]);
+      requestAnimationFrame(() => setSelectedGenres([genre]));
     } else {
       const genresParam = searchParams.get("genres");
-      setSelectedGenres(
-        genresParam ? genresParam.split(",").filter(Boolean) : [],
-      );
+      if (genresParam) {
+        requestAnimationFrame(() => setSelectedGenres(genresParam.split(",").filter(Boolean)));
+      } else {
+        requestAnimationFrame(() => setSelectedGenres([]));
+      }
     }
-    setSearch(searchParams.get("search") || "");
-    setSelectedType(searchParams.get("type") || "Tất cả");
-    setSelectedStatus(searchParams.get("status") || "Tất cả");
-    setSelectedChapters(searchParams.get("chapters") || "0");
-    setSelectedSort(searchParams.get("sort") || "Tất cả");
-    setSelectedTimeframe(searchParams.get("timeframe") || "Tất cả");
-    setPage(1);
+    requestAnimationFrame(() => {
+      setSearch(searchParams.get("search") || "");
+      setSelectedType(searchParams.get("type") || "Tất cả");
+      setSelectedStatus(searchParams.get("status") || "Tất cả");
+      setSelectedChapters(searchParams.get("chapters") || "0");
+      setSelectedSort(searchParams.get("sort") || "Tất cả");
+    });
+    requestAnimationFrame(() => {
+      setSelectedTimeframe(searchParams.get("timeframe") || "Tất cả");
+      setPage(1);
+    });
   }, [searchParams]);
 
   useEffect(() => {
-    setLoading(true);
+    requestAnimationFrame(() => setLoading(true));
     const params = new URLSearchParams();
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (selectedGenres.length > 0) params.set("genreId", selectedGenres[0]);
@@ -182,6 +185,7 @@ function StoriesContent() {
     selectedStatus,
     selectedChapters,
     selectedSort,
+    selectedTimeframe,
     page,
   ]);
 
@@ -216,7 +220,7 @@ function StoriesContent() {
 
   /* shared class strings */
   const triggerCls =
-    "h-9 w-full sm:min-w-[140px] sm:w-auto bg-surface-elevated border-border-brand text-text-primary text-sm rounded-md focus:ring-1 focus:ring-emerald-500/50 transition-all hover:border-emerald-500/40";
+    "h-9 w-full sm:min-w-[140px] sm:w-auto bg-surface-elevated border-border-brand text-text-primary text-sm rounded-md focus:ring-1 focus:ring-emerald-500/50 transition-all hover:not-disabled:border-emerald-500/40";
   const contentCls =
     "bg-surface-elevated border-border-brand rounded-md shadow-xl";
   const itemCls =
@@ -282,7 +286,7 @@ function StoriesContent() {
                   onClick={clearFilters}
                   className="flex items-center gap-1.5 text-[11px] text-rose-400 hover:text-rose-300 transition-colors font-bold uppercase tracking-wider"
                 >
-                  <RotateCcw size={11} />
+                  <RotateCcw size={11} className="transition-transform group-hover:rotate-180 duration-500" />
                   Đặt lại
                 </button>
               )}
@@ -480,9 +484,9 @@ function StoriesContent() {
               {[...Array(12)].map((_, i) => (
                 <div
                   key={i}
-                  className="bg-surface-brand/50 border border-border-brand/50 rounded-2xl overflow-hidden aspect-[2/3.5] animate-pulse"
+                  className="bg-surface-brand/50 border border-border-brand/50 rounded-2xl overflow-hidden aspect-2/3.5 animate-pulse"
                 >
-                  <div className="w-full aspect-[2/3] bg-surface-elevated/80" />
+                  <div className="w-full aspect-2/3 bg-surface-elevated/80" />
                   <div className="p-3 space-y-2">
                     <div className="h-4 bg-surface-elevated rounded w-3/4 mx-auto" />
                     <div className="h-3 bg-surface-elevated rounded w-1/2 mx-auto" />

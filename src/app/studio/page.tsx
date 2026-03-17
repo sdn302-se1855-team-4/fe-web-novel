@@ -101,7 +101,7 @@ export default function StudioPage() {
       {loading ? (
         <div className="flex flex-col gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[2rem] md:rounded-[2.5rem] transition-all duration-300">
+            <div key={i} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-4xl md:rounded-[2.5rem] transition-all duration-300">
               <div
                 className="skeleton"
                 style={{
@@ -120,8 +120,8 @@ export default function StudioPage() {
       ) : stories.length > 0 ? (
         <div className="flex flex-col gap-4">
           {stories.map((story) => (
-            <div key={story.id} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[2rem] md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
-              <div className="w-16 h-20 rounded-2xl overflow-hidden bg-surface-elevated flex items-center justify-center text-text-muted shadow-sm flex-shrink-0">
+            <div key={story.id} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-4xl md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
+              <div className="w-16 h-20 rounded-2xl overflow-hidden bg-surface-elevated flex items-center justify-center text-text-muted shadow-sm shrink-0">
                 {story.coverImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={story.coverImage} alt={story.title} className="w-full h-full object-cover" />
@@ -154,7 +154,7 @@ export default function StudioPage() {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-3 flex-shrink-0 w-full md:w-auto justify-end pt-4 md:pt-0 border-t md:border-t-0 border-border-brand">
+              <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end pt-4 md:pt-0 border-t md:border-t-0 border-border-brand">
                 <Link
                   href={`/studio/${story.id}/chapters/create`}
                   className="btn btn-outline btn-sm border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 px-4 rounded-xl"

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Star, BookOpen } from "lucide-react";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -25,8 +26,7 @@ interface Story {
   _count?: { chapters: number };
 }
 
-const DEFAULT_COVER =
-  "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop";
+
 
 function formatTimeAgo(date?: string | Date) {
   if (!date) return "Mới đây";
@@ -35,44 +35,20 @@ function formatTimeAgo(date?: string | Date) {
     const distance = formatDistanceToNow(d, { locale: vi });
     // distance is something like "19 giờ", "2 ngày"
     // We want "19 Giờ Trước" or "2 Ngày Trước"
-    const words = distance.replace("khoảng ", "").split(" ");
-    const formattedDistance = words
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
-    return `${formattedDistance} Trước`;
-  } catch (e) {
+    return `${distance} Trước`;
+  } catch {
     return "Vừa cập nhật";
   }
 }
 
-function typeLabel(type: string) {
-  switch (type) {
-    case "NOVEL":
-      return "Novel";
-    case "MANGA":
-      return "Manga";
-    case "COMIC":
-      return "Comic";
-    default:
-      return "LN";
-  }
-}
+
 
 export default function StoryCard({ story }: { story: Story }) {
   if (!story) return null;
 
-  const authorName =
-    story.author?.displayName ||
-    story.author?.username ||
-    story.author?.name ||
-    "Unknown";
 
-  const handleImageError = (
-    e: React.SyntheticEvent<HTMLImageElement, Event>,
-  ) => {
-    const target = e.target as HTMLImageElement;
-    if (target.src !== DEFAULT_COVER) target.src = DEFAULT_COVER;
-  };
+
+
 
   // Logic for HOT badge: Updated in last 24h and has view count > threshold
   const isHot = () => {
@@ -94,12 +70,12 @@ export default function StoryCard({ story }: { story: Story }) {
       {/* Cover Image Container */}
       <div className="relative aspect-3/4 overflow-hidden rounded-2xl bg-surface-elevated ring-1 ring-border-brand/40 group-hover:ring-primary-brand/30 transition-all duration-500 shadow-sm group-hover:shadow-[0_20px_40px_-15px_rgba(16,185,129,0.25)]">
         {story.coverImage ? (
-          <img
+          <Image
             src={story.coverImage}
             alt={story.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            loading="lazy"
-            onError={handleImageError}
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            unoptimized
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-text-muted bg-surface-elevated">
@@ -136,7 +112,7 @@ export default function StoryCard({ story }: { story: Story }) {
 
       {/* Info Content */}
       <div className="mt-3 px-1">
-        <h3 className="text-sm sm:text-base font-bold text-text-primary leading-tight line-clamp-3 min-h-[3.75rem] group-hover:text-emerald-500 transition-colors duration-300">
+        <h3 className="text-sm sm:text-base font-bold text-text-primary leading-tight line-clamp-3 min-h-10 group-hover:text-emerald-500 transition-colors duration-300">
           {story.title}
         </h3>
         <div className="flex items-center justify-between mt-2">

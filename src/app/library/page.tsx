@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Library, BookOpen } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
@@ -135,9 +135,9 @@ export default function LibraryPage() {
               {[...Array(12)].map((_, i) => (
                 <div
                   key={i}
-                  className="bg-surface-brand/50 border border-border-brand/50 rounded-2xl overflow-hidden aspect-[2/3.5] animate-pulse"
+                  className="bg-surface-brand/50 border border-border-brand/50 rounded-2xl overflow-hidden aspect-2/3.5 animate-pulse"
                 >
-                  <div className="w-full aspect-[2/3] bg-surface-elevated/80" />
+                  <div className="w-full aspect-2/3 bg-surface-elevated/80" />
                   <div className="p-3 space-y-2">
                     <div className="h-4 bg-surface-elevated rounded w-3/4 mx-auto" />
                     <div className="h-3 bg-surface-elevated rounded w-1/2 mx-auto" />

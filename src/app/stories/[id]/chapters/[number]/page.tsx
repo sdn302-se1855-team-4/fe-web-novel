@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -20,7 +20,9 @@ import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
 
-const THEMES = {
+type ThemeKey = "light" | "dark" | "sepia";
+
+const THEMES: Record<ThemeKey, React.CSSProperties> = {
   light: {
     "--reader-bg": "#f9f7f2",
     "--reader-text": "#1a1a1a",
@@ -29,7 +31,7 @@ const THEMES = {
     "--reader-shadow": "rgba(0, 0, 0, 0.05)",
     "--reader-btn-hover": "#f0ede5",
     "--reader-accent": "#10b981",
-  },
+  } as React.CSSProperties,
   dark: {
     "--reader-bg": "#0f1117",
     "--reader-text": "#e2e8f0",
@@ -38,7 +40,7 @@ const THEMES = {
     "--reader-shadow": "rgba(0, 0, 0, 0.3)",
     "--reader-btn-hover": "#171923",
     "--reader-accent": "#10b981",
-  },
+  } as React.CSSProperties,
   sepia: {
     "--reader-bg": "#f1e7d0",
     "--reader-text": "#433422",
@@ -47,8 +49,10 @@ const THEMES = {
     "--reader-shadow": "rgba(67, 52, 34, 0.08)",
     "--reader-btn-hover": "#e6d8b9",
     "--reader-accent": "#8b4513",
-  },
+  } as React.CSSProperties,
 };
+
+const SKELETON_WIDTHS = [92, 85, 98, 80, 88, 95];
 
 interface Chapter {
   id: string;
@@ -151,10 +155,12 @@ export default function ChapterReaderPage() {
   }, [storyId, chapterNumber, router]);
 
   useEffect(() => {
-    const stored = localStorage.getItem("readerFontSize");
-    if (stored) setFontSize(Number(stored));
-    const storedTheme = localStorage.getItem("readerTheme") as any;
-    if (storedTheme) setReaderTheme(storedTheme);
+    requestAnimationFrame(() => {
+      const stored = localStorage.getItem("readerFontSize");
+      if (stored) setFontSize(Number(stored));
+      const storedTheme = localStorage.getItem("readerTheme") as ThemeKey;
+      if (storedTheme && (storedTheme === "light" || storedTheme === "dark" || storedTheme === "sepia")) setReaderTheme(storedTheme);
+    });
   }, []);
 
   // Focus search input when modal opens
@@ -184,10 +190,10 @@ export default function ChapterReaderPage() {
     setSearchQuery("");
   };
 
-  const navigateChapter = (num: number) => {
+  const navigateChapter = useCallback((num: number) => {
     if (num < 1 || num > totalChapters) return;
     router.push(`/stories/${storyId}/chapters/${num}`);
-  };
+  }, [storyId, totalChapters, router]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -206,18 +212,18 @@ export default function ChapterReaderPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [chapterNumber, totalChapters, storyId, router, isModalOpen]);
+  }, [chapterNumber, totalChapters, storyId, router, isModalOpen, navigateChapter]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--reader-bg)] text-[var(--reader-text)] font-sans flex flex-col transition-all duration-400" style={THEMES["light"] as any} data-reader-theme="light">
+      <div className="min-h-screen bg-(--reader-bg) text-(--reader-text) font-sans flex flex-col transition-all duration-400" style={THEMES["light"]} data-reader-theme="light">
         <div className="max-w-[800px] mx-auto px-6 py-16 md:py-20 w-full">
           <div className="animate-pulse bg-gray-200/50 h-10 w-3/4 rounded-xl mx-auto mb-10" />
           {[...Array(12)].map((_, i) => (
             <div
               key={i}
               className="animate-pulse bg-black/5 h-4 rounded-full mb-4"
-              style={{ width: `${85 + Math.random() * 15}%` }}
+              style={{ width: `${SKELETON_WIDTHS[i % SKELETON_WIDTHS.length]}%` }}
             />
           ))}
         </div>
@@ -267,17 +273,17 @@ export default function ChapterReaderPage() {
 
   return (
     <div
-      className="min-h-screen bg-[var(--reader-bg)] text-[var(--reader-text)] font-sans flex flex-col transition-all duration-400"
-      style={THEMES[readerTheme] as any}
+      className="min-h-screen bg-(--reader-bg) text-(--reader-text) font-sans flex flex-col transition-all duration-400"
+      style={THEMES[readerTheme]}
       data-reader-theme={readerTheme}
     >
       {/* Top Bar */}
       <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 bg-[var(--reader-bar-bg)] border-b border-[var(--reader-border)] backdrop-blur-md shadow-sm"
+        className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 bg-(--reader-bar-bg) border-b border-(--reader-border) backdrop-blur-md shadow-sm"
       >
-        <Link href={`/stories/${storyId}`} className="flex items-center gap-3 text-[var(--reader-text)] no-underline font-bold text-sm hover:-translate-x-1 transition-transform max-w-[40%]">
+        <Link href={`/stories/${storyId}`} className="flex items-center gap-3 text-(--reader-text) no-underline font-bold text-sm hover:-translate-x-1 transition-transform max-w-[40%]">
           <ChevronLeft size={18} />
           <span className="truncate tracking-tight">
             {chapter.story?.title || "Trở lại"}
@@ -322,7 +328,7 @@ export default function ChapterReaderPage() {
             <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center leading-tight">
               Chương {chapter.chapterNumber}: {chapter.title}
               {chapter.isPremium && (
-                <span className="inline-flex items-center gap-1.5 text-[10px] px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 text-white font-black tracking-wider ml-3 shadow-md">
+                <span className="inline-flex items-center gap-1.5 text-[10px] px-3 py-1 rounded-full bg-linear-to-r from-amber-400 to-amber-600 text-white font-black tracking-wider ml-3 shadow-md">
                   <Coins size={14} /> PREMIUM
                 </span>
               )}
@@ -331,7 +337,7 @@ export default function ChapterReaderPage() {
             {/* Inline Navigation Bar */}
             <div className="flex items-center justify-center gap-3 mb-10 w-full" data-no-toggle>
               <button
-                className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border border-[var(--reader-border)] bg-[var(--reader-bar-bg)] text-[var(--reader-text)] cursor-pointer hover:not-disabled:bg-[var(--reader-btn-hover)] hover:not-disabled:border-[var(--reader-accent)] hover:not-disabled:text-[var(--reader-accent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border border-(--reader-border) bg-(--reader-bar-bg) text-(--reader-text) cursor-pointer hover:not-disabled:bg-(--reader-btn-hover) hover:not-disabled:border-(--reader-accent) hover:not-disabled:text-(--reader-accent) disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 disabled={chapterNumber <= 1}
                 onClick={() => navigateChapter(chapterNumber - 1)}
               >
@@ -339,16 +345,16 @@ export default function ChapterReaderPage() {
               </button>
 
               <button
-                className="flex-1 min-w-0 h-10 flex items-center gap-2 px-4 rounded-xl border border-[var(--reader-border)] bg-[var(--reader-bar-bg)] text-[var(--reader-text)] font-semibold text-sm cursor-pointer hover:bg-[var(--reader-btn-hover)] hover:border-[var(--reader-accent)] hover:text-[var(--reader-accent)] transition-all"
+                className="flex-1 min-w-0 h-10 flex items-center gap-2 px-4 rounded-xl border border-(--reader-border) bg-(--reader-bar-bg) text-(--reader-text) font-semibold text-sm cursor-pointer hover:bg-(--reader-btn-hover) hover:border-(--reader-accent) hover:text-(--reader-accent) transition-all"
                 onClick={() => setIsModalOpen(true)}
                 title="Chọn chương"
               >
-                <List size={16} className="flex-shrink-0 opacity-60" />
+                <List size={16} className="shrink-0 opacity-60" />
                 <span className="truncate text-left">{currentChapterTitle}</span>
               </button>
 
               <button
-                className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border border-[var(--reader-border)] bg-[var(--reader-bar-bg)] text-[var(--reader-text)] cursor-pointer hover:not-disabled:bg-[var(--reader-btn-hover)] hover:not-disabled:border-[var(--reader-accent)] hover:not-disabled:text-[var(--reader-accent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border border-(--reader-border) bg-(--reader-bar-bg) text-(--reader-text) cursor-pointer hover:not-disabled:bg-(--reader-btn-hover) hover:not-disabled:border-(--reader-accent) hover:not-disabled:text-(--reader-accent) disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 disabled={chapterNumber >= totalChapters}
                 onClick={() => navigateChapter(chapterNumber + 1)}
               >
@@ -357,7 +363,7 @@ export default function ChapterReaderPage() {
             </div>
 
             {chapter.isPremium && chapter.isLocked ? (
-              <div className="flex flex-col items-center gap-6 p-12 text-center bg-[var(--reader-bar-bg)] rounded-[2.5rem] border border-[var(--reader-border)] my-12 shadow-md" data-no-toggle>
+              <div className="flex flex-col items-center gap-6 p-12 text-center bg-(--reader-bar-bg) rounded-4xl border border-(--reader-border) my-12 shadow-md" data-no-toggle>
                 <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-4 border-2 border-amber-200">
                   <Lock size={40} className="text-amber-600" />
                 </div>
@@ -374,15 +380,16 @@ export default function ChapterReaderPage() {
                         body: JSON.stringify({ storyId, chapterId: chapter.id }),
                       });
                       window.location.reload();
-                    } catch (err: any) {
-                      showToast(err.message || "Lỗi mua chương", "error");
+                    } catch (err: unknown) {
+                      const message = err instanceof Error ? err.message : "Lỗi mua chương";
+                      showToast(message, "error");
                     }
                     setPurchasing(false);
                   }}
                 >
                   {purchasing ? "ĐANG XỬ LÝ..." : `MỞ KHÓA (${chapter.price} XU)`}
                 </button>
-                <Link href="/wallet" className="text-sm text-[var(--reader-accent)] font-bold">
+                <Link href="/wallet" className="text-sm text-(--reader-accent) font-bold">
                   Nạp thêm xu vào ví →
                 </Link>
               </div>
@@ -391,7 +398,7 @@ export default function ChapterReaderPage() {
                 className={
                   chapter.story?.type === "MANGA" || chapter.story?.type === "COMIC"
                     ? "flex flex-col items-center w-full max-w-[1000px] mx-auto [&_img]:max-w-full [&_img]:h-auto [&_img]:shadow-md [&_img]:mb-0.5"
-                    : "font-serif leading-relaxed break-words whitespace-pre-wrap [&_p]:mb-6"
+                    : "font-serif leading-relaxed wrap-break-word whitespace-pre-wrap [&_p]:mb-6"
                 }
                 dangerouslySetInnerHTML={{ __html: chapter.content || "" }}
               />
@@ -403,13 +410,13 @@ export default function ChapterReaderPage() {
       {/* Fixed Bottom Navigation — hide on scroll down, show on scroll up / click */}
       <motion.nav
         data-no-toggle
-        className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--reader-bar-bg)] border-t border-[var(--reader-border)] backdrop-blur-md shadow-lg"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-(--reader-bar-bg) border-t border-(--reader-border) backdrop-blur-md shadow-lg"
         animate={{ y: showControls ? 0 : "100%", opacity: showControls ? 1 : 0 }}
         transition={{ duration: 0.25, ease: "easeInOut" }}
       >
         <div className="flex items-center gap-3 w-full max-w-[800px] mx-auto px-4 py-3">
           <button
-            className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border border-[var(--reader-border)] bg-[var(--reader-bar-bg)] text-[var(--reader-text)] cursor-pointer hover:not-disabled:bg-[var(--reader-btn-hover)] hover:not-disabled:border-[var(--reader-accent)] hover:not-disabled:text-[var(--reader-accent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border border-(--reader-border) bg-(--reader-bar-bg) text-(--reader-text) cursor-pointer hover:not-disabled:bg-(--reader-btn-hover) hover:not-disabled:border-(--reader-accent) hover:not-disabled:text-(--reader-accent) disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             disabled={chapterNumber <= 1}
             onClick={() => navigateChapter(chapterNumber - 1)}
           >
@@ -417,16 +424,16 @@ export default function ChapterReaderPage() {
           </button>
 
           <button
-            className="flex-1 min-w-0 h-10 flex items-center gap-2 px-4 rounded-xl border border-[var(--reader-border)] bg-[var(--reader-bar-bg)] text-[var(--reader-text)] font-semibold text-sm cursor-pointer hover:bg-[var(--reader-btn-hover)] hover:border-[var(--reader-accent)] hover:text-[var(--reader-accent)] transition-all"
+            className="flex-1 min-w-0 h-10 flex items-center gap-2 px-4 rounded-xl border border-(--reader-border) bg-(--reader-bar-bg) text-(--reader-text) font-semibold text-sm cursor-pointer hover:bg-(--reader-btn-hover) hover:border-(--reader-accent) hover:text-(--reader-accent) transition-all"
             onClick={() => setIsModalOpen(true)}
             title="Chọn chương"
           >
-            <List size={16} className="flex-shrink-0 opacity-60" />
+            <List size={16} className="shrink-0 opacity-60" />
             <span className="truncate text-left">{currentChapterTitle}</span>
           </button>
 
           <button
-            className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border border-[var(--reader-border)] bg-[var(--reader-bar-bg)] text-[var(--reader-text)] cursor-pointer hover:not-disabled:bg-[var(--reader-btn-hover)] hover:not-disabled:border-[var(--reader-accent)] hover:not-disabled:text-[var(--reader-accent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border border-(--reader-border) bg-(--reader-bar-bg) text-(--reader-text) cursor-pointer hover:not-disabled:bg-(--reader-btn-hover) hover:not-disabled:border-(--reader-accent) hover:not-disabled:text-(--reader-accent) disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             disabled={chapterNumber >= totalChapters}
             onClick={() => navigateChapter(chapterNumber + 1)}
           >
@@ -439,7 +446,7 @@ export default function ChapterReaderPage() {
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
-            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
+            className="fixed inset-0 z-100 flex items-end sm:items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -453,7 +460,7 @@ export default function ChapterReaderPage() {
 
             {/* Modal Panel */}
             <motion.div
-              className="relative w-full sm:max-w-lg bg-[var(--reader-bar-bg)] rounded-t-3xl sm:rounded-2xl flex flex-col overflow-hidden shadow-2xl"
+              className="relative w-full sm:max-w-lg bg-(--reader-bar-bg) rounded-t-3xl sm:rounded-2xl flex flex-col overflow-hidden shadow-2xl"
               style={{ maxHeight: "75vh" }}
               initial={{ y: "100%", opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -462,14 +469,14 @@ export default function ChapterReaderPage() {
             >
               {/* Handle bar (mobile) */}
               <div className="flex justify-center pt-3 pb-1 sm:hidden">
-                <div className="w-10 h-1 rounded-full bg-[var(--reader-border)] opacity-60" />
+                <div className="w-10 h-1 rounded-full bg-(--reader-border) opacity-60" />
               </div>
 
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--reader-border)]">
-                <h2 className="font-bold text-base text-[var(--reader-text)]">Danh sách chương</h2>
+              <div className="flex items-center justify-between px-5 py-3 border-b border-(--reader-border)">
+                <h2 className="font-bold text-base text-(--reader-text)">Danh sách chương</h2>
                 <button
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--reader-text)] opacity-60 hover:opacity-100 hover:bg-[var(--reader-btn-hover)] transition-all"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-(--reader-text) opacity-60 hover:opacity-100 hover:bg-(--reader-btn-hover) transition-all"
                   onClick={() => { setIsModalOpen(false); setSearchQuery(""); }}
                 >
                   <X size={18} />
@@ -477,16 +484,16 @@ export default function ChapterReaderPage() {
               </div>
 
               {/* Search */}
-              <div className="px-4 py-3 border-b border-[var(--reader-border)]">
-                <div className="flex items-center gap-2 px-3 h-10 rounded-xl border border-[var(--reader-border)] bg-[var(--reader-bg)]">
-                  <Search size={15} className="flex-shrink-0 opacity-40 text-[var(--reader-text)]" />
+              <div className="px-4 py-3 border-b border-(--reader-border)">
+                <div className="flex items-center gap-2 px-3 h-10 rounded-xl border border-(--reader-border) bg-(--reader-bg)">
+                  <Search size={15} className="shrink-0 opacity-40 text-(--reader-text)" />
                   <input
                     ref={searchInputRef}
                     type="text"
                     placeholder="Tìm chương..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent text-sm text-[var(--reader-text)] placeholder:opacity-40 outline-none"
+                    className="flex-1 bg-transparent text-sm text-(--reader-text) placeholder:opacity-40 outline-none"
                   />
                   {searchQuery && (
                     <button onClick={() => setSearchQuery("")} className="opacity-40 hover:opacity-80">
@@ -499,7 +506,7 @@ export default function ChapterReaderPage() {
               {/* Chapter List */}
               <div className="overflow-y-auto flex-1 py-2">
                 {filteredChapters.length === 0 ? (
-                  <p className="text-center py-10 text-sm opacity-40 text-[var(--reader-text)]">Không tìm thấy chương</p>
+                  <p className="text-center py-10 text-sm opacity-40 text-(--reader-text)">Không tìm thấy chương</p>
                 ) : (
                   filteredChapters.map((ch) => {
                     const isActive = ch.chapterNumber === chapterNumber;
@@ -509,24 +516,24 @@ export default function ChapterReaderPage() {
                         className={cn(
                           "w-full flex items-center gap-3 px-5 py-3 text-left transition-all",
                           isActive
-                            ? "bg-[var(--reader-accent)]/10 text-[var(--reader-accent)]"
-                            : "text-[var(--reader-text)] hover:bg-[var(--reader-btn-hover)]",
+                            ? "bg-(--reader-accent)/10 text-(--reader-accent)"
+                            : "text-(--reader-text) hover:bg-(--reader-btn-hover)",
                         )}
                         onClick={() => handleSelectChapter(ch.chapterNumber)}
                       >
-                        <span className={cn("text-xs font-bold w-8 flex-shrink-0 opacity-50", isActive && "opacity-100")}>
+                        <span className={cn("text-xs font-bold w-8 shrink-0 opacity-50", isActive && "opacity-100")}>
                           {ch.chapterNumber}
                         </span>
                         <span className="flex-1 text-sm font-medium truncate">
                           {ch.title}
                         </span>
                         {ch.isPremium && (
-                          <span className="flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-500 font-bold">
+                          <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-500 font-bold">
                             PREMIUM
                           </span>
                         )}
                         {isActive && (
-                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-[var(--reader-accent)]" />
+                          <span className="shrink-0 w-2 h-2 rounded-full bg-(--reader-accent)" />
                         )}
                       </button>
                     );
@@ -535,8 +542,8 @@ export default function ChapterReaderPage() {
               </div>
 
               {/* Footer info */}
-              <div className="px-5 py-3 border-t border-[var(--reader-border)] text-center">
-                <span className="text-xs opacity-40 text-[var(--reader-text)]">
+              <div className="px-5 py-3 border-t border-(--reader-border) text-center">
+                <span className="text-xs opacity-40 text-(--reader-text)">
                   {filteredChapters.length} / {allChapters.length} chương
                 </span>
               </div>

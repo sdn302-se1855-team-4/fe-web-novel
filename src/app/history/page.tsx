@@ -44,9 +44,14 @@ export default function HistoryPage() {
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>,
   ) => {
-    const target = e.target as HTMLImageElement;
+    const target = e.currentTarget;
     if (target.src !== DEFAULT_COVER) {
       target.src = DEFAULT_COVER;
+    } else {
+      target.style.display = 'none';
+      if (target.parentElement) {
+        target.parentElement.innerHTML = '<div class="w-full h-full bg-surface-elevated flex items-center justify-center rounded-2xl"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open opacity-20"><path d="M2 3h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H2z"/><path d="M22 3h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg></div>';
+      }
     }
   };
 
@@ -78,7 +83,7 @@ export default function HistoryPage() {
             Quay lại
           </button>
           
-          <h1 className="flex items-center gap-3 text-2xl md:text-3xl font-black text-text-primary tracking-tight italic uppercase font-heading !mb-0">
+          <h1 className="flex items-center gap-3 text-2xl md:text-3xl font-black text-text-primary tracking-tight italic uppercase font-heading mb-0!">
             <Clock size={32} className="text-emerald-500" /> Lịch sử đọc
           </h1>
         </div>
@@ -86,7 +91,7 @@ export default function HistoryPage() {
         {loading ? (
           <div className="flex flex-col gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 md:gap-6 p-4 md:p-5 bg-surface-brand border border-border-brand rounded-[2rem] no-underline text-inherit transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/5 hover:translate-x-2 group">
+              <div key={i} className="flex items-center gap-4 md:gap-6 p-4 md:p-5 bg-surface-brand border border-border-brand rounded-4xl no-underline text-inherit transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/5 hover:translate-x-2 group">
                 <div
                   className="skeleton shrink-0"
                   style={{
@@ -109,20 +114,20 @@ export default function HistoryPage() {
               <Link
                 key={item.id}
                 href={`/stories/${item.story.id}/chapters/${item.chapter.chapterNumber}`}
-                className="flex items-center gap-4 md:gap-6 p-4 md:p-5 bg-surface-brand border border-border-brand rounded-[2rem] no-underline text-inherit transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/5 hover:translate-x-2 group"
+                className="flex items-center gap-4 md:gap-6 p-4 md:p-5 bg-surface-brand border border-border-brand rounded-4xl no-underline text-inherit transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/5 hover:translate-x-2 group"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.story.coverImage || DEFAULT_COVER}
                   alt={item.story.title}
-                  className="w-16 md:w-20 h-24 md:h-28 object-cover rounded-2xl shadow-lg flex-shrink-0"
+                  className="w-16 md:w-20 h-24 md:h-28 object-cover rounded-2xl shadow-lg shrink-0"
                   onError={handleImageError}
                 />
                 <div className="flex-1 min-w-0 flex flex-col gap-2">
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-lg text-text-primary truncate">{item.story.title}</span>
                     {item.story.type && (
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-500 text-white uppercase tracking-wider flex-shrink-0">
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-500 text-white uppercase tracking-wider shrink-0">
                         {item.story.type}
                       </span>
                     )}

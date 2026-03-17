@@ -32,7 +32,7 @@ export default function RootLayout({
             {!hideNavbar && <Navbar />}
             <main className={cn(
               "min-h-screen",
-              !hideNavbar && "pt-[var(--navbar-height)]"
+              !hideNavbar && "pt-(--navbar-height)"
             )}>
               {children}
             </main>
