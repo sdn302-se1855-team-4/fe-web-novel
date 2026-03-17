@@ -60,10 +60,10 @@ export default function AdminStoriesPage() {
       setLoading(true);
     }
     const url = `/admin/stories?limit=10${cursor ? `&cursor=${cursor}` : ""}`;
-    apiFetch<any>(url)
+    apiFetch<{ data: AdminStory[]; pagination?: { nextCursor?: string | null } }>(url)
       .then((res) => {
-        const data = Array.isArray(res) ? res : res.data || [];
-        const pagination = res.pagination || {};
+        const data = Array.isArray(res) ? res : (res as { data: AdminStory[] }).data || [];
+        const pagination = (res as { pagination?: { nextCursor?: string | null } }).pagination || { nextCursor: null };
         
         if (cursor) {
           setStories((prev) => [...prev, ...data]);
@@ -95,8 +95,8 @@ export default function AdminStoriesPage() {
     setExpandedStory(storyId);
     setChaptersLoading(true);
     try {
-      const res = await apiFetch<any>(`/admin/stories/${storyId}/chapters`);
-      const data = Array.isArray(res) ? res : res.data || [];
+      const res = await apiFetch<{ data: AdminChapter[] }>(`/admin/stories/${storyId}/chapters`);
+      const data = Array.isArray(res) ? res : (res as { data: AdminChapter[] }).data || [];
       setChapters(data);
     } catch {
       showToast("Không thể tải danh sách chương", "error");
@@ -273,7 +273,7 @@ export default function AdminStoriesPage() {
               <tbody className="divide-y divide-border-brand">
                 {filtered.map((story) => (
                   <Fragment key={story.id}>
-                    <tr className={`group transition-all duration-200 hover:bg-surface-elevated/80 ${!story.isPublished ? "bg-amber-500/[0.03]" : ""}`}>
+                    <tr className={`group transition-all duration-200 hover:bg-surface-elevated/80 ${!story.isPublished ? "bg-amber-500/3" : ""}`}>
                       <td className="px-6 py-5">
                         <div className="flex flex-col gap-1">
                           <Link href={`/stories/${story.id}`} className="text-sm font-bold text-text-primary hover:text-emerald-500 transition-colors cursor-pointer leading-tight">
