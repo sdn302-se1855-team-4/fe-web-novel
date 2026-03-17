@@ -240,7 +240,7 @@ export default function HomePage() {
                                 "Khám phá thế giới tiểu thuyết đầy hấp dẫn..."}
                             </p>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 pt-1 sm:pt-2">
-                              <Button className="bg-[#10b981] hover:bg-[#10b981]/90 text-white px-6 sm:px-8 py-5 sm:py-6 rounded-xl sm:rounded-2xl font-bold flex gap-2 text-sm sm:text-base w-fit h-auto shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">
+                              <Button className="bg-[#10b981] hover:bg-[#10b981]/90 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-bold flex gap-2 text-sm sm:text-base w-fit h-auto shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">
                                 <BookOpen size={18} className="sm:w-5 sm:h-5" />{" "}
                                 Đọc ngay
                               </Button>
