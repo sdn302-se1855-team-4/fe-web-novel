@@ -59,6 +59,7 @@ interface Chapter {
   chapterNumber: number;
   title: string;
   content: string;
+  isPublished: boolean;
   isPremium?: boolean;
   price?: number;
   isLocked?: boolean;
@@ -185,11 +186,15 @@ export default function ChapterReaderPage() {
             }).catch(() => {});
           }
         })
-        .catch(() => router.push(`/stories/${storyId}`))
+        .catch((err) => {
+          const message = err instanceof Error ? err.message : "Không thể truy cập chương này";
+          showToast(message, "error");
+          router.push(`/stories/${storyId}`);
+        })
         .finally(() => setLoading(false));
     };
     fetchChapter();
-  }, [storyId, chapterNumber, router]);
+  }, [storyId, chapterNumber, router, showToast]);
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -370,6 +375,15 @@ export default function ChapterReaderPage() {
                 </span>
               )}
             </h1>
+
+            {!chapter.isPublished && (
+              <div className="mb-10 p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 text-center">
+                <p className="text-sm font-bold flex items-center justify-center gap-2">
+                  <X size={16} /> CHƯƠNG ĐANG CHỜ DUYỆT
+                </p>
+                <p className="text-xs opacity-80 mt-1">Chỉ có bạn và Admin mới có thể nhìn thấy nội dung này.</p>
+              </div>
+            )}
 
             {/* Inline Navigation Bar */}
             <div className="flex items-center justify-center gap-3 mb-10 w-full" data-no-toggle>
