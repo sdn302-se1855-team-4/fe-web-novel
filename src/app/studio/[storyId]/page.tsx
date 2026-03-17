@@ -24,6 +24,7 @@ interface Chapter {
   id: string;
   chapterNumber: number;
   title: string;
+  isPublished?: boolean;
   isPremium?: boolean;
   createdAt?: string;
 }
@@ -354,6 +355,11 @@ export default function EditStoryPage() {
                       Chương {ch.chapterNumber}: {ch.title}
                     </h3>
                     <div className="flex items-center gap-4 flex-wrap text-sm font-medium">
+                      {!ch.isPublished && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[10px] font-black uppercase tracking-widest border border-amber-500/20">
+                          Chờ duyệt
+                        </span>
+                      )}
                       {ch.isPremium && (
                         <span className="badge badge-premium">Premium</span>
                       )}
