@@ -16,27 +16,46 @@ interface Genre {
 export default function AdminGenresPage() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formModal, setFormModal] = useState<{ open: boolean; editId: string | null }>({ open: false, editId: null });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: string; name: string }>({ open: false, id: "", name: "" });
   const { showToast } = useToast();
 
-  const fetchGenres = useCallback(async () => {
+  const fetchGenres = useCallback(async (cursor: string | null = null) => {
     try {
-      setLoading(true);
-      const res = await apiFetch<any>("/admin/genres");
+      if (cursor) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      const url = `/admin/genres?limit=10${cursor ? `&cursor=${cursor}` : ""}`;
+      const res = await apiFetch<any>(url);
+      
       const data = Array.isArray(res) ? res : res.data || [];
-      setGenres(data);
+      const pagination = res.pagination || {};
+      
+      if (cursor) {
+        setGenres(prev => [...prev, ...data]);
+      } else {
+        setGenres(data);
+      }
+      
+      setNextCursor(pagination.nextCursor || null);
+      setHasMore(!!pagination.nextCursor);
     } catch {
       showToast("Lỗi khi tải danh sách thể loại", "error");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [showToast]);
 
-  useEffect(() => { fetchGenres(); }, [fetchGenres]);
+  useEffect(() => { fetchGenres(null); }, [fetchGenres]);
 
   const genSlug = (v: string) => v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
@@ -72,7 +91,7 @@ export default function AdminGenresPage() {
         showToast("Đã tạo thể loại mới", "success");
       }
       closeFormModal();
-      fetchGenres();
+      fetchGenres(null);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Thao tác thất bại", "error");
     } finally {
@@ -162,6 +181,18 @@ export default function AdminGenresPage() {
           </div>
         )}
       </div>
+
+      {hasMore && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => fetchGenres(nextCursor)}
+            disabled={loadingMore}
+            className="px-6 py-2.5 rounded-xl bg-surface-brand border border-border-brand text-text-secondary font-medium hover:bg-surface-hover transition-colors flex items-center justify-center min-w-[140px]"
+          >
+            {loadingMore ? <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" /> : "Xem thêm"}
+          </button>
+        </div>
+      )}
 
       {/* Create/Edit Modal */}
       {formModal.open && (

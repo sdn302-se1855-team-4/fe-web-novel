@@ -19,27 +19,50 @@ interface AdminUser {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "ADMIN" | "WRITER" | "READER">("all");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const { showToast } = useToast();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [blockModal, setBlockModal] = useState<{ open: boolean; id: string; name: string; isBlocked: boolean }>({ open: false, id: "", name: "", isBlocked: false });
 
-  const fetchUsers = () => {
-    setLoading(true);
+  const fetchUsers = (cursor: string | null = null) => {
+    if (cursor) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+    
     // Explicitly cast to any or a Pagination interface to avoid TS errors
-    apiFetch<any>("/admin/users")
+    const url = `/admin/users?limit=10${cursor ? `&cursor=${cursor}` : ""}`;
+    apiFetch<any>(url)
       .then((res) => {
         // Handle both plain array (legacy) and paginated response
         const data = Array.isArray(res) ? res : res.data || [];
-        setUsers(data);
+        const pagination = res.pagination || {};
+        
+        if (cursor) {
+          setUsers((prev) => [...prev, ...data]);
+        } else {
+          setUsers(data);
+        }
+        
+        setNextCursor(pagination.nextCursor || null);
+        setHasMore(!!pagination.nextCursor);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {
+        showToast("Lỗi khi tải danh sách người dùng", "error");
+      })
+      .finally(() => {
+        setLoading(false);
+        setLoadingMore(false);
+      });
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(null);
   }, []);
 
   const handleBlock = async () => {
@@ -200,6 +223,18 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+
+      {hasMore && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => fetchUsers(nextCursor)}
+            disabled={loadingMore}
+            className="px-6 py-2.5 rounded-xl bg-surface-brand border border-border-brand text-text-secondary font-medium hover:bg-surface-hover transition-colors flex items-center justify-center min-w-[140px]"
+          >
+            {loadingMore ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : "Xem thêm"}
+          </button>
+        </div>
+      )}
 
       {/* Block/Unblock Modal */}
       <ConfirmModal 
