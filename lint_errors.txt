@@ -1,0 +1,24 @@
+
+D:\aFPT\SDN302\Project\fe-web-novel\src\app\notifications\page.tsx
+  61:18  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\aFPT\SDN302\Project\fe-web-novel\src\app\notifications\page.tsx:61:18
+  59 |
+  60 |   const timeAgo = (dateStr: string) => {
+> 61 |     const diff = Date.now() - new Date(dateStr).getTime();
+     |                  ^^^^^^^^^^ Cannot call impure function
+  62 |     const mins = Math.floor(diff / 60000);
+  63 |     if (mins < 1) return "Vừa xong";
+  64 |     if (mins < 60) return `${mins} phút trước`;  react-hooks/purity
+
+D:\aFPT\SDN302\Project\fe-web-novel\src\components\ui\carousel.tsx
+   18:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  129:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\aFPT\SDN302\Project\fe-web-novel\src\components\ui\label.tsx
+  4:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+✖ 4 problems (4 errors, 0 warnings)
+

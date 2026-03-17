@@ -23,6 +23,7 @@ import { useState, useSyncExternalStore } from "react";
 import { removeTokens } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/ThemeProvider";
+import NotificationBell from "@/components/NotificationBell";
 
 interface NavItem {
   href: string;
@@ -189,6 +190,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 ?.label || "Admin"}
             </h2>
             <div className="flex items-center gap-3 ml-auto">
+              <NotificationBell />
               {mounted && (
                 <button
                   onClick={toggleTheme}

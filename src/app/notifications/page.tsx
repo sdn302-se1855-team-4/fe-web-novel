@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Check, CheckCheck, Inbox } from "lucide-react";
+import { Bell, Check, CheckCheck } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 interface Notification {
@@ -57,16 +59,8 @@ export default function NotificationsPage() {
     }
   };
 
-  const timeAgo = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "Vừa xong";
-    if (mins < 60) return `${mins} phút trước`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours} giờ trước`;
-    const days = Math.floor(hours / 24);
-    return `${days} ngày trước`;
-  };
+  // Remove the old timeAgo function and use date-fns instead
+
 
   return (
     <div className="container py-12">
@@ -116,12 +110,12 @@ export default function NotificationsPage() {
                   {n.message}
                 </p>
                 <span className="text-xs text-text-muted">
-                  {timeAgo(n.createdAt)}
+                  {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: vi })}
                 </span>
               </div>
               {!n.isRead && (
                 <button
-                  className="flex-shrink-0 text-text-muted hover:text-emerald-500 transition-colors p-2 hover:bg-emerald-500/10 rounded-lg"
+                  className="shrink-0 text-text-muted hover:text-emerald-500 transition-colors p-2 hover:bg-emerald-500/10 rounded-lg"
                   onClick={() => markAsRead(n.id)}
                   title="Đánh dấu đã đọc"
                 >
