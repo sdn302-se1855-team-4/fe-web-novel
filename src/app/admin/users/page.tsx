@@ -158,7 +158,7 @@ export default function AdminUsersPage() {
                     <td className="px-5 py-4 align-middle text-left">{roleBadge(user.role)}</td>
                     <td className="px-5 py-4 align-middle text-left text-sm text-text-muted">{new Date(user.createdAt).toLocaleDateString("vi")}</td>
                     <td className="px-5 py-4 align-middle text-left">
-                      {user.role !== "ADMIN" ? (
+                      {user.role !== "ADMIN" && (
                         <button
                           onClick={() => setBlockModal({ open: true, id: user.id, name: user.displayName || user.username, isBlocked: !!user.isBlocked })}
                           disabled={actionLoading === user.id}
@@ -177,8 +177,6 @@ export default function AdminUsersPage() {
                             <><Ban size={13} /> Khóa</>
                           )}
                         </button>
-                      ) : (
-                        <span className="text-xs text-text-muted italic">—</span>
                       )}
                     </td>
                   </tr>

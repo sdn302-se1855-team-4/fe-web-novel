@@ -2,7 +2,8 @@
 
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle, XCircle, Eye, BookOpen, Search, Trash2, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Eye, BookOpen, Search, Trash2, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
@@ -102,9 +103,9 @@ export default function AdminStoriesPage() {
     try {
       await apiFetch(`/admin/stories/${storyId}/reject`, { method: "PUT" });
       setStories((prev) => prev.map((s) => (s.id === storyId ? { ...s, isPublished: false } : s)));
-      showToast("Đã từ chối truyện", "success");
+      showToast("Đã gỡ truyện", "success");
     } catch {
-      showToast("Từ chối truyện thất bại", "error");
+      showToast("Gỡ truyện thất bại", "error");
     } finally {
       setActionLoading(null);
     }
@@ -116,13 +117,14 @@ export default function AdminStoriesPage() {
     setDeleteStoryModal({ open: false, storyId: "", title: "" });
     setActionLoading(storyId);
     try {
+      // Correct API for deleting story: DELETE /admin/stories/:id
       await apiFetch(`/admin/stories/${storyId}`, { method: "DELETE" });
       setStories((prev) => prev.filter((s) => s.id !== storyId));
       if (expandedStory === storyId) {
         setExpandedStory(null);
         setChapters([]);
       }
-      showToast("Đã xóa truyện", "success");
+      showToast("Đã xóa truyện vĩnh viễn", "success");
     } catch {
       showToast("Xóa truyện thất bại", "error");
     } finally {
@@ -200,7 +202,7 @@ export default function AdminStoriesPage() {
           <input
             type="text"
             placeholder="Tìm kiếm truyện..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-surface-elevated border border-border-brand text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all"
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-surface-elevated border border-border-brand text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 transition-all font-medium"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -214,8 +216,8 @@ export default function AdminStoriesPage() {
             <button
               key={t.key}
               onClick={() => setFilter(t.key)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
-                filter === t.key ? "bg-surface-brand text-text-primary shadow-sm border border-border-brand" : "text-text-secondary hover:text-text-primary"
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                filter === t.key ? "bg-surface-brand text-emerald-500 shadow-sm border border-border-brand" : "text-text-secondary hover:text-text-primary"
               }`}
             >
               {t.label} ({t.count})
@@ -224,91 +226,99 @@ export default function AdminStoriesPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-xl bg-surface-brand border border-border-brand overflow-hidden shadow-sm">
+      {/* Table container */}
+      <div className="rounded-2xl bg-surface-brand border border-border-brand overflow-hidden shadow-xl shadow-black/20">
         {loading ? (
-          <div className="h-72 animate-pulse bg-surface-brand" />
+          <div className="flex flex-col items-center justify-center py-32 gap-4">
+            <Loader2 size={32} className="animate-spin text-emerald-500" />
+            <p className="text-sm font-bold text-text-muted animate-pulse uppercase tracking-widest">Đang tải dữ liệu...</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-border-brand bg-surface-elevated/50">
-                  <th className="w-[25%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Tiêu đề</th>
-                  <th className="w-[12%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Tác giả</th>
-                  <th className="w-[8%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Loại</th>
-                  <th className="w-[8%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Chương</th>
-                  <th className="w-[12%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Trạng thái</th>
-                  <th className="w-[12%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Ngày tạo</th>
-                  <th className="w-[23%] px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-left">Hành động</th>
+                  <th className="w-[35%] px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-text-muted">Tiêu đề & Tác giả</th>
+                  <th className="w-[10%] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-text-muted">Loại</th>
+                  <th className="w-[10%] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-text-muted">Chương</th>
+                  <th className="w-[15%] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-text-muted">Trạng thái</th>
+                  <th className="w-[15%] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-text-muted">Ngày tạo</th>
+                  <th className="w-[15%] px-6 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-text-muted">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-brand">
                 {filtered.map((story) => (
                   <Fragment key={story.id}>
-                    <tr className={`hover:bg-surface-elevated transition-colors ${!story.isPublished ? "bg-amber-500/5" : ""}`}>
-                      <td className="px-5 py-4 align-middle">
-                        <div className="text-sm font-semibold text-text-primary leading-tight">{story.title}</div>
-                        {story.description && (
-                          <p className="text-xs text-text-muted truncate max-w-[260px] mt-1">{story.description}</p>
-                        )}
+                    <tr className={`group transition-all duration-200 hover:bg-surface-elevated/80 ${!story.isPublished ? "bg-amber-500/[0.03]" : ""}`}>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col gap-1">
+                          <Link href={`/stories/${story.id}`} className="text-sm font-bold text-text-primary hover:text-emerald-500 transition-colors cursor-pointer leading-tight">
+                            {story.title}
+                          </Link>
+                          <div className="flex items-center gap-1.5 opacity-70">
+                            <span className="text-[10px] text-text-muted uppercase font-bold tracking-tighter">by</span>
+                            <span className="text-xs font-semibold text-text-secondary">
+                              {story.author?.displayName || story.author?.username}
+                            </span>
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-5 py-4 align-middle text-sm text-text-secondary">
-                        {story.author?.displayName || story.author?.username}
-                      </td>
-                      <td className="px-5 py-4 align-middle text-left">
-                        <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400">
+                      <td className="px-4 py-5 text-center">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-black bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase">
                           {story.type}
                         </span>
                       </td>
-                      <td className="px-5 py-4 align-middle text-left text-sm text-text-secondary">
-                        {story._count?.chapters || 0}
+                      <td className="px-4 py-5 text-center">
+                        <div className="inline-flex flex-col items-center px-3 py-1 rounded-lg bg-surface-elevated/50 border border-border-brand/30">
+                          <span className="text-sm font-black text-text-primary">{story._count?.chapters || 0}</span>
+                          <span className="text-[9px] text-text-muted font-bold uppercase tracking-tight">C.H.U.Ơ.N.G</span>
+                        </div>
                       </td>
-                      <td className="px-5 py-4 align-middle text-left">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                          story.isPublished ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"
+                      <td className="px-4 py-5 text-center">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border transition-all uppercase tracking-tight ${
+                          story.isPublished 
+                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
+                            : "bg-amber-500/10 text-amber-500 border-amber-500/20"
                         }`}>
-                          {story.isPublished ? <><CheckCircle size={12} /> Đã duyệt</> : <><Eye size={12} /> Chờ duyệt</>}
+                          <div className={`w-1.5 h-1.5 rounded-full ${story.isPublished ? "bg-emerald-500" : "bg-amber-500"} ${!story.isPublished ? "animate-pulse" : ""}`} />
+                          {story.isPublished ? "Đã duyệt" : "Chờ duyệt"}
                         </span>
                       </td>
-                      <td className="px-5 py-4 align-middle text-left text-sm text-text-muted">
-                        {new Date(story.createdAt).toLocaleDateString("vi")}
+                      <td className="px-4 py-5 text-center text-xs text-text-muted font-bold tracking-tighter">
+                        {new Date(story.createdAt).toLocaleDateString("en-GB")}
                       </td>
-                      <td className="px-5 py-4 align-middle text-left">
-                        <div className="flex items-center justify-start gap-2 flex-wrap">
-                          <Link href={`/stories/${story.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-500 border border-indigo-500/30 hover:bg-indigo-500/10 transition-all cursor-pointer" title="Xem chi tiết">
-                            <Eye size={13} /> Xem
-                          </Link>
-                          {story.isPublished ? (
-                            <button onClick={() => setRejectModal({ open: true, storyId: story.id })} disabled={actionLoading === story.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-500 border border-amber-500/30 hover:bg-amber-500/10 transition-all cursor-pointer disabled:opacity-40" title="Gỡ">
-                              <XCircle size={13} /> Gỡ
-                            </button>
-                          ) : (
-                            <button onClick={() => handleApprove(story.id)} disabled={actionLoading === story.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-500 border border-emerald-500/30 hover:bg-emerald-500/10 transition-all cursor-pointer disabled:opacity-40" title="Duyệt">
-                              <CheckCircle size={13} /> Duyệt
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setDeleteStoryModal({ open: true, storyId: story.id, title: story.title })}
-                            disabled={actionLoading === story.id}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-500 border border-rose-500/30 hover:bg-rose-500/10 transition-all cursor-pointer disabled:opacity-40"
-                            title="Xóa truyện"
-                          >
-                            <Trash2 size={13} /> Xóa
-                          </button>
-                          {(story._count?.chapters || 0) > 0 && (
+                      <td className="px-6 py-5">
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center gap-1 bg-surface-elevated/50 border border-border-brand/50 rounded-xl p-1 shadow-inner">
+                            {story.isPublished ? (
+                              <button onClick={() => setRejectModal({ open: true, storyId: story.id })} disabled={actionLoading === story.id} className="p-2 text-amber-500 hover:bg-amber-500/20 rounded-lg transition-all cursor-pointer disabled:opacity-40" title="Gỡ truyện">
+                                <XCircle size={18} />
+                              </button>
+                            ) : (
+                              <button onClick={() => handleApprove(story.id)} disabled={actionLoading === story.id} className="p-2 text-emerald-500 hover:bg-emerald-500/20 rounded-lg transition-all cursor-pointer disabled:opacity-40" title="Duyệt truyện">
+                                <CheckCircle size={18} />
+                              </button>
+                            )}
                             <button
-                              onClick={() => toggleExpand(story.id)}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                                expandedStory === story.id
-                                  ? "text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
-                                  : "text-text-secondary border-border-brand hover:bg-surface-elevated"
-                              }`}
-                              title="Quản lý chương"
+                              onClick={() => setDeleteStoryModal({ open: true, storyId: story.id, title: story.title })}
+                              disabled={actionLoading === story.id}
+                              className="p-2 text-rose-500 hover:bg-rose-500/20 rounded-lg transition-all cursor-pointer disabled:opacity-40"
+                              title="Xóa vĩnh viễn"
                             >
-                              {expandedStory === story.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                              Chương
+                              <Trash2 size={18} />
                             </button>
-                          )}
+                          </div>
+                          <button
+                            onClick={() => toggleExpand(story.id)}
+                            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                              expandedStory === story.id
+                                ? "bg-emerald-500 text-bg-primary border-emerald-500 shadow-lg shadow-emerald-500/30"
+                                : "bg-surface-elevated text-text-secondary border-border-brand/50 hover:border-emerald-500 hover:text-emerald-500"
+                            }`}
+                            title="Xem chi tiết chương"
+                          >
+                            <BookOpen size={18} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -316,87 +326,110 @@ export default function AdminStoriesPage() {
                     {/* Expanded chapter rows */}
                     {expandedStory === story.id && (
                       <tr key={`${story.id}-chapters`}>
-                        <td colSpan={7} className="p-0">
-                          <div className="bg-surface-elevated/30 border-t border-b border-border-brand">
-                            {chaptersLoading ? (
-                              <div className="flex items-center justify-center gap-2 py-8 text-text-muted">
-                                <Loader2 size={16} className="animate-spin" />
-                                <span className="text-sm">Đang tải chương...</span>
+                        <td colSpan={6} className="p-0 bg-surface-elevated/20">
+                          <motion.div 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            className="overflow-hidden border-t border-border-brand/30"
+                          >
+                            <div className="p-8">
+                              <div className="mb-6 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-1.5 h-6 bg-emerald-500 rounded-full" />
+                                  <h4 className="text-xs font-black text-text-primary uppercase tracking-[0.2em]">
+                                    Danh sách chương ({chapters.length})
+                                  </h4>
+                                </div>
                               </div>
-                            ) : chapters.length === 0 ? (
-                              <div className="py-8 text-center text-text-muted text-sm">Không có chương nào.</div>
-                            ) : (
-                              <table className="w-full text-left">
-                                <thead>
-                                  <tr className="border-b border-border-brand bg-surface-elevated/60">
-                                    <th className="px-8 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Chương</th>
-                                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Tiêu đề</th>
-                                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Số từ</th>
-                                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Lượt xem</th>
-                                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Trạng thái</th>
-                                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Hành động</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border-brand/50">
-                                  {chapters.map((ch) => (
-                                    <tr key={ch.id} className={`hover:bg-surface-elevated/50 transition-colors ${!ch.isPublished ? "bg-amber-500/5" : ""}`}>
-                                      <td className="px-8 py-3 text-sm text-text-primary font-medium">
-                                        #{ch.chapterNumber}
-                                      </td>
-                                      <td className="px-4 py-3 text-sm text-text-primary">
-                                        <div className="flex items-center gap-2">
-                                          {ch.title}
-                                          {ch.isPremium && (
-                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400">VIP</span>
-                                          )}
-                                        </div>
-                                      </td>
-                                      <td className="px-4 py-3 text-sm text-text-muted">{ch.wordCount?.toLocaleString() || 0}</td>
-                                      <td className="px-4 py-3 text-sm text-text-muted">{ch.viewCount?.toLocaleString() || 0}</td>
-                                      <td className="px-4 py-3">
-                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                                          ch.isPublished ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"
-                                        }`}>
-                                          {ch.isPublished ? <><CheckCircle size={10} /> Đã duyệt</> : <><Eye size={10} /> Chờ duyệt</>}
-                                        </span>
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        <div className="flex items-center gap-1.5">
-                                          {ch.isPublished ? (
-                                            <button
-                                              onClick={() => setRejectChapterModal({ open: true, chapterId: ch.id, title: `Chương ${ch.chapterNumber}: ${ch.title}` })}
-                                              disabled={chapterActionLoading === ch.id}
-                                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold text-amber-500 border border-amber-500/30 hover:bg-amber-500/10 transition-all cursor-pointer disabled:opacity-40"
-                                              title="Gỡ chương"
-                                            >
-                                              <XCircle size={11} /> Gỡ
-                                            </button>
-                                          ) : (
-                                            <button
-                                              onClick={() => handleApproveChapter(ch.id)}
-                                              disabled={chapterActionLoading === ch.id}
-                                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold text-emerald-500 border border-emerald-500/30 hover:bg-emerald-500/10 transition-all cursor-pointer disabled:opacity-40"
-                                              title="Duyệt chương"
-                                            >
-                                              {chapterActionLoading === ch.id ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle size={11} />} Duyệt
-                                            </button>
-                                          )}
-                                          <button
-                                            onClick={() => setDeleteChapterModal({ open: true, chapterId: ch.id, title: `Chương ${ch.chapterNumber}: ${ch.title}`, storyId: story.id })}
-                                            disabled={chapterActionLoading === ch.id}
-                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold text-rose-500 border border-rose-500/30 hover:bg-rose-500/10 transition-all cursor-pointer disabled:opacity-40"
-                                            title="Xóa chương"
-                                          >
-                                            <Trash2 size={11} /> Xóa
-                                          </button>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            )}
-                          </div>
+                              
+                              <div className="rounded-2xl border border-border-brand/40 bg-surface-brand overflow-hidden shadow-lg">
+                                {chaptersLoading ? (
+                                  <div className="flex flex-col items-center justify-center py-20 gap-4">
+                                    <Loader2 size={24} className="animate-spin text-emerald-500" />
+                                    <span className="text-xs font-bold text-text-muted uppercase tracking-widest">Đang tải...</span>
+                                  </div>
+                                ) : chapters.length === 0 ? (
+                                  <div className="py-20 text-center space-y-3">
+                                    <div className="w-16 h-16 bg-surface-elevated rounded-full flex items-center justify-center mx-auto border border-border-brand/50">
+                                      <BookOpen size={24} className="opacity-20 text-text-primary" />
+                                    </div>
+                                    <p className="text-xs font-bold text-text-muted uppercase tracking-widest">Chưa có chương nào được đăng tải</p>
+                                  </div>
+                                ) : (
+                                  <table className="w-full text-left">
+                                    <thead>
+                                      <tr className="border-b border-border-brand/20 bg-surface-elevated/30">
+                                        <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-text-muted">#</th>
+                                        <th className="px-4 py-4 text-[9px] font-black uppercase tracking-widest text-text-muted">Tiêu đề chương</th>
+                                        <th className="px-4 py-4 text-center text-[9px] font-black uppercase tracking-widest text-text-muted">Thống kê</th>
+                                        <th className="px-4 py-4 text-center text-[9px] font-black uppercase tracking-widest text-text-muted">Trạng thái</th>
+                                        <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-text-muted">Hành động</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border-brand/10">
+                                      {chapters.map((ch) => (
+                                        <tr key={ch.id} className="hover:bg-surface-elevated/30 transition-colors group/ch">
+                                          <td className="px-6 py-4 text-xs font-black text-emerald-500/50 group-hover/ch:text-emerald-500 transition-colors">{ch.chapterNumber}</td>
+                                          <td className="px-4 py-4">
+                                            <div className="flex flex-col gap-0.5">
+                                              <span className="text-sm font-bold text-text-primary leading-tight">{ch.title}</span>
+                                              {ch.isPremium && (
+                                                <span className="w-fit px-1.5 py-0.5 rounded-[4px] text-[8px] font-black bg-amber-500/20 text-amber-500 border border-amber-500/30 uppercase tracking-tighter">PREMIUM</span>
+                                              )}
+                                            </div>
+                                          </td>
+                                          <td className="px-4 py-4">
+                                            <div className="flex items-center justify-center gap-4 text-[10px] text-text-muted font-bold tracking-tight">
+                                              <span className="flex items-center gap-1.5"><Eye size={12} className="text-emerald-500/50" /> {ch.viewCount?.toLocaleString()}</span>
+                                              <span className="flex items-center gap-1.5"><Search size={12} className="text-indigo-500/50" /> {ch.wordCount?.toLocaleString()} từ</span>
+                                            </div>
+                                          </td>
+                                          <td className="px-4 py-4 text-center">
+                                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${
+                                              ch.isPublished ? "text-emerald-500 bg-emerald-500/10 border border-emerald-500/20" : "text-amber-500 bg-amber-500/10 border border-amber-500/20"
+                                            }`}>
+                                              {ch.isPublished ? "Đã duyệt" : "Chờ duyệt"}
+                                            </span>
+                                          </td>
+                                          <td className="px-6 py-4">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                              {ch.isPublished ? (
+                                                <button
+                                                  onClick={() => setRejectChapterModal({ open: true, chapterId: ch.id, title: `Chương ${ch.chapterNumber}: ${ch.title}` })}
+                                                  disabled={chapterActionLoading === ch.id}
+                                                  className="p-2 rounded-lg text-amber-500 hover:bg-amber-500/10 transition-all cursor-pointer disabled:opacity-40"
+                                                  title="Gỡ chương"
+                                                >
+                                                  <XCircle size={16} />
+                                                </button>
+                                              ) : (
+                                                <button
+                                                  onClick={() => handleApproveChapter(ch.id)}
+                                                  disabled={chapterActionLoading === ch.id}
+                                                  className="p-2 rounded-lg text-emerald-500 hover:bg-emerald-500/10 transition-all cursor-pointer disabled:opacity-40"
+                                                  title="Duyệt chương"
+                                                >
+                                                  <CheckCircle size={16} />
+                                                </button>
+                                              )}
+                                              <button
+                                                onClick={() => setDeleteChapterModal({ open: true, chapterId: ch.id, title: `Chương ${ch.chapterNumber}: ${ch.title}`, storyId: story.id })}
+                                                disabled={chapterActionLoading === ch.id}
+                                                className="p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-all cursor-pointer disabled:opacity-40"
+                                                title="Xóa vĩnh viễn"
+                                              >
+                                                <Trash2 size={16} />
+                                              </button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
                         </td>
                       </tr>
                     )}
@@ -404,9 +437,16 @@ export default function AdminStoriesPage() {
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-5 py-12 text-center text-text-muted">
-                      <BookOpen size={28} className="mx-auto mb-2 opacity-30" />
-                      <p className="text-sm">{filter === "pending" ? "Không có truyện nào chờ duyệt" : "Không có truyện nào."}</p>
+                    <td colSpan={6} className="px-6 py-32 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="p-6 bg-surface-elevated rounded-3xl border border-border-brand/40 shadow-inner">
+                          <BookOpen size={56} className="text-text-muted opacity-10" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-lg font-black text-text-primary uppercase tracking-widest">Không có dữ liệu</p>
+                          <p className="text-sm text-text-muted">Không tìm thấy truyện nào phù hợp với bộ lọc hiện tại.</p>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -417,16 +457,52 @@ export default function AdminStoriesPage() {
       </div>
 
       {/* Reject Story Modal */}
-      <ConfirmModal isOpen={rejectModal.open} title="Từ chối truyện" message="Bạn có chắc muốn từ chối truyện này? Truyện sẽ bị gỡ khỏi danh sách hiển thị công khai." confirmText="Xác nhận" cancelText="Hủy" variant="danger" onConfirm={executeReject} onCancel={() => setRejectModal({ open: false, storyId: "" })} />
+      <ConfirmModal 
+        isOpen={rejectModal.open} 
+        title="Gỡ truyện xác nhận" 
+        message="Bạn có chắc muốn gỡ phê duyệt truyện này? Truyện sẽ chuyển sang trạng thái 'Chờ duyệt' và tạm ẩn khỏi danh sách đọc công khai." 
+        confirmText="Xác nhận gỡ" 
+        cancelText="Hủy bỏ" 
+        variant="danger" 
+        onConfirm={executeReject} 
+        onCancel={() => setRejectModal({ open: false, storyId: "" })} 
+      />
 
       {/* Delete Story Modal */}
-      <ConfirmModal isOpen={deleteStoryModal.open} title="Xóa truyện vĩnh viễn" message={`Bạn có chắc muốn xóa truyện "${deleteStoryModal.title}"? Tất cả dữ liệu liên quan (chương, bình luận, đánh giá...) sẽ bị xóa vĩnh viễn và KHÔNG THỂ khôi phục.`} confirmText="Xóa vĩnh viễn" cancelText="Hủy" variant="danger" onConfirm={executeDeleteStory} onCancel={() => setDeleteStoryModal({ open: false, storyId: "", title: "" })} />
+      <ConfirmModal 
+        isOpen={deleteStoryModal.open} 
+        title="XÓA TRUYỆN VĨNH VIỄN" 
+        message={`CẢNH BÁO: Bạn đang thực hiện xóa vĩnh viễn truyện "${deleteStoryModal.title}". Hành động này sẽ gọi API [DELETE /admin/stories/${deleteStoryModal.storyId}] để xóa toàn bộ dữ liệu truyện và các chương liên quan. Hành động này KHÔNG THỂ KHÔI PHỤC.`} 
+        confirmText="Xóa vĩnh viễn" 
+        cancelText="Quay lại" 
+        variant="danger" 
+        onConfirm={executeDeleteStory} 
+        onCancel={() => setDeleteStoryModal({ open: false, storyId: "", title: "" })} 
+      />
 
       {/* Reject Chapter Modal */}
-      <ConfirmModal isOpen={rejectChapterModal.open} title="Gỡ chương" message={`Bạn có chắc muốn gỡ "${rejectChapterModal.title}"? Chương sẽ không còn hiển thị công khai.`} confirmText="Xác nhận" cancelText="Hủy" variant="danger" onConfirm={executeRejectChapter} onCancel={() => setRejectChapterModal({ open: false, chapterId: "", title: "" })} />
+      <ConfirmModal 
+        isOpen={rejectChapterModal.open} 
+        title="Xác nhận gỡ chương" 
+        message={`Gỡ phê duyệt "${rejectChapterModal.title}"? Chương sẽ không còn hiển thị với độc giả.`} 
+        confirmText="Đồng ý gỡ" 
+        cancelText="Không, giữ lại" 
+        variant="danger" 
+        onConfirm={executeRejectChapter} 
+        onCancel={() => setRejectChapterModal({ open: false, chapterId: "", title: "" })} 
+      />
 
       {/* Delete Chapter Modal */}
-      <ConfirmModal isOpen={deleteChapterModal.open} title="Xóa chương vĩnh viễn" message={`Bạn có chắc muốn xóa "${deleteChapterModal.title}"? Chương sẽ bị xóa vĩnh viễn và KHÔNG THỂ khôi phục.`} confirmText="Xóa vĩnh viễn" cancelText="Hủy" variant="danger" onConfirm={executeDeleteChapter} onCancel={() => setDeleteChapterModal({ open: false, chapterId: "", title: "", storyId: "" })} />
+      <ConfirmModal 
+        isOpen={deleteChapterModal.open} 
+        title="Xóa chương vĩnh viễn" 
+        message={`Bạn có chắc muốn xóa "${deleteChapterModal.title}"? Thao tác này sẽ gọi API [DELETE /admin/chapters/${deleteChapterModal.chapterId}]. Công việc này KHÔNG THỂ hoàn tác.`} 
+        confirmText="Xóa vĩnh viễn" 
+        cancelText="Hủy" 
+        variant="danger" 
+        onConfirm={executeDeleteChapter} 
+        onCancel={() => setDeleteChapterModal({ open: false, chapterId: "", title: "", storyId: "" })} 
+      />
     </div>
   );
 }
