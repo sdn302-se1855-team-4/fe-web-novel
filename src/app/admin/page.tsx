@@ -98,10 +98,14 @@ export default function AdminDashboardPage() {
       apiFetch<AdminExtendedStats>("/admin/stats/extended").catch(() => ({ summary: { userGrowth: 0, storyGrowth: 0, chapterGrowth: 0 }, monthlyData: [] })),
       apiFetch<RoleDistribution[]>("/admin/stats/role-distribution").catch(() => []),
       apiFetch<ContentTypeStat[]>("/admin/stats/content-types").catch(() => [])
-    ]).then(([s, stories, withdrawals, ext, roles, contents]) => {
+    ]).then(([s, storiesRes, withdrawalsRes, ext, roles, contents]) => {
       setStats(s);
-      setPendingStories(stories.filter((st) => !st.isPublished).slice(0, 5));
-      setPendingWithdrawals(withdrawals.filter((w) => w.status === "PENDING").slice(0, 5));
+      
+      const stories = Array.isArray(storiesRes) ? storiesRes : (storiesRes as { data?: PendingStory[] }).data || [];
+      const withdrawals = Array.isArray(withdrawalsRes) ? withdrawalsRes : (withdrawalsRes as { data?: PendingWithdrawal[] }).data || [];
+
+      setPendingStories(stories.filter((st: PendingStory) => !st.isPublished).slice(0, 5));
+      setPendingWithdrawals(withdrawals.filter((w: PendingWithdrawal) => w.status === "PENDING").slice(0, 5));
       
       if (ext?.summary) setSummary(ext.summary);
       if (ext?.monthlyData) setMonthlyData(ext.monthlyData);
