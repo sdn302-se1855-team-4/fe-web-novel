@@ -84,6 +84,7 @@ export default function ChapterReaderPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const scrollUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { showToast } = useToast();
 
@@ -100,11 +101,43 @@ export default function ChapterReaderPage() {
         setShowControls(true);
       }
       setLastScrollY(currentScrollY);
+
+      // Progress tracking
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+      const totalScrollable = scrollHeight - clientHeight;
+      
+      if (totalScrollable > 0 && isLoggedIn() && chapter?.id) {
+        const scrollPercent = (currentScrollY / totalScrollable) * 100;
+        // Debounced update to backend
+        const debounceUpdate = () => {
+          if (scrollUpdateTimeoutRef.current) clearTimeout(scrollUpdateTimeoutRef.current);
+          scrollUpdateTimeoutRef.current = setTimeout(() => {
+             const bookLevelProgress = totalChapters > 0 
+               ? Math.min(100, Math.max(0, ((chapterNumber - 1 + (scrollPercent / 100)) / totalChapters) * 100))
+               : 0;
+
+             apiFetch("/reading-history", {
+               method: "POST",
+               body: JSON.stringify({
+                 storyId,
+                 chapterId: chapter.id,
+                 progress: bookLevelProgress,
+                 lastPosition: currentScrollY,
+               }),
+             }).catch(() => {});
+          }, 3000); // Update after 3 seconds of no scrolling
+        };
+        debounceUpdate();
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollUpdateTimeoutRef.current) clearTimeout(scrollUpdateTimeoutRef.current);
+    };
+  }, [lastScrollY, chapter, storyId, chapterNumber, totalChapters]);
 
   const toggleControls = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -137,12 +170,16 @@ export default function ChapterReaderPage() {
           setTotalChapters(sortedChapters.length);
 
           if (isLoggedIn() && chData?.id && !chData.isLocked) {
+            const calculatedProgress = chaptersData.length > 0 
+              ? Math.min(100, Math.max(0, (chData.chapterNumber / chaptersData.length) * 100))
+              : 0;
+              
             apiFetch("/reading-history", {
               method: "POST",
               body: JSON.stringify({
                 storyId,
                 chapterId: chData.id,
-                progress: 0,
+                progress: calculatedProgress,
                 lastPosition: 0,
               }),
             }).catch(() => {});
