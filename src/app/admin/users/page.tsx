@@ -27,8 +27,13 @@ export default function AdminUsersPage() {
 
   const fetchUsers = () => {
     setLoading(true);
-    apiFetch<AdminUser[]>("/admin/users")
-      .then((res) => setUsers(res))
+    // Explicitly cast to any or a Pagination interface to avoid TS errors
+    apiFetch<any>("/admin/users")
+      .then((res) => {
+        // Handle both plain array (legacy) and paginated response
+        const data = Array.isArray(res) ? res : res.data || [];
+        setUsers(data);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -47,7 +52,8 @@ export default function AdminUsersPage() {
         body: JSON.stringify({ isBlocked: !isBlocked })
       });
       showToast(`${isBlocked ? "Mở khóa" : "Khóa"} người dùng thành công`, "success");
-      fetchUsers();
+      // Update local state directly for better UX instead of refetching
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, isBlocked: !isBlocked } : u));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Thao tác thất bại";
       showToast(msg, "error");

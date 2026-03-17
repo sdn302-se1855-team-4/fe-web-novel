@@ -52,8 +52,11 @@ export default function AdminStoriesPage() {
 
   const fetchStories = () => {
     setLoading(true);
-    apiFetch<AdminStory[]>("/admin/stories")
-      .then((res) => setStories(res))
+    apiFetch<any>("/admin/stories")
+      .then((res) => {
+        const data = Array.isArray(res) ? res : res.data || [];
+        setStories(data);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -72,8 +75,9 @@ export default function AdminStoriesPage() {
     setExpandedStory(storyId);
     setChaptersLoading(true);
     try {
-      const res = await apiFetch<AdminChapter[]>(`/admin/stories/${storyId}/chapters`);
-      setChapters(res);
+      const res = await apiFetch<any>(`/admin/stories/${storyId}/chapters`);
+      const data = Array.isArray(res) ? res : res.data || [];
+      setChapters(data);
     } catch {
       showToast("Không thể tải danh sách chương", "error");
       setChapters([]);

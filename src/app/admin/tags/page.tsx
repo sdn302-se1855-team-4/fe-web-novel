@@ -26,8 +26,9 @@ export default function AdminTagsPage() {
   const fetchTags = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiFetch<TagItem[]>("/admin/tags");
-      setTags(res);
+      const res = await apiFetch<any>("/admin/tags");
+      const data = Array.isArray(res) ? res : res.data || [];
+      setTags(data);
     } catch {
       showToast("Lỗi khi tải danh sách tag", "error");
     } finally {
