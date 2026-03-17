@@ -35,8 +35,11 @@ interface AdminChapter {
 export default function AdminStoriesPage() {
   const [stories, setStories] = useState<AdminStory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [filter, setFilter] = useState<"all" | "pending" | "published">("all");
   const [search, setSearch] = useState("");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { showToast } = useToast();
   const [rejectModal, setRejectModal] = useState<{ open: boolean; storyId: string }>({ open: false, storyId: "" });
@@ -50,19 +53,36 @@ export default function AdminStoriesPage() {
   const [deleteChapterModal, setDeleteChapterModal] = useState<{ open: boolean; chapterId: string; title: string; storyId: string }>({ open: false, chapterId: "", title: "", storyId: "" });
   const [rejectChapterModal, setRejectChapterModal] = useState<{ open: boolean; chapterId: string; title: string }>({ open: false, chapterId: "", title: "" });
 
-  const fetchStories = () => {
-    setLoading(true);
-    apiFetch<any>("/admin/stories")
+  const fetchStories = (cursor: string | null = null) => {
+    if (cursor) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+    const url = `/admin/stories?limit=10${cursor ? `&cursor=${cursor}` : ""}`;
+    apiFetch<any>(url)
       .then((res) => {
         const data = Array.isArray(res) ? res : res.data || [];
-        setStories(data);
+        const pagination = res.pagination || {};
+        
+        if (cursor) {
+          setStories((prev) => [...prev, ...data]);
+        } else {
+          setStories(data);
+        }
+        
+        setNextCursor(pagination.nextCursor || null);
+        setHasMore(!!pagination.nextCursor);
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setLoadingMore(false);
+      });
   };
 
   useEffect(() => {
-    fetchStories();
+    fetchStories(null);
   }, []);
 
   // Fetch chapters when expanding a story
@@ -459,6 +479,18 @@ export default function AdminStoriesPage() {
           </div>
         )}
       </div>
+
+      {hasMore && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => fetchStories(nextCursor)}
+            disabled={loadingMore}
+            className="px-6 py-2.5 rounded-xl bg-surface-brand border border-border-brand text-text-secondary font-medium hover:bg-surface-hover transition-colors flex items-center justify-center min-w-[140px]"
+          >
+            {loadingMore ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : "Xem thêm"}
+          </button>
+        </div>
+      )}
 
       {/* Reject Story Modal */}
       <ConfirmModal 

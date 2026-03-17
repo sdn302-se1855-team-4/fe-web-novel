@@ -18,27 +18,47 @@ interface Withdrawal {
 export default function AdminWithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "PENDING" | "COMPLETED" | "FAILED">("all");
   const [search, setSearch] = useState("");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{ open: boolean; id: string; name: string }>({ open: false, id: "", name: "" });
   const [rejectModal, setRejectModal] = useState<{ open: boolean; id: string; name: string }>({ open: false, id: "", name: "" });
   const { showToast } = useToast();
 
-  const fetchWithdrawals = async () => {
+  const fetchWithdrawals = async (cursor: string | null = null) => {
     try {
-      setLoading(true);
-      const res = await apiFetch<Withdrawal[]>("/admin/withdrawals");
-      setWithdrawals(res);
+      if (cursor) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      const url = `/admin/withdrawals?limit=10${cursor ? `&cursor=${cursor}` : ""}`;
+      const res = await apiFetch<any>(url);
+      
+      const data = Array.isArray(res) ? res : res.data || [];
+      const pagination = res.pagination || {};
+      
+      if (cursor) {
+        setWithdrawals(prev => [...prev, ...data]);
+      } else {
+        setWithdrawals(data);
+      }
+      
+      setNextCursor(pagination.nextCursor || null);
+      setHasMore(!!pagination.nextCursor);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Lỗi khi tải danh sách rút tiền");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  useEffect(() => { fetchWithdrawals(); }, []);
+  useEffect(() => { fetchWithdrawals(null); }, []);
 
   const handleApprove = async (id: string) => {
     try {
@@ -168,6 +188,18 @@ export default function AdminWithdrawalsPage() {
           </div>
         )}
       </div>
+
+      {hasMore && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => fetchWithdrawals(nextCursor)}
+            disabled={loadingMore}
+            className="px-6 py-2.5 rounded-xl bg-surface-brand border border-border-brand text-text-secondary font-medium hover:bg-surface-hover transition-colors flex items-center justify-center min-w-[140px]"
+          >
+            {loadingMore ? <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" /> : "Xem thêm"}
+          </button>
+        </div>
+      )}
 
       <ConfirmModal isOpen={confirmModal.open} title="Xác nhận duyệt rút tiền" message={`Bạn xác nhận đã CHUYỂN KHOẢN thành công cho tác giả "${confirmModal.name}"?`} confirmText="Đã chuyển khoản" cancelText="Hủy" variant="primary" onConfirm={() => handleApprove(confirmModal.id)} onCancel={() => setConfirmModal({ open: false, id: "", name: "" })} />
       <InputModal isOpen={rejectModal.open} title="Từ chối yêu cầu rút tiền" message={`Nhập lý do từ chối cho tác giả "${rejectModal.name}". Xu sẽ được hoàn lại vào ví.`} placeholder="Lý do từ chối..." confirmText="Xác nhận từ chối" cancelText="Hủy" onConfirm={(reason) => handleReject(rejectModal.id, reason)} onCancel={() => setRejectModal({ open: false, id: "", name: "" })} />

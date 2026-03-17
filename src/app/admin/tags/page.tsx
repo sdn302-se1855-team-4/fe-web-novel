@@ -16,27 +16,46 @@ interface TagItem {
 export default function AdminTagsPage() {
   const [tags, setTags] = useState<TagItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formModal, setFormModal] = useState<{ open: boolean; editId: string | null }>({ open: false, editId: null });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: string; name: string }>({ open: false, id: "", name: "" });
   const { showToast } = useToast();
 
-  const fetchTags = useCallback(async () => {
+  const fetchTags = useCallback(async (cursor: string | null = null) => {
     try {
-      setLoading(true);
-      const res = await apiFetch<any>("/admin/tags");
+      if (cursor) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      const url = `/admin/tags?limit=10${cursor ? `&cursor=${cursor}` : ""}`;
+      const res = await apiFetch<any>(url);
+      
       const data = Array.isArray(res) ? res : res.data || [];
-      setTags(data);
+      const pagination = res.pagination || {};
+      
+      if (cursor) {
+        setTags(prev => [...prev, ...data]);
+      } else {
+        setTags(data);
+      }
+      
+      setNextCursor(pagination.nextCursor || null);
+      setHasMore(!!pagination.nextCursor);
     } catch {
       showToast("Lỗi khi tải danh sách tag", "error");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [showToast]);
 
-  useEffect(() => { fetchTags(); }, [fetchTags]);
+  useEffect(() => { fetchTags(null); }, [fetchTags]);
 
   const genSlug = (v: string) => v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
@@ -72,7 +91,7 @@ export default function AdminTagsPage() {
         showToast("Đã tạo tag mới", "success");
       }
       closeFormModal();
-      fetchTags();
+      fetchTags(null);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Thao tác thất bại", "error");
     } finally {
@@ -86,7 +105,7 @@ export default function AdminTagsPage() {
     try {
       await apiFetch(`/admin/tags/${id}`, { method: "DELETE" });
       showToast("Đã xóa tag", "success");
-      fetchTags();
+      fetchTags(null);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Xóa thất bại", "error");
     }
@@ -162,6 +181,18 @@ export default function AdminTagsPage() {
           </div>
         )}
       </div>
+
+      {hasMore && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => fetchTags(nextCursor)}
+            disabled={loadingMore}
+            className="px-6 py-2.5 rounded-xl bg-surface-brand border border-border-brand text-text-secondary font-medium hover:bg-surface-hover transition-colors flex items-center justify-center min-w-[140px]"
+          >
+            {loadingMore ? <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" /> : "Xem thêm"}
+          </button>
+        </div>
+      )}
 
       {/* Create/Edit Modal */}
       {formModal.open && (
