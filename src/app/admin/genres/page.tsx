@@ -26,8 +26,9 @@ export default function AdminGenresPage() {
   const fetchGenres = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiFetch<Genre[]>("/admin/genres");
-      setGenres(res);
+      const res = await apiFetch<any>("/admin/genres");
+      const data = Array.isArray(res) ? res : res.data || [];
+      setGenres(data);
     } catch {
       showToast("Lỗi khi tải danh sách thể loại", "error");
     } finally {
