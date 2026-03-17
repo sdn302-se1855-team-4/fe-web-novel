@@ -52,7 +52,7 @@ interface SearchSuggestion {
 }
 
 export default function Navbar() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, mounted } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
   const [loggedIn, setLoggedIn] = useState(false);
@@ -243,7 +243,11 @@ export default function Navbar() {
               aria-label="Toggle Theme"
               suppressHydrationWarning
             >
-              {theme === "dark" ? <Lightbulb size={18} /> : <Sun size={18} />}
+              {(mounted && theme === "dark") ? (
+                <Lightbulb size={18} />
+              ) : (
+                <Sun size={18} />
+              )}
             </button>
           </div>
 
