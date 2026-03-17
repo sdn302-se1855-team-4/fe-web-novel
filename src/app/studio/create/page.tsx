@@ -24,6 +24,8 @@ export default function CreateStoryPage() {
   const [coverImage, setCoverImage] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -41,8 +43,9 @@ export default function CreateStoryPage() {
       apiFetch<Genre[]>("/stories/genres"),
       apiFetch<Tag[]>("/stories/tags"),
     ])
-      .then(([g]) => {
+      .then(([g, t]) => {
         setGenres(g);
+        setTags(t);
       })
       .catch(() => {});
   }, [router]);
@@ -69,6 +72,7 @@ export default function CreateStoryPage() {
           type,
           coverImage: coverImage || undefined,
           genreIds: selectedGenres,
+          tagIds: selectedTags,
         }),
       });
       router.push("/studio");
@@ -83,9 +87,15 @@ export default function CreateStoryPage() {
     setSelectedGenres((prev) =>
       prev.includes(id)
         ? prev.filter((g) => g !== id)
-        : prev.length < 5
-          ? [...prev, id]
-          : prev,
+        : [...prev, id],
+    );
+  };
+
+  const toggleTag = (id: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(id)
+        ? prev.filter((t) => t !== id)
+        : [...prev, id],
     );
   };
 
@@ -212,7 +222,7 @@ export default function CreateStoryPage() {
 
             {genres.length > 0 && (
               <div className="space-y-4 pt-4 border-t border-border-brand/30">
-                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Thể loại (Tối đa 5)</label>
+                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Thể loại</label>
                 <div className="flex flex-wrap gap-2.5">
                   {genres.map((g) => {
                     const isActive = selectedGenres.includes(g.id);
@@ -229,6 +239,32 @@ export default function CreateStoryPage() {
                         onClick={() => toggleGenre(g.id)}
                       >
                         {g.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {tags.length > 0 && (
+              <div className="space-y-4 pt-4 border-t border-border-brand/30">
+                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Từ khóa (Tags)</label>
+                <div className="flex flex-wrap gap-2.5">
+                  {tags.map((t) => {
+                    const isActive = selectedTags.includes(t.id);
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        className={cn(
+                          "px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-tight transition-all duration-300 transform active:scale-95 border-2",
+                          isActive 
+                            ? "bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
+                            : "bg-surface-elevated border-border-brand text-text-muted hover:border-indigo-500/30 hover:text-indigo-500"
+                        )}
+                        onClick={() => toggleTag(t.id)}
+                      >
+                        {t.name}
                       </button>
                     );
                   })}

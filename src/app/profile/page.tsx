@@ -434,7 +434,15 @@ export default function ProfileSettingsPage() {
       </motion.div>
 
       {/* Change Password Dialog */}
-      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+      <Dialog 
+        open={showPasswordDialog} 
+        onOpenChange={(open) => {
+          setShowPasswordDialog(open);
+          if (!open) {
+            setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+          }
+        }}
+      >
         <DialogContent className="bg-surface-brand/95 backdrop-blur-3xl border-border-brand text-text-primary rounded-4xl max-w-md w-[95%] shadow-2xl p-0 overflow-hidden">
           <div className="h-2 bg-linear-to-r from-rose-500 to-emerald-500" />
           <div className="p-8 sm:p-10">

@@ -132,7 +132,21 @@ export default function AdminGenresPage() {
                         <button onClick={() => openEditModal(g)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-500 hover:text-indigo-600 hover:bg-indigo-500/10 transition-all flex items-center gap-1.5 cursor-pointer border border-indigo-500/30">
                           <Edit2 size={13} /> Sửa
                         </button>
-                        <button onClick={() => setDeleteModal({ open: true, id: g.id, name: g.name })} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-500 hover:bg-rose-500/10 transition-all flex items-center gap-1.5 cursor-pointer border border-rose-500/30">
+                        <button 
+                          onClick={() => {
+                            if (g._count.stories > 0) {
+                              showToast("Phải xóa hết truyện thuộc thể loại này trước", "error");
+                              return;
+                            }
+                            setDeleteModal({ open: true, id: g.id, name: g.name })
+                          }} 
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 border ${
+                            g._count.stories > 0 
+                              ? "text-slate-400 bg-slate-500/5 cursor-not-allowed border-slate-500/20" 
+                              : "text-rose-500 hover:bg-rose-500/10 cursor-pointer border-rose-500/30"
+                          }`}
+                          title={g._count.stories > 0 ? "Phải xóa hết truyện thuộc thể loại này trước" : ""}
+                        >
                           <Trash2 size={13} /> Xóa
                         </button>
                       </div>
