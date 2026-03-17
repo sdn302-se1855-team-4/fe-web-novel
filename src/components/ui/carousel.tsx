@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button"
 
 type CarouselApi = UseEmblaCarouselType[1]
 type CarouselOptions = UseEmblaCarouselType[0]
-type CarouselPlugin = UseEmblaCarouselType[1]
 
 type CarouselProps = {
   opts?: CarouselOptions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   plugins?: any
   orientation?: "horizontal" | "vertical"
   setApi?: (api: CarouselApi) => void
@@ -126,7 +126,7 @@ const Carousel = React.forwardRef<
           api: api,
           opts,
           orientation:
-            orientation || ((opts as any)?.axis === "y" ? "vertical" : "horizontal"),
+            orientation || ((opts as { axis?: string })?.axis === "y" ? "vertical" : "horizontal"),
           scrollPrev,
           scrollNext,
           canScrollPrev,

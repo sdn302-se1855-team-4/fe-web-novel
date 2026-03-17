@@ -15,13 +15,13 @@ import {
   Pen,
   ChevronDown,
   Wallet,
-  Bell,
   Lightbulb,
   Clock,
   Shield,
   Search,
 } from "lucide-react";
 import Logo from "./Logo";
+import NotificationBell from "./NotificationBell";
 import { useTheme } from "./ThemeProvider";
 import { isLoggedIn, removeTokens, getUserRole } from "@/lib/auth";
 import { useState, useEffect, useRef, FormEvent } from "react";
@@ -350,12 +350,7 @@ export default function Navbar() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-1 sm:gap-3 shrink-0">
-            {/* Desktop search is hidden on mobile, button shows instead */}
-            {loggedIn && (
-              <button className="p-2 text-rose-500 bg-rose-500/5 hover:bg-rose-500/10 rounded-full transition-all hidden sm:flex">
-                <Bell size={20} />
-              </button>
-            )}
+            {loggedIn && <NotificationBell />}
 
             {loggedIn ? (
               <div className="relative" ref={userMenuRef}>

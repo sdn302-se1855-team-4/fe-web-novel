@@ -4,6 +4,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
+import { getMessaging, getToken, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -18,6 +19,40 @@ const firebaseConfig = {
 // Initialize Firebase (prevent duplicate initialization in dev)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
+
+// Request FCM Token
+export async function requestFCMToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  
+  try {
+    const supported = await isSupported();
+    if (!supported) {
+      console.warn("Trình duyệt không hỗ trợ Web Push Notifications");
+      return null;
+    }
+
+    const messaging = getMessaging(app);
+    const permission = await Notification.requestPermission();
+    
+    if (permission === "granted") {
+      const currentToken = await getToken(messaging, {
+        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+      });
+      if (currentToken) {
+        return currentToken;
+      } else {
+        console.warn("Không thể lấy FCM token");
+        return null;
+      }
+    } else {
+      console.warn("Người dùng từ chối quyền gửi thông báo");
+      return null;
+    }
+  } catch (err) {
+    console.error("Lỗi khi xin cấp quyền FCM:", err);
+    return null;
+  }
+}
 
 /**
  * Opens Google sign-in popup and returns the Firebase idToken.

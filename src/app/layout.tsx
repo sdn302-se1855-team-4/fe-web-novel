@@ -8,6 +8,7 @@ import { ToastProvider } from "@/components/Toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { cn } from "@/lib/utils";
 
 export default function RootLayout({
@@ -33,12 +34,14 @@ export default function RootLayout({
         <ThemeProvider>
           <ToastProvider>
             {!hideNavbar && <Navbar />}
-            <main className={cn(
-              "min-h-screen",
-              !hideNavbar && "pt-(--navbar-height)"
-            )}>
-              {children}
-            </main>
+            <NotificationProvider>
+              <main className={cn(
+                "min-h-screen",
+                !hideNavbar && "pt-(--navbar-height)"
+              )}>
+                {children}
+              </main>
+            </NotificationProvider>
             {!hideNavbar && <Footer />}
             <ScrollToTop />
           </ToastProvider>
