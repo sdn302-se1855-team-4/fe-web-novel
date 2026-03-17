@@ -1,10 +1,22 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { XCircle } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 
 export default function DepositCancelPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const orderCode = searchParams.get("orderCode");
+
+  useEffect(() => {
+    if (orderCode) {
+      apiFetch(`/wallet/deposit/cancel?orderCode=${orderCode}`).catch(() => {
+        // Ignore error
+      });
+    }
+  }, [orderCode]);
 
   return (
     <div className="container py-8">
