@@ -130,7 +130,7 @@ export default function CreateStoryPage() {
     <div className="pb-20 max-w-[850px] mx-auto min-h-screen">
       <div className="mb-8">
         <button 
-          onClick={() => router.back()}
+          onClick={() => router.push("/studio")}
           className="flex items-center gap-2 text-text-muted hover:text-emerald-500 transition-colors font-bold text-sm group"
         >
           <div className="p-2 rounded-xl bg-surface-elevated group-hover:bg-emerald-500/10 transition-colors">
