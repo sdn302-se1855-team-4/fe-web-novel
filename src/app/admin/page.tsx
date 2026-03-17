@@ -9,7 +9,6 @@ import {
   Layers,
   Wallet,
   TrendingUp,
-  Clock,
   ArrowUpRight,
   ArrowRight,
   Eye,

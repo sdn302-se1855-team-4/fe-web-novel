@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
@@ -213,19 +214,23 @@ export default function ProfileSettingsPage() {
         className="container pb-16 min-h-[80vh] tracking-wide bg-[radial-gradient(at_0%_0%,rgba(16,185,129,0.05)_0px,transparent_50%),radial-gradient(at_100%_100%,rgba(79,70,229,0.05)_0px,transparent_50%)] flex justify-center w-full"
       >
         <main className="w-full max-w-[850px] flex flex-col gap-12 bg-surface-brand/70 backdrop-blur-[20px] border border-border-brand/50 p-8 md:p-14 rounded shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#10b981] to-[#3b82f6]" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-[#10b981] to-[#3b82f6]" />
           {/* Avatar section */}
           <section className="flex flex-col items-center gap-6 mb-4">
-            <div className="relative group w-[140px] h-[140px] p-1 bg-gradient-to-br from-[#10b981] to-[#3b82f6] shadow-lg shadow-emerald-500/30 rounded-full">
-              <img
-                src={
-                  previewImage ||
-                  user.avatar ||
-                  "https://api.dicebear.com/7.x/avataaars/svg?seed=" + user.username
-                }
-                alt={user.username}
-                className="w-full h-full object-cover border-3 border-surface-brand rounded-full"
-              />
+            <div className="relative group w-[140px] h-[140px] p-1 bg-linear-to-br from-[#10b981] to-[#3b82f6] shadow-lg shadow-emerald-500/30 rounded-full">
+              <div className="w-full h-full relative border-3 border-surface-brand rounded-full overflow-hidden">
+                <Image
+                  src={
+                    previewImage ||
+                    user.avatar ||
+                    "https://api.dicebear.com/7.x/avataaars/svg?seed=" + user.username
+                  }
+                  alt={user.username}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
               <div
                 className="absolute inset-1 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:backdrop-blur-sm transition-all duration-300 cursor-pointer text-white rounded-full"
                 title="Đổi ảnh đại diện"
@@ -384,7 +389,7 @@ export default function ProfileSettingsPage() {
                         checked={formData.isAnonymous}
                         onChange={(e) => setFormData(p => ({ ...p, isAnonymous: e.target.checked }))}
                       />
-                      <div className="w-11 h-6 bg-surface-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                      <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:top-[2px] after:inset-s-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:border-slate-600 dark:bg-slate-700 dark:peer-focus:ring-emerald-800"></div>
                     </div>
                     <span className="text-sm font-medium text-text-muted group-hover:text-text-primary transition-colors">
                       {formData.isAnonymous ? "Đang bật (Tên sẽ hiển thị là 'Người dùng')" : "Đang tắt (Hiển thị tên công khai)"}
@@ -430,7 +435,7 @@ export default function ProfileSettingsPage() {
 
       {/* Change Password Dialog */}
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent className="bg-surface-brand/95 backdrop-blur-3xl border-border-brand text-text-primary rounded-[2rem] max-w-md w-[95%] shadow-2xl p-0 overflow-hidden">
+        <DialogContent className="bg-surface-brand/95 backdrop-blur-3xl border-border-brand text-text-primary rounded-4xl max-w-md w-[95%] shadow-2xl p-0 overflow-hidden">
           <div className="h-2 bg-linear-to-r from-rose-500 to-emerald-500" />
           <div className="p-8 sm:p-10">
             <DialogHeader>

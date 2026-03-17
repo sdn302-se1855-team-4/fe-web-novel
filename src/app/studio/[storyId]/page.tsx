@@ -3,7 +3,7 @@
 import { useEffect, useState, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Save, Plus, BookOpen, Trash2, Edit, RefreshCw, ChevronLeft, Info, LayoutList } from "lucide-react";
+import { Save, Plus, Trash2, Edit, RefreshCw, ChevronLeft, Info, LayoutList } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
@@ -287,7 +287,7 @@ export default function EditStoryPage() {
           <div className="flex flex-col gap-4">
             {chapters.length > 0 ? (
               chapters.map((ch) => (
-                <div key={ch.id} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-[2rem] md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
+                <div key={ch.id} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-4xl md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
                   <div className="flex-1 min-w-0 flex flex-col gap-2">
                     <h3 className="text-lg font-bold text-text-primary truncate">
                       Chương {ch.chapterNumber}: {ch.title}
@@ -305,7 +305,7 @@ export default function EditStoryPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0 w-full md:w-auto justify-end pt-4 md:pt-0 border-t md:border-t-0 border-border-brand">
+                  <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end pt-4 md:pt-0 border-t md:border-t-0 border-border-brand">
                     <Link
                       href={`/studio/${storyId}/chapters/${ch.chapterNumber}/edit`}
                       className="btn btn-outline btn-sm"

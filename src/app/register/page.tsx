@@ -251,7 +251,7 @@ export default function RegisterPage() {
                       type="button"
                       onClick={() => setRole(item.id)}
                       className={cn(
-                        "relative flex flex-col items-center gap-3 p-6 rounded-[2rem] border-2 transition-all duration-300 group",
+                        "relative flex flex-col items-center gap-3 p-6 rounded-4xl border-2 transition-all duration-300 group",
                         role === item.id 
                           ? "bg-emerald-500/10 border-emerald-500 shadow-lg shadow-emerald-500/10" 
                           : "bg-surface-elevated border-border-brand hover:border-emerald-500/30 hover:bg-emerald-500/5 text-text-muted"
@@ -277,7 +277,7 @@ export default function RegisterPage() {
 
               <Button
                 type="submit"
-                className="w-full h-16 rounded-[2rem] bg-emerald-500 hover:bg-emerald-400 text-[#020617] font-black text-xl shadow-2xl shadow-emerald-500/30 transition-all duration-300 transform active:scale-[0.97] mt-4"
+                className="w-full h-16 rounded-4xl bg-emerald-500 hover:bg-emerald-400 text-[#020617] font-black text-xl shadow-2xl shadow-emerald-500/30 transition-all duration-300 transform active:scale-[0.97] mt-4"
                 disabled={loading || googleLoading}
               >
                 {loading ? (

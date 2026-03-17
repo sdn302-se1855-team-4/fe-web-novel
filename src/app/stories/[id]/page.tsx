@@ -3,18 +3,17 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   BookOpen,
   Star,
   User,
   Eye,
-  Bookmark,
   BookmarkCheck,
   MessageCircle,
   ChevronRight,
   Crown,
   Heart,
-  Gift,
   Clock,
   Share2,
   ChevronLeft,
@@ -42,6 +41,20 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
+
+interface UserProfile {
+  id: string;
+  username: string;
+  email: string;
+  displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  avatar: string | null;
+  bio: string | null;
+  gender: "MALE" | "FEMALE" | "OTHER" | null;
+  role: string;
+  isAnonymous: boolean;
+}
 
 interface Story {
   id: string;
@@ -83,6 +96,7 @@ interface Comment {
   user: { id: string; name?: string; displayName?: string; username?: string; avatar?: string; isAnonymous?: boolean };
   parentId?: string;
   replies?: Comment[];
+  isLiked?: boolean;
   _count?: { replies?: number; likes?: number };
 }
 
@@ -130,14 +144,14 @@ export default function StoryDetailPage() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const { showToast } = useToast();
-  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     Promise.allSettled([
       apiFetch<Story>(`/stories/${storyId}`),
       apiFetch<Chapter[]>(`/stories/${storyId}/chapters`),
       apiFetch<{ data: Comment[] } | Comment[]>(`/stories/${storyId}/comments`),
-      isLoggedIn() ? apiFetch<any>("/users/me") : Promise.resolve(null),
+      isLoggedIn() ? apiFetch<UserProfile>("/users/me") : Promise.resolve(null),
       isLoggedIn() ? apiFetch<string[]>(`/reading-history/story/${storyId}`) : Promise.resolve([] as string[])
     ])
       .then(([storyResult, chaptersResult, commentsResult, profileResult, historyResult]) => {
@@ -161,11 +175,11 @@ export default function StoryDetailPage() {
           const flatComments: Comment[] = [];
           const likedIds: string[] = [];
 
-          rawComments.forEach((c: any) => {
+          rawComments.forEach((c: Comment) => {
             flatComments.push(c);
             if (c.isLiked) likedIds.push(c.id);
             if (c.replies && Array.isArray(c.replies)) {
-              c.replies.forEach((r: any) => {
+              c.replies.forEach((r: Comment) => {
                 flatComments.push({ ...r, parentId: c.id });
                 if (r.isLiked) likedIds.push(r.id);
               });
@@ -289,7 +303,7 @@ export default function StoryDetailPage() {
       } else {
         await apiFetch(`/comments/${commentId}/like`, { method: "POST" });
       }
-    } catch (err) {
+    } catch {
       // Revert optimistic update
       if (isLiked) {
         setLikedComments((prev) => [...prev, commentId]);
@@ -376,9 +390,14 @@ export default function StoryDetailPage() {
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>,
   ) => {
-    const target = e.target as HTMLImageElement;
+    const target = e.currentTarget;
     if (target.src !== DEFAULT_COVER) {
       target.src = DEFAULT_COVER;
+    } else {
+      target.style.display = 'none';
+      if (target.parentElement) {
+        target.parentElement.innerHTML = '<div class="w-full h-full flex flex-col items-center justify-center text-text-muted bg-surface-elevated"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open mb-4 opacity-20"><path d="M2 3h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H2z"/><path d="M22 3h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg></div>';
+      }
     }
   };
 
@@ -516,13 +535,13 @@ export default function StoryDetailPage() {
                 {/* Genres */}
                 {story.genres && story.genres.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {story.genres.map((g: any) => (
+                    {story.genres.map((g: { genre?: { id: string; name: string }; id?: string; name?: string }) => (
                       <Link 
-                        key={g.genre.id} 
-                        href={`/stories?genre=${g.genre.id}`}
-                        className="px-3 py-1 border border-orange-400/80 rounded-md font-bold text-orange-400 text-xs hover:bg-orange-400 hover:text-[#020617] transition-all cursor-pointer backdrop-blur-sm shadow-sm hover:shadow-orange-500/20"
+                        key={g.genre?.id || g.id} 
+                        href={`/stories?genre=${g.genre?.id || g.id}`}
+                        className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-medium border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all duration-300"
                       >
-                        {g.genre.name}
+                        {g.genre?.name || g.name}
                       </Link>
                     ))}
                   </div>
@@ -766,7 +785,15 @@ export default function StoryDetailPage() {
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
                         {currentUserProfile?.avatar ? (
-                          <img src={currentUserProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                          <div className="w-full h-full relative">
+                            <Image 
+                              src={currentUserProfile.avatar} 
+                              alt="Avatar" 
+                              fill
+                              className="object-cover" 
+                              unoptimized
+                            />
+                          </div>
                         ) : (
                           currentUserProfile?.displayName?.[0]?.toUpperCase() || currentUserProfile?.username?.[0]?.toUpperCase() || "B"
                         )}
@@ -811,8 +838,8 @@ export default function StoryDetailPage() {
                           : comment.user?.displayName || comment.user?.username || comment.user?.name || "Người dùng";
                         const initial = authorName[0].toUpperCase();
                         const repliesForThisComment = childComments
-                          .filter((c: any) => c.parentId === comment.id)
-                          .sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                          .filter((c: Comment) => c.parentId === comment.id)
+                          .sort((a: Comment, b: Comment) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
                         const isExpanded = expandedComments.includes(comment.id);
 
                         return (
@@ -821,7 +848,9 @@ export default function StoryDetailPage() {
                               <div className="flex items-center gap-3 mb-3">
                                 <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
                                   {comment.user?.avatar && !comment.user?.isAnonymous ? (
-                                    <img src={comment.user.avatar} alt={authorName} className="w-full h-full object-cover" />
+                                    <div className="w-full h-full relative">
+                                      <Image src={comment.user.avatar} alt={authorName} fill className="object-cover" unoptimized />
+                                    </div>
                                   ) : (
                                     initial
                                   )}
@@ -994,7 +1023,9 @@ export default function StoryDetailPage() {
                                 <div className="flex items-center gap-3">
                                   <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
                                     {review.user?.avatar && !review.user?.isAnonymous ? (
-                                      <img src={review.user.avatar} alt={authorName} className="w-full h-full object-cover" />
+                                      <div className="w-full h-full relative">
+                                        <Image src={review.user.avatar} alt={authorName} fill className="object-cover" unoptimized />
+                                      </div>
                                     ) : (
                                       initial
                                     )}
@@ -1031,9 +1062,8 @@ export default function StoryDetailPage() {
         </div>
       </div>
 
-      {/* Donate Dialog (Refined) */}
       <Dialog open={showDonate} onOpenChange={setShowDonate}>
-        <DialogContent className="bg-surface-brand/95 backdrop-blur-3xl border-border-brand text-text-primary rounded-[2rem] max-w-md w-[95%] shadow-2xl">
+        <DialogContent className="bg-surface-brand/95 backdrop-blur-3xl border-border-brand text-text-primary rounded-4xl max-w-md w-[95%] shadow-2xl">
           <DialogHeader className="items-center text-center pb-4">
             <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mb-4 border border-rose-500/20">
               <Heart size={40} className="text-rose-500 animate-pulse" fill="currentColor" />

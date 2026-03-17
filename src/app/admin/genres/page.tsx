@@ -128,7 +128,7 @@ export default function AdminGenresPage() {
                       </span>
                     </td>
                     <td className="px-5 py-4 align-middle text-left">
-                      <div className="flex items-center justify-start gap-2">
+                      <div className="flex items-center gap-2 group">
                         <button onClick={() => openEditModal(g)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-500 hover:text-indigo-600 hover:bg-indigo-500/10 transition-all flex items-center gap-1.5 cursor-pointer border border-indigo-500/30">
                           <Edit2 size={13} /> Sửa
                         </button>
@@ -190,7 +190,7 @@ export default function AdminGenresPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-text-secondary mb-1.5 flex items-center gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary mb-1.5 flex items-center gap-1.5">
                   Slug
                   <span className="relative group">
                     <HelpCircle size={13} className="text-text-muted cursor-help" />
