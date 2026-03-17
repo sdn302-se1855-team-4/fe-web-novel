@@ -158,24 +158,28 @@ export default function AdminUsersPage() {
                     <td className="px-5 py-4 align-middle text-left">{roleBadge(user.role)}</td>
                     <td className="px-5 py-4 align-middle text-left text-sm text-text-muted">{new Date(user.createdAt).toLocaleDateString("vi")}</td>
                     <td className="px-5 py-4 align-middle text-left">
-                      <button
-                        onClick={() => setBlockModal({ open: true, id: user.id, name: user.displayName || user.username, isBlocked: !!user.isBlocked })}
-                        disabled={actionLoading === user.id}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-40 border ${
-                          user.isBlocked
-                            ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10 hover:border-emerald-500/50"
-                            : "text-rose-500 border-rose-500/30 hover:bg-rose-500/10 hover:border-rose-500/50"
-                        }`}
-                        title={user.isBlocked ? "Mở khóa" : "Khóa tài khoản"}
-                      >
-                        {actionLoading === user.id ? (
-                          <Loader2 size={13} className="animate-spin" />
-                        ) : user.isBlocked ? (
-                          <><UserCheck size={13} /> Mở khóa</>
-                        ) : (
-                          <><Ban size={13} /> Khóa</>
-                        )}
-                      </button>
+                      {user.role !== "ADMIN" ? (
+                        <button
+                          onClick={() => setBlockModal({ open: true, id: user.id, name: user.displayName || user.username, isBlocked: !!user.isBlocked })}
+                          disabled={actionLoading === user.id}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-40 border ${
+                            user.isBlocked
+                              ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10 hover:border-emerald-500/50"
+                              : "text-rose-500 border-rose-500/30 hover:bg-rose-500/10 hover:border-rose-500/50"
+                          }`}
+                          title={user.isBlocked ? "Mở khóa" : "Khóa tài khoản"}
+                        >
+                          {actionLoading === user.id ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : user.isBlocked ? (
+                            <><UserCheck size={13} /> Mở khóa</>
+                          ) : (
+                            <><Ban size={13} /> Khóa</>
+                          )}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-text-muted italic">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
