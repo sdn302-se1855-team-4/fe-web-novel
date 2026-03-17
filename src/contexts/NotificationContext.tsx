@@ -33,8 +33,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const fetchInitialNotifications = useCallback(async () => {
     try {
       // Fetch the first 20 notifications
-      const res = await apiFetch<{ items: Notification[] }>("/notifications?page=1&limit=20");
-      const items = res?.items || (res as unknown as Notification[]) || [];
+      const res = await apiFetch<unknown>("/notifications?page=1&limit=20");
+      
+      let items: Notification[] = [];
+      if (res && typeof res === 'object') {
+        const r = res as Record<string, unknown>;
+        if (Array.isArray(r.items)) {
+          items = r.items as Notification[];
+        } else if (Array.isArray(res)) {
+          items = res as Notification[];
+        } else if (Array.isArray(r.data)) {
+          items = r.data as Notification[];
+        }
+      }
+
       setNotifications(items);
       setUnreadCount(items.filter((n: Notification) => !n.isRead).length);
     } catch (err) {

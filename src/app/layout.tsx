@@ -33,16 +33,16 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <ToastProvider>
-            {!hideNavbar && <Navbar />}
             <NotificationProvider>
+              {!hideNavbar && <Navbar />}
               <main className={cn(
                 "min-h-screen",
                 !hideNavbar && "pt-(--navbar-height)"
               )}>
                 {children}
               </main>
+              {!hideNavbar && <Footer />}
             </NotificationProvider>
-            {!hideNavbar && <Footer />}
             <ScrollToTop />
           </ToastProvider>
         </ThemeProvider>
