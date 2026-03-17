@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, BookOpen, RefreshCw, ChevronLeft } from "lucide-react";
+import { Plus, BookOpen, RefreshCw, ChevronLeft, Upload, Image as ImageIcon } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/Toast";
 
 interface Genre {
   id: string;
@@ -18,6 +19,8 @@ interface Tag {
 
 export default function CreateStoryPage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("NOVEL");
@@ -27,11 +30,35 @@ export default function CreateStoryPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
   const handleRandomCover = () => {
     const randomId = Math.floor(Math.random() * 1000);
     setCoverImage(`https://picsum.photos/seed/${randomId}/400/600`);
+  };
+
+  const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await apiFetch<{ url: string }>("/upload/image", {
+        method: "POST",
+        body: formData,
+      });
+      setCoverImage(res.url);
+      showToast("Tải ảnh lên thành công", "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Tải ảnh thất bại", "error");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   useEffect(() => {
@@ -183,39 +210,71 @@ export default function CreateStoryPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <label
                   htmlFor="coverImage"
                   className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1 flex justify-between items-center"
                 >
                   <span>Ảnh bìa tác phẩm</span>
-                  <button
-                    type="button"
-                    className="text-[10px] font-black uppercase text-emerald-500 hover:text-emerald-400 flex items-center gap-1 transition-colors"
-                    onClick={handleRandomCover}
-                  >
-                    <RefreshCw size={12} /> Lấy ảnh ngẫu nhiên
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      className="text-[10px] font-black uppercase text-text-muted hover:text-emerald-500 flex items-center gap-1 transition-colors"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                    >
+                      {uploading ? <RefreshCw size={12} className="animate-spin" /> : <Upload size={12} />}
+                      Tải ảnh lên
+                    </button>
+                    <button
+                      type="button"
+                      className="text-[10px] font-black uppercase text-emerald-500 hover:text-emerald-400 flex items-center gap-1 transition-colors"
+                      onClick={handleRandomCover}
+                    >
+                      <RefreshCw size={12} /> Ngẫu nhiên
+                    </button>
+                  </div>
                 </label>
-                <div className="flex gap-3">
-                  <input
-                    id="coverImage"
-                    className="input h-14 flex-1 rounded-2xl"
-                    value={coverImage}
-                    onChange={(e) => setCoverImage(e.target.value)}
-                    placeholder="Dán link ảnh tại đây (https://...)"
-                    type="url"
-                  />
-                  {coverImage && (
-                    <div className="w-14 h-14 rounded-xl overflow-hidden border border-border-brand bg-surface-elevated shrink-0 shadow-lg shadow-black/5">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={coverImage}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
+                
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleUploadImage}
+                />
+
+                <div className="flex gap-4">
+                  <div className="w-24 h-32 rounded-2xl overflow-hidden border-2 border-dashed border-border-brand/50 bg-surface-elevated flex items-center justify-center shrink-0 shadow-xl group relative">
+                    {coverImage ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={coverImage}
+                          alt="Preview"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                          <ImageIcon size={24} className="text-white/70" />
+                        </div>
+                      </>
+                    ) : (
+                      <ImageIcon size={32} className="text-text-muted/30" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-3 pt-1">
+                    <input
+                      id="coverImage"
+                      className="input h-14 rounded-2xl text-sm"
+                      value={coverImage}
+                      onChange={(e) => setCoverImage(e.target.value)}
+                      placeholder="Hoặc dán link ảnh tại đây (https://...)"
+                      type="url"
+                    />
+                    <p className="text-[10px] font-bold text-text-muted px-2">
+                       Bạn có thể tải ảnh lên từ máy tính hoặc dán trực tiếp đường dẫn URL ảnh.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
