@@ -136,7 +136,7 @@ export default function Navbar() {
       try {
         // Fetch more than needed to allow client-side filtering if backend results are imperfect
         const res = await apiFetch<{ data: SearchSuggestion[] }>(
-          `/stories?search=${encodeURIComponent(removeAccents(searchQuery))}&limit=20`,
+          `/stories?search=${encodeURIComponent(searchQuery)}&limit=20`,
         );
         
         const normalizedQuery = removeAccents(searchQuery.toLowerCase());
