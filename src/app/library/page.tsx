@@ -92,7 +92,8 @@ export default function LibraryPage() {
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      router.push("/login");
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
     apiFetch("/bookmarks")

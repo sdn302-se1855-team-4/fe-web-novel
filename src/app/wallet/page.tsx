@@ -87,7 +87,8 @@ export default function WalletPage() {
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      router.push("/login");
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
     Promise.resolve().then(() => {
@@ -398,7 +399,7 @@ export default function WalletPage() {
               {transactions.map((tx) => (
                 <div key={tx.id} className="group flex items-center gap-6 p-4 rounded-2xl transition-all duration-300 hover:bg-surface-elevated">
                   <div
-                    className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${
                       tx.amount > 0 ? "text-emerald-500 bg-emerald-500/10" : "text-rose-500 bg-rose-500/10"
                     }`}
                   >
@@ -410,7 +411,7 @@ export default function WalletPage() {
                     </span>
                     <span className="text-xs text-text-muted truncate">{tx.description}</span>
                   </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <div className="flex flex-col items-end gap-1 shrink-0">
                     <span
                       className={`font-black text-sm ${tx.amount > 0 ? "text-emerald-500" : "text-rose-500"}`}
                     >

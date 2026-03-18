@@ -32,7 +32,8 @@ export default function AnalyticsDashboardPage() {
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      router.push("/login");
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
 
@@ -75,7 +76,7 @@ export default function AnalyticsDashboardPage() {
         </div>
         <div className="w-64 h-10 skeleton rounded-lg mb-12" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {[1, 2, 3].map(i => <div key={i} className="h-32 skeleton rounded-[2rem]" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-32 skeleton rounded-4xl" />)}
         </div>
         <div className="h-[400px] skeleton rounded-[2.5rem]" />
       </div>
@@ -116,7 +117,7 @@ export default function AnalyticsDashboardPage() {
            initial={{ opacity: 0, scale: 0.9 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ delay: 0.1 }}
-           className="p-6 sm:p-8 bg-surface-brand border border-border-brand rounded-[2rem] flex items-center gap-6 group hover:bg-surface-elevated transition-colors shadow-lg shadow-black/5"
+           className="p-6 sm:p-8 bg-surface-brand border border-border-brand rounded-4xl flex items-center gap-6 group hover:bg-surface-elevated transition-colors shadow-lg shadow-black/5"
         >
           <div className="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
             <TrendingUp size={32} />
@@ -133,7 +134,7 @@ export default function AnalyticsDashboardPage() {
            initial={{ opacity: 0, scale: 0.9 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ delay: 0.2 }}
-           className="p-6 sm:p-8 bg-surface-brand border border-border-brand rounded-[2rem] flex items-center gap-6 group hover:bg-surface-elevated transition-colors shadow-lg shadow-black/5"
+           className="p-6 sm:p-8 bg-surface-brand border border-border-brand rounded-4xl flex items-center gap-6 group hover:bg-surface-elevated transition-colors shadow-lg shadow-black/5"
         >
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
             <Users size={32} />
@@ -150,7 +151,7 @@ export default function AnalyticsDashboardPage() {
            initial={{ opacity: 0, scale: 0.9 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ delay: 0.3 }}
-           className="p-6 sm:p-8 bg-surface-brand border border-border-brand rounded-[2rem] flex items-center gap-6 group hover:bg-surface-elevated transition-colors shadow-lg shadow-black/5 sm:col-span-2 lg:col-span-1"
+           className="p-6 sm:p-8 bg-surface-brand border border-border-brand rounded-4xl flex items-center gap-6 group hover:bg-surface-elevated transition-colors shadow-lg shadow-black/5 sm:col-span-2 lg:col-span-1"
         >
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
             <Coins size={32} />
