@@ -100,7 +100,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     // Register FCM service worker (needed for background push notifications)
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register("/firebase-messaging-sw.js")
+        .register("/firebase-messaging-sw.js", { scope: "/" })
         .catch((err) => console.error("FCM SW registration failed:", err));
     }
 

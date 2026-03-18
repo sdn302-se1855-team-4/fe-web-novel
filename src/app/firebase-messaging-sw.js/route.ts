@@ -62,8 +62,11 @@ export async function GET() {
 
   return new Response(scriptContent, {
     headers: {
-      "Content-Type": "application/javascript",
-      "Cache-Control": "public, max-age=3600",
+      "Content-Type": "application/javascript; charset=utf-8",
+      // Required: allows SW served from /firebase-messaging-sw.js to control scope /
+      "Service-Worker-Allowed": "/",
+      // No caching — ensure the browser always gets the latest SW
+      "Cache-Control": "no-store, max-age=0",
     },
   });
 }
