@@ -32,7 +32,8 @@ export default function HistoryPage() {
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      router.push("/login");
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
     apiFetch<HistoryItem[]>("/reading-history/me?limit=50")

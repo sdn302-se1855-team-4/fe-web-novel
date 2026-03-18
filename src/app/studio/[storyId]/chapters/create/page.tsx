@@ -23,7 +23,8 @@ export default function CreateChapterPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!isLoggedIn()) {
-      router.push("/login");
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
     setError("");

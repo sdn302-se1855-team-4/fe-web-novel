@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Mail, Lock, LogIn, ArrowLeft } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Mail, Lock, LogIn, ArrowLeft, Loader2 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
@@ -25,8 +25,11 @@ interface LoginResponse {
   refreshToken: string;
 }
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -44,7 +47,10 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       setTokens(data.accessToken, data.refreshToken, data.user?.role);
-      if (data.user?.role === "ADMIN") {
+      
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else if (data.user?.role === "ADMIN") {
         router.push("/admin");
       } else {
         router.push("/");
@@ -66,7 +72,10 @@ export default function LoginPage() {
         body: JSON.stringify({ idToken }),
       });
       setTokens(data.accessToken, data.refreshToken, data.user?.role);
-      if (data.user?.role === "ADMIN") {
+      
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else if (data.user?.role === "ADMIN") {
         router.push("/admin");
       } else {
         router.push("/");
@@ -228,5 +237,19 @@ export default function LoginPage() {
         </Card>
       </motion.div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="min-h-screen w-full flex items-center justify-center bg-bg-brand">
+          <Loader2 size={48} className="text-emerald-500 animate-spin" />
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }
