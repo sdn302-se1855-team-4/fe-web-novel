@@ -20,10 +20,22 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
 
-// Request FCM Token
+// Get Firebase Messaging instance (null if unsupported)
+export async function getFirebaseMessaging() {
+  if (typeof window === "undefined") return null;
+  try {
+    const supported = await isSupported();
+    if (!supported) return null;
+    return getMessaging(app);
+  } catch {
+    return null;
+  }
+}
+
+// Request FCM Token — uses existing SW registration if available
 export async function requestFCMToken(): Promise<string | null> {
   if (typeof window === "undefined") return null;
-  
+
   try {
     const supported = await isSupported();
     if (!supported) {
@@ -33,10 +45,15 @@ export async function requestFCMToken(): Promise<string | null> {
 
     const messaging = getMessaging(app);
     const permission = await Notification.requestPermission();
-    
+
     if (permission === "granted") {
+      const swReg = await navigator.serviceWorker
+        .getRegistration("/firebase-messaging-sw.js")
+        .catch(() => undefined);
+
       const currentToken = await getToken(messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+        ...(swReg && { serviceWorkerRegistration: swReg }),
       });
       if (currentToken) {
         return currentToken;

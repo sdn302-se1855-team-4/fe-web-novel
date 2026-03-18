@@ -1,9 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { onMessage } from "firebase/messaging";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { apiFetch } from "@/lib/api";
 import { getAccessToken, isLoggedIn } from "@/lib/auth";
+import { getFirebaseMessaging } from "@/lib/firebase";
 
 export interface Notification {
   id: string;
@@ -95,19 +97,40 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, []);
 
   useEffect(() => {
-    // Only connect if the user is logged in
-    if (isLoggedIn()) {
-      fetchInitialNotifications().then(() => {
-        // We defer SSE connection slightly to ensure initial load completes
-        connectSSE();
-      });
-    } else {
-      setLoading(false);
+    // Register FCM service worker (needed for background push notifications)
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/firebase-messaging-sw.js")
+        .catch((err) => console.error("FCM SW registration failed:", err));
     }
 
-    // Since EventSource cleanup is tricky with fetchEventSource unless we pass an AbortController,
-    // we'll keep it simple for now, but in a robust app we should abort on unmount.
-    // For now, this is adequate for the user's requirement.
+    if (!isLoggedIn()) {
+      setLoading(false);
+      return;
+    }
+
+    fetchInitialNotifications().then(() => {
+      connectSSE();
+    });
+
+    // Foreground FCM message handler — show browser notification when app is open
+    let unsubscribeFCM: (() => void) | undefined;
+    (async () => {
+      const messaging = await getFirebaseMessaging();
+      if (!messaging) return;
+      unsubscribeFCM = onMessage(messaging, (payload) => {
+        if (Notification.permission === "granted" && payload.notification?.title) {
+          new Notification(payload.notification.title, {
+            body: payload.notification.body ?? "",
+            data: payload.data,
+          });
+        }
+      });
+    })();
+
+    return () => {
+      unsubscribeFCM?.();
+    };
   }, [fetchInitialNotifications, connectSSE]);
 
   const markAsRead = async (id: string, e?: React.MouseEvent) => {
