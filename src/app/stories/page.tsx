@@ -125,7 +125,7 @@ function StoriesContent() {
   useEffect(() => {
     requestAnimationFrame(() => setLoading(true));
     const params = new URLSearchParams();
-    if (debouncedSearch) params.set("search", removeAccents(debouncedSearch));
+    if (debouncedSearch) params.set("search", debouncedSearch);
     if (selectedGenres.length > 0) params.set("genreId", selectedGenres[0]);
 
     if (selectedType && selectedType !== "Tất cả") {
