@@ -12,6 +12,7 @@ import {
   BookmarkCheck,
   MessageCircle,
   ChevronRight,
+  ChevronDown,
   Crown,
   Heart,
   Clock,
@@ -134,6 +135,8 @@ export default function StoryDetailPage() {
   const [originalLikes, setOriginalLikes] = useState<string[]>([]);
   const [readChapterIds, setReadChapterIds] = useState<string[]>([]);
   const [likingIds, setLikingIds] = useState<string[]>([]);
+  const [showAllChapters, setShowAllChapters] = useState(false);
+  const CHAPTERS_INITIAL = 5;
 
   // Donate modal state
   const [showDonate, setShowDonate] = useState(false);
@@ -724,7 +727,8 @@ export default function StoryDetailPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mt-12"
+              className="mt-12 scroll-mt-24"
+              id="chapters-section"
             >
               <Tabs defaultValue="chapters" value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="bg-surface-elevated p-1 h-auto rounded-xl border border-border-brand backdrop-blur-xl mb-6 flex-wrap justify-start">
@@ -741,73 +745,93 @@ export default function StoryDetailPage() {
                 <TabsContent value="chapters" className="mt-0 outline-none">
                   <div className="space-y-3">
                     {chapters.length > 0 ? (
-                      chapters.map((ch, idx) => (
-                        <motion.div
-                          key={ch.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.05 * Math.min(idx, 15) }}
-                        >
-                          <Link
-                            href={`/stories/${story.id}/chapters/${ch.chapterNumber}`}
-                            onClick={() => markAsRead(ch.id)}
-                            className={cn(
-                              "group block relative p-5 bg-surface-brand/40 border border-border-brand/50 rounded-2xl hover:bg-surface-elevated hover:border-primary-brand/30 transition-all duration-300 backdrop-blur-sm overflow-hidden",
-                              readChapterIds.includes(ch.id) && "opacity-60 bg-surface-brand/20"
-                            )}
+                      <>
+                        {(showAllChapters ? chapters : chapters.slice(0, CHAPTERS_INITIAL)).map((ch, idx) => (
+                          <motion.div
+                            key={ch.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.05 * Math.min(idx, 15) }}
                           >
-                            <div className="flex items-center gap-6">
-                              {/* Chapter Number Badge */}
-                              <div className="w-14 h-14 shrink-0 rounded-2xl bg-surface-elevated border border-border-brand flex flex-col items-center justify-center group-hover:bg-primary-brand group-hover:border-primary-brand transition-all duration-300 shadow-sm relative overflow-hidden">
-                                <span className="text-[10px] font-black text-text-muted uppercase tracking-tighter group-hover:text-slate-900 leading-none mb-1">CHƯƠNG</span>
-                                <span className="text-xl font-black text-text-primary group-hover:text-slate-950 leading-none">{ch.chapterNumber}</span>
-                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                              </div>
+                            <Link
+                              href={`/stories/${story.id}/chapters/${ch.chapterNumber}`}
+                              onClick={() => markAsRead(ch.id)}
+                              className={cn(
+                                "group block relative p-3 bg-surface-brand/40 border border-border-brand/50 rounded-xl hover:bg-surface-elevated hover:border-primary-brand/30 transition-all duration-300 backdrop-blur-sm overflow-hidden",
+                                readChapterIds.includes(ch.id) && "opacity-60 bg-surface-brand/20"
+                              )}
+                            >
+                              <div className="flex items-center gap-4">
+                                {/* Chapter Number Badge */}
+                                <div className="w-10 h-10 shrink-0 rounded-xl bg-surface-elevated border border-border-brand flex flex-col items-center justify-center group-hover:bg-primary-brand group-hover:border-primary-brand transition-all duration-300 shadow-sm relative overflow-hidden">
+                                  <span className="text-[8px] font-black text-text-muted uppercase tracking-tighter group-hover:text-slate-900 leading-none mb-0.5">CH</span>
+                                  <span className="text-sm font-black text-text-primary group-hover:text-slate-950 leading-none">{ch.chapterNumber}</span>
+                                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
 
-                              {/* Title and Info section */}
-                              <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="space-y-1">
-                                  <h4 className={cn(
-                                    "text-base md:text-lg font-black transition-colors truncate",
-                                    readChapterIds.includes(ch.id) ? "text-text-muted" : "text-text-primary group-hover:text-primary-brand"
-                                  )}>
-                                    {ch.title}
-                                  </h4>
-                                  <div className="flex items-center gap-4 text-xs font-bold text-text-muted">
-                                    <div className="flex items-center gap-1.5">
-                                      <Clock size={14} className="text-secondary-brand" />
-                                      <span>Cập nhật: {ch.createdAt ? new Intl.DateTimeFormat("vi").format(new Date(ch.createdAt)) : "Vừa xong"}</span>
+                                {/* Title and Info section */}
+                                <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                                  <div className="space-y-0.5">
+                                    <h4 className={cn(
+                                      "text-sm font-black transition-colors truncate",
+                                      readChapterIds.includes(ch.id) ? "text-text-muted" : "text-text-primary group-hover:text-primary-brand"
+                                    )}>
+                                      {ch.title}
+                                    </h4>
+                                    <div className="flex items-center gap-3 text-[11px] font-bold text-text-muted">
+                                      <div className="flex items-center gap-1">
+                                        <Clock size={11} className="text-secondary-brand" />
+                                        <span>{ch.createdAt ? new Intl.DateTimeFormat("vi").format(new Date(ch.createdAt)) : "Vừa xong"}</span>
+                                      </div>
+                                      <div className="hidden sm:flex items-center gap-1">
+                                        <Eye size={11} className="text-primary-brand" />
+                                        <span>Mới</span>
+                                      </div>
                                     </div>
-                                    <div className="hidden sm:flex items-center gap-1.5">
-                                      <Eye size={14} className="text-primary-brand" />
-                                      <span>Mới</span>
+                                  </div>
+
+                                  {/* Right Actions/Badges */}
+                                  <div className="flex items-center gap-3 shrink-0">
+                                    {ch.isPremium && (
+                                      <Badge className="bg-accent-brand/20 text-accent-brand border border-accent-brand/20 gap-1 px-2 py-0.5 font-black text-[9px]">
+                                        <Crown size={10} fill="currentColor" />
+                                        PREMIUM
+                                      </Badge>
+                                    )}
+                                    <div className="flex items-center gap-1.5 group-hover:translate-x-1 transition-transform">
+                                      <span className="text-[9px] font-black text-primary-brand opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest hidden sm:block">ĐỌC NGAY</span>
+                                      <div className="w-7 h-7 rounded-full border border-border-brand flex items-center justify-center group-hover:border-primary-brand group-hover:bg-primary-brand transition-all">
+                                        <ChevronRight size={14} className="text-text-muted group-hover:text-slate-950" />
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-
-                                {/* Right Actions/Badges */}
-                                <div className="flex items-center gap-4 shrink-0">
-                                  {ch.isPremium && (
-                                    <Badge className="bg-accent-brand/20 text-accent-brand border border-accent-brand/20 gap-1 px-3 py-1 font-black text-[10px]">
-                                      <Crown size={12} fill="currentColor" />
-                                      PREMIUM
-                                    </Badge>
-                                  )}
-                                  <div className="flex items-center gap-2 group-hover:translate-x-1 transition-transform">
-                                    <span className="text-[10px] font-black text-primary-brand opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest hidden sm:block">ĐỌC NGAY</span>
-                                    <div className="w-10 h-10 rounded-full border border-border-brand flex items-center justify-center group-hover:border-primary-brand group-hover:bg-primary-brand transition-all">
-                                      <ChevronRight size={18} className="text-text-muted group-hover:text-slate-950" />
-                                    </div>
-                                  </div>
-                                </div>
                               </div>
-                            </div>
 
-                            {/* Visual Glow Effect on Hover */}
-                            <div className="absolute top-0 right-0 w-32 h-full bg-linear-to-l from-primary-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                          </Link>
-                        </motion.div>
-                      ))
+                              {/* Visual Glow Effect on Hover */}
+                              <div className="absolute top-0 right-0 w-32 h-full bg-linear-to-l from-primary-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            </Link>
+                          </motion.div>
+                        ))}
+
+                        {chapters.length > CHAPTERS_INITIAL && (
+                          <button
+                            onClick={() => {
+                              const next = !showAllChapters;
+                              setShowAllChapters(next);
+                              if (!next) {
+                                setTimeout(() => {
+                                  document.getElementById('chapters-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }, 50);
+                              }
+                            }}
+                            className="w-full mt-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-border-brand/60 bg-surface-brand/40 hover:bg-surface-elevated hover:border-primary-brand/40 text-text-muted hover:text-primary-brand transition-all duration-300 text-xs font-black"
+                          >
+                            <span>{showAllChapters ? "Thu gọn" : "Xem thêm"}</span>
+                            <ChevronDown size={15} className={cn("transition-transform duration-300", showAllChapters && "rotate-180")} />
+                          </button>
+                        )}
+                      </>
                     ) : (
                       <div className="py-32 text-center bg-surface-brand/40 border-2 border-dashed border-border-brand rounded-3xl">
                         <BookOpen size={48} className="mx-auto mb-4 text-text-muted opacity-20" />
@@ -825,7 +849,7 @@ export default function StoryDetailPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="mt-16 space-y-8"
+              className="mt-16 space-y-6 max-w-5xl mx-auto scroll-mt-32"
               id="reviews-section"
             >
               <div className="flex items-center justify-between">
@@ -857,9 +881,9 @@ export default function StoryDetailPage() {
               {feedTab === 'comments' && (
                 <div className="space-y-4">
                   {/* Comment Input Form */}
-                  <div className="bg-surface-elevated/95 border border-border-brand/60 p-5 rounded-2xl">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
+                  <div className="bg-surface-elevated/95 border border-border-brand/60 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-xs shadow-md border-2 border-white overflow-hidden">
                         {currentUserProfile?.avatar ? (
                           <div className="w-full h-full relative">
                             <Image
@@ -874,18 +898,18 @@ export default function StoryDetailPage() {
                           currentUserProfile?.displayName?.[0]?.toUpperCase() || currentUserProfile?.username?.[0]?.toUpperCase() || "B"
                         )}
                       </div>
-                      <p className="font-black text-text-primary text-sm">
+                      <p className="font-black text-text-primary text-xs">
                         {isLoggedIn() ? (currentUserProfile?.displayName || "Bạn") : "Đăng nhập để bình luận"}
                       </p>
                     </div>
                     <textarea
                       disabled={!isLoggedIn()}
                       placeholder={isLoggedIn() ? "Chia sẻ ý kiến của bạn..." : "Vui lòng đăng nhập để bình luận"}
-                      className="w-full bg-surface-brand border border-border-brand rounded-lg p-3 text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-brand/30 min-h-[80px] resize-none disabled:opacity-50"
+                      className="w-full bg-surface-brand border border-border-brand rounded-lg p-2.5 text-xs text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-brand/30 min-h-[50px] resize-none disabled:opacity-50"
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                     />
-                    <div className="flex justify-end gap-2 mt-3">
+                    <div className="flex justify-end gap-2 mt-2">
                       {newComment.trim() && (
                         <Button variant="ghost" size="sm" className="text-text-muted hover:text-text-primary text-xs font-bold" onClick={() => setNewComment("")}>Hủy</Button>
                       )}
@@ -920,9 +944,9 @@ export default function StoryDetailPage() {
 
                         return (
                           <div key={comment.id} className="group">
-                            <div className="bg-surface-elevated/95 border border-border-brand/60 p-5 rounded-2xl group-hover:bg-surface-brand transition-all shadow-sm">
-                              <div className="flex items-center gap-3 mb-3">
-                                <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
+                            <div className="bg-surface-elevated/95 border border-border-brand/60 p-3 rounded-lg group-hover:bg-surface-brand transition-all shadow-sm">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-8 h-8 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-xs shadow-md border-2 border-white overflow-hidden">
                                   {comment.user?.avatar && !comment.user?.isAnonymous ? (
                                     <div className="w-full h-full relative">
                                       <Image src={comment.user.avatar} alt={authorName} fill className="object-cover" unoptimized />
@@ -932,15 +956,15 @@ export default function StoryDetailPage() {
                                   )}
                                 </div>
                                 <div>
-                                  <p className="font-bold text-text-primary text-sm">{authorName}</p>
-                                  <p className="text-[10px] text-text-muted font-bold">{new Intl.DateTimeFormat("vi").format(new Date(comment.createdAt))}</p>
+                                  <p className="font-bold text-text-primary text-xs">{authorName}</p>
+                                  <p className="text-[9px] text-text-muted font-bold">{new Intl.DateTimeFormat("vi").format(new Date(comment.createdAt))}</p>
                                 </div>
                               </div>
-                              <div className="border-t border-border-brand my-2.5" />
-                              <p className="text-text-secondary leading-relaxed font-medium text-sm">
+                              <div className="border-t border-border-brand my-1.5" />
+                              <p className="text-text-secondary leading-relaxed font-medium text-xs">
                                 {comment.content}
                               </p>
-                              <div className="mt-3 flex items-center gap-3">
+                              <div className="mt-2 flex items-center gap-3">
                                 <button
                                   className={cn(
                                     "flex items-center gap-1 text-xs font-bold transition-colors",
@@ -1094,10 +1118,10 @@ export default function StoryDetailPage() {
 
                         return (
                           <div key={review.id} className="group">
-                            <div className="bg-surface-elevated/95 border border-border-brand/60 p-5 rounded-2xl group-hover:bg-surface-brand transition-all shadow-sm">
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
+                            <div className="bg-surface-elevated/95 border border-border-brand/60 p-3 rounded-lg group-hover:bg-surface-brand transition-all shadow-sm">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-xs shadow-md border-2 border-white overflow-hidden">
                                     {review.user?.avatar && !review.user?.isAnonymous ? (
                                       <div className="w-full h-full relative">
                                         <Image src={review.user.avatar} alt={authorName} fill className="object-cover" unoptimized />
@@ -1108,20 +1132,20 @@ export default function StoryDetailPage() {
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                      <p className="font-bold text-text-primary text-sm">{authorName}</p>
+                                      <p className="font-bold text-text-primary text-xs">{authorName}</p>
                                       <div className="flex gap-1">
                                         {[...Array(5)].map((_, i) => (
                                           <Star key={i} size={12} className={i < review.rating ? "text-accent-brand" : "text-border-brand/30"} fill={i < review.rating ? "currentColor" : "none"} />
                                         ))}
                                       </div>
                                     </div>
-                                    <p className="text-[10px] text-text-muted font-bold">{new Intl.DateTimeFormat("vi").format(new Date(review.createdAt))}</p>
+                                    <p className="text-[9px] text-text-muted font-bold">{new Intl.DateTimeFormat("vi").format(new Date(review.createdAt))}</p>
                                   </div>
                                 </div>
                               </div>
-                              <div className="border-t border-border-brand my-2.5" />
+                              <div className="border-t border-border-brand my-1.5" />
                               {review.content && (
-                                <p className="text-text-secondary font-medium text-sm leading-relaxed mt-1">
+                                <p className="text-text-secondary font-medium text-xs leading-relaxed mt-1">
                                   {review.content}
                                 </p>
                               )}
