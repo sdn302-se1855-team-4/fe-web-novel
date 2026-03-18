@@ -47,12 +47,19 @@ export async function requestFCMToken(): Promise<string | null> {
     const permission = await Notification.requestPermission();
 
     if (permission === "granted") {
+      const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+      if (!vapidKey) {
+        console.error("NEXT_PUBLIC_FIREBASE_VAPID_KEY is not set");
+        return null;
+      }
+
+      // getRegistration takes the scope URL ("/"), not the SW script path
       const swReg = await navigator.serviceWorker
-        .getRegistration("/firebase-messaging-sw.js")
+        .getRegistration("/")
         .catch(() => undefined);
 
       const currentToken = await getToken(messaging, {
-        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+        vapidKey,
         ...(swReg && { serviceWorkerRegistration: swReg }),
       });
       if (currentToken) {
