@@ -1,0 +1,16 @@
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded-square background -->
+  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
+  <!-- Left page of open book -->
+  <path d="M6 23 L6 11.5 C7.5 10.5 10.5 9.5 15 10 L15 22.5 C10.5 22 7.5 22.5 6 23Z" fill="white"/>
+  <!-- Right page of open book (slightly dimmer = depth) -->
+  <path d="M26 23 L26 11.5 C24.5 10.5 21.5 9.5 17 10 L17 22.5 C21.5 22 24.5 22.5 26 23Z" fill="white" fill-opacity="0.88"/>
+  <!-- Spine (matches background, splits the two pages) -->
+  <rect x="15" y="10" width="2" height="13" rx="0.5" fill="#059669"/>
+</svg>
