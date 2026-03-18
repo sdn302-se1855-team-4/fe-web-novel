@@ -196,9 +196,11 @@ export default function Navbar() {
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/stories?search=${encodeURIComponent(removeAccents(searchQuery.trim()))}`);
+      // Send original query to URL, the search page handles normalization for the API
+      router.push(`/stories?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery("");
       setMobileOpen(false);
+      setShowSuggestions(false);
     }
   };
 
@@ -345,7 +347,10 @@ export default function Navbar() {
                         <Link
                           href={`/stories?search=${encodeURIComponent(searchQuery)}`}
                           className="block text-center py-2 text-[11px] font-bold text-emerald-500 hover:bg-emerald-500/5 transition-colors border-t border-border-brand/50 mt-1"
-                          onClick={() => setShowSuggestions(false)}
+                          onClick={() => {
+                            setShowSuggestions(false);
+                            setSearchQuery("");
+                          }}
                         >
                           Xem tất cả kết quả
                         </Link>
@@ -588,6 +593,7 @@ export default function Navbar() {
                       placeholder="Tác giả, tên truyện..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
                     />
                     <Search
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-emerald-500 transition-colors"

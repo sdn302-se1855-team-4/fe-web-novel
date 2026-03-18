@@ -13,6 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface LoginResponse {
   user: {
@@ -25,6 +32,37 @@ interface LoginResponse {
   refreshToken: string;
 }
 
+const TOS_CONTENT = {
+  READER: {
+    title: "Điều khoản Độc giả",
+    content: (
+      <div className="space-y-4">
+        <p>Chào mừng bạn đến với cộng đồng độc giả của ChapterOne. Bằng cách đăng ký, bạn đồng ý với các điều khoản sau:</p>
+        <ul className="list-disc pl-5 space-y-2">
+          <li><strong>Tôn trọng bản quyền:</strong> Không sao chép, chia sẻ trái phép nội dung tác phẩm dưới mọi hình thức.</li>
+          <li><strong>Quy tắc cộng đồng:</strong> Bình luận văn minh, không gây hấn, xúc phạm hoặc vi phạm tiêu chuẩn đạo đức xã hội.</li>
+          <li><strong>Bảo mật tài khoản:</strong> Bạn có trách nhiệm bảo mật thông tin đăng nhập và mọi hoạt động diễn ra trên tài khoản của mình.</li>
+          <li><strong>Quyền lợi:</strong> Được tiếp cận kho tàng truyện phong phú và tham gia các sự kiện dành riêng cho độc giả.</li>
+        </ul>
+      </div>
+    )
+  },
+  WRITER: {
+    title: "Điều khoản Tác giả",
+    content: (
+      <div className="space-y-4">
+        <p>Dành cho các nhà sáng tạo nội dung tại ChapterOne. Bằng cách đăng ký vai trò Tác giả, bạn cam kết:</p>
+        <ul className="list-disc pl-5 space-y-2">
+          <li><strong>Bản quyền gốc:</strong> Cam kết nội dung đăng tải là do bạn sáng tác hoặc có quyền sở hữu hợp pháp. ChapterOne không chấp nhận đạo văn.</li>
+          <li><strong>Nội dung hợp lệ:</strong> Không đăng tải nội dung vi phạm pháp luật, chính trị, sắc tộc hoặc các nội dung đồi trụy không phù hợp.</li>
+          <li><strong>Chia sẻ doanh thu:</strong> Đồng ý với chính sách trả nhuận bút và phân chia lợi nhuận từ hệ thống đăng ký của độc giả.</li>
+          <li><strong>Duy trì tác phẩm:</strong> Cam kết không xóa tác phẩm đang trong quá trình thương mại hóa mà không có sự đồng ý của nền tảng.</li>
+        </ul>
+      </div>
+    )
+  }
+};
+
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -35,6 +73,8 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [showTOS, setShowTOS] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -42,6 +82,11 @@ export default function RegisterPage() {
 
     if (password !== confirmPassword) {
       setError("Mật khẩu xác nhận không khớp");
+      return;
+    }
+
+    if (!agreed) {
+      setError("Bạn phải đồng ý với điều khoản dịch vụ để đăng ký");
       return;
     }
 
@@ -275,10 +320,31 @@ export default function RegisterPage() {
                 </div>
               </div>
 
+              <div className="flex items-start gap-3 px-1 mt-6">
+                <input 
+                  type="checkbox" 
+                  id="agreed"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded-md border-border-brand bg-surface-elevated text-emerald-500 focus:ring-emerald-500 transition-all cursor-pointer accent-emerald-500"
+                />
+                <Label htmlFor="agreed" className="text-text-muted text-sm font-medium cursor-pointer select-none leading-relaxed">
+                  Tôi đã đọc và đồng ý với{" "}
+                  <button 
+                    type="button"
+                    onClick={() => setShowTOS(true)}
+                    className="text-emerald-500 hover:text-emerald-400 font-bold underline underline-offset-4 decoration-2 transition-colors inline-block"
+                  >
+                    điều khoản dịch vụ
+                  </button>
+                  {" "}dành cho {role === "READER" ? "Độc giả" : "Tác giả"}
+                </Label>
+              </div>
+
               <Button
                 type="submit"
-                className="w-full h-16 rounded-4xl bg-emerald-500 hover:bg-emerald-400 text-[#020617] font-black text-xl shadow-2xl shadow-emerald-500/30 transition-all duration-300 transform active:scale-[0.97] mt-4"
-                disabled={loading || googleLoading}
+                className="w-full h-16 rounded-4xl bg-emerald-500 hover:bg-emerald-400 text-[#020617] font-black text-xl shadow-2xl shadow-emerald-500/30 transition-all duration-300 transform active:scale-[0.97] mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale"
+                disabled={loading || googleLoading || !agreed}
               >
                 {loading ? (
                   <div className="w-8 h-8 border-4 border-[#020617]/30 border-t-[#020617] rounded-full animate-spin" />
@@ -302,6 +368,39 @@ export default function RegisterPage() {
           </CardContent>
         </Card>
       </motion.div>
+
+      <Dialog open={showTOS} onOpenChange={setShowTOS}>
+        <DialogContent className="max-w-2xl bg-surface-brand border-border-brand text-text-primary rounded-[2rem] overflow-hidden">
+          <DialogHeader className="pb-4 border-b border-border-brand">
+            <DialogTitle className="text-2xl font-black text-emerald-500 italic uppercase italic" style={{ fontFamily: "var(--font-heading)" }}>
+              {TOS_CONTENT[role as keyof typeof TOS_CONTENT].title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-6 text-text-secondary leading-relaxed max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar text-base font-medium">
+            {TOS_CONTENT[role as keyof typeof TOS_CONTENT].content}
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row justify-end gap-3 mt-6 pt-6 border-t border-border-brand">
+            <Button 
+              type="button"
+              variant="outline"
+              onClick={() => setShowTOS(false)}
+              className="h-12 rounded-xl border-border-brand hover:bg-surface-elevated text-text-primary px-8"
+            >
+              Hủy bỏ
+            </Button>
+            <Button 
+              type="button"
+              onClick={() => {
+                setAgreed(true);
+                setShowTOS(false);
+              }}
+              className="h-12 bg-emerald-500 hover:bg-emerald-400 text-[#020617] font-bold rounded-xl px-10 shadow-lg shadow-emerald-500/20"
+            >
+              Tôi đồng ý
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

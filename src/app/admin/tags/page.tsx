@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
 import { Tag, Plus, Edit2, Trash2, HelpCircle } from "lucide-react";
+import { removeAccents } from "@/lib/utils";
 
 interface TagItem {
   id: string;
@@ -46,7 +47,7 @@ export default function AdminTagsPage() {
 
   useEffect(() => { fetchTags(1); }, [fetchTags]);
 
-  const genSlug = (v: string) => v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const genSlug = (v: string) => removeAccents(v.toLowerCase()).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
   const onNameChange = (v: string) => { setName(v); if (!formModal.editId) setSlug(genSlug(v)); };
 

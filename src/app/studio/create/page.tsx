@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, BookOpen, RefreshCw, ChevronLeft, Upload, Image as ImageIcon } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
-import { cn } from "@/lib/utils";
+import { cn, removeAccents } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
 
 interface Genre {
@@ -82,10 +82,7 @@ export default function CreateStoryPage() {
     setError("");
     setLoading(true);
     try {
-      const slug = title
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+      const slug = removeAccents(title.toLowerCase())
         .replace(/[^\w\s-]/g, "")
         .replace(/[\s_-]+/g, "-")
         .replace(/^-+|-+$/g, "");

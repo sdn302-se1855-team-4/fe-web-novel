@@ -188,8 +188,6 @@ function StoriesContent() {
             return normalizedTitle.includes(normalizedQuery) || normalizedAuthor.includes(normalizedQuery);
           });
           setStories(filtered);
-          // Note: Pagination might be slightly off if many items are filtered out, 
-          // but for typical unaccented search this is better than zero results.
         } else {
           setStories(rawStories);
         }
