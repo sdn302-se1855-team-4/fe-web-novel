@@ -13,3 +13,8 @@ export function removeAccents(str: string): string {
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D");
 }
+
+export function countWords(str: string): number {
+  if (!str) return 0;
+  return str.trim().split(/\s+/).filter(Boolean).length;
+}

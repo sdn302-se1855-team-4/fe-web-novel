@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Plus, BookOpen, ChevronLeft, LayoutPanelTop, Coins, FileText, Sparkles, Info } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
-import { cn, removeAccents } from "@/lib/utils";
+import { cn, removeAccents, countWords } from "@/lib/utils";
 
 export default function CreateChapterPage() {
   const params = useParams();
@@ -126,9 +126,14 @@ export default function CreateChapterPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <label htmlFor="content" className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1 flex items-center gap-2">
-                    <Sparkles size={14} className="text-purple-500" /> Nội dung chương
-                  </label>
+                  <div className="flex items-center justify-between ml-1">
+                    <label htmlFor="content" className="text-[11px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2">
+                      <Sparkles size={14} className="text-purple-500" /> Nội dung chương
+                    </label>
+                    <p className="text-[11px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2 bg-surface-elevated/50 px-3 py-1 rounded-full border border-border-brand/30">
+                      <FileText size={12} className="text-emerald-500" /> {countWords(content)} chữ
+                    </p>
+                  </div>
                   <textarea
                     id="content"
                     className="input min-h-[400px] py-4 rounded-2xl resize-none leading-relaxed"

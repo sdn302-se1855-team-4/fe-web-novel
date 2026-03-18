@@ -7,6 +7,8 @@ import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
+import { countWords } from "@/lib/utils";
+import { FileText } from "lucide-react";
 
 interface ChapterDetail {
   id: string;
@@ -179,9 +181,14 @@ export default function EditChapterPage() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="content" className="label">
-            Nội dung chương *
-          </label>
+          <div className="flex items-center justify-between mb-2 ml-1">
+            <label htmlFor="content" className="text-[11px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2">
+              Nội dung chương *
+            </label>
+            <p className="text-[11px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2 bg-surface-elevated/50 px-3 py-1 rounded-full border border-border-brand/30">
+              <FileText size={12} className="text-emerald-500" /> {countWords(content)} chữ
+            </p>
+          </div>
           <textarea
             id="content"
             className="input textarea"
