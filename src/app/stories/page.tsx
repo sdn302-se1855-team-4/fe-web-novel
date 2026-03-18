@@ -30,6 +30,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
 import StoryCard from "@/components/StoryCard";
 
@@ -244,6 +245,55 @@ function StoriesContent() {
     "py-1.5 text-sm cursor-pointer focus:bg-emerald-500 focus:text-white";
   const labelCls =
     "text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest whitespace-nowrap";
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(i);
+      }
+    } else {
+      if (page <= 3) {
+        items.push(1, 2, 3, 4, 'ellipsis', totalPages);
+      } else if (page >= totalPages - 2) {
+        items.push(1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        items.push(1, 'ellipsis', page - 1, page, page + 1, 'ellipsis', totalPages);
+      }
+    }
+
+    return items.map((item, idx) => {
+      if (item === 'ellipsis') {
+        return (
+          <PaginationItem key={`ellipsis-${idx}`}>
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+      return (
+        <PaginationItem key={item}>
+          <PaginationLink
+            href="#"
+            isActive={page === item}
+            onClick={(e) => {
+              e.preventDefault();
+              setPage(item as number);
+            }}
+            className={cn(
+              "w-9 h-9 rounded-md transition-all text-sm",
+              page === item
+                ? "bg-emerald-500 text-white border-emerald-500"
+                : "text-text-muted hover:text-text-primary border-transparent hover:bg-surface-elevated",
+            )}
+          >
+            {item}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    });
+  };
 
   return (
     <div className="min-h-screen bg-bg-brand pb-20 overflow-x-hidden">
@@ -564,26 +614,7 @@ function StoriesContent() {
                     )}
                   />
                 </PaginationItem>
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <PaginationItem key={i}>
-                    <PaginationLink
-                      href="#"
-                      isActive={page === i + 1}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setPage(i + 1);
-                      }}
-                      className={cn(
-                        "w-9 h-9 rounded-md transition-all text-sm",
-                        page === i + 1
-                          ? "bg-emerald-500 text-white border-emerald-500"
-                          : "text-text-muted hover:text-text-primary border-transparent hover:bg-surface-elevated",
-                      )}
-                    >
-                      {i + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
+                {renderPaginationItems()}
                 <PaginationItem>
                   <PaginationNext
                     href="#"
