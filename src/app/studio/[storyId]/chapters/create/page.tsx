@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Plus, BookOpen, ChevronLeft, LayoutPanelTop, Coins, FileText, Sparkles, Info } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
-import { cn } from "@/lib/utils";
+import { cn, removeAccents } from "@/lib/utils";
 
 export default function CreateChapterPage() {
   const params = useParams();
@@ -29,10 +29,7 @@ export default function CreateChapterPage() {
     setError("");
     setLoading(true);
     try {
-      const slug = title
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+      const slug = removeAccents(title.toLowerCase())
         .replace(/[^\w\s-]/g, "")
         .replace(/[\s_-]+/g, "-")
         .replace(/^-+|-+$/g, "");

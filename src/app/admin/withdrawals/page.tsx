@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import ConfirmModal, { InputModal } from "@/components/ConfirmModal";
 import { Wallet, Search } from "lucide-react";
+import { removeAccents } from "@/lib/utils";
 
 interface Withdrawal {
   id: string;
@@ -79,7 +80,13 @@ export default function AdminWithdrawalsPage() {
 
   const filtered = withdrawals.filter((w) => {
     const matchFilter = filter === "all" || w.status === filter;
-    const matchSearch = !search || w.wallet.user.displayName?.toLowerCase().includes(search.toLowerCase()) || w.wallet.user.email?.toLowerCase().includes(search.toLowerCase());
+    if (!search) return matchFilter;
+
+    const normalizedSearch = removeAccents(search.toLowerCase());
+    const matchSearch =
+      removeAccents(w.wallet.user.displayName || "").toLowerCase().includes(normalizedSearch) ||
+      removeAccents(w.wallet.user.email || "").toLowerCase().includes(normalizedSearch);
+      
     return matchFilter && matchSearch;
   });
 

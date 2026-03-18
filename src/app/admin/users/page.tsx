@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/api";
 import { UserCircle, Search, Users, Ban, UserCheck, Loader2 } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
+import { removeAccents } from "@/lib/utils";
 
 interface AdminUser {
   id: string;
@@ -72,12 +73,15 @@ export default function AdminUsersPage() {
   };
 
   const filtered = users.filter((u) => {
-    const matchSearch =
-      !search ||
-      u.displayName?.toLowerCase().includes(search.toLowerCase()) ||
-      u.username.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === "all" || u.role === roleFilter;
+    if (!search) return matchRole;
+
+    const normalizedSearch = removeAccents(search.toLowerCase());
+    const matchSearch =
+      removeAccents(u.displayName || "").toLowerCase().includes(normalizedSearch) ||
+      removeAccents(u.username || "").toLowerCase().includes(normalizedSearch) ||
+      removeAccents(u.email || "").toLowerCase().includes(normalizedSearch);
+      
     return matchSearch && matchRole;
   });
 

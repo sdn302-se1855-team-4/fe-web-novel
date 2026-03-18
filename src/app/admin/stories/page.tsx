@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import ConfirmModal from "@/components/ConfirmModal";
+import { removeAccents } from "@/lib/utils";
 
 interface AdminStory {
   id: string;
@@ -207,7 +208,13 @@ export default function AdminStoriesPage() {
 
   const filtered = stories.filter((s) => {
     const matchFilter = filter === "all" ? true : filter === "pending" ? !s.isPublished : s.isPublished;
-    const matchSearch = !search || s.title.toLowerCase().includes(search.toLowerCase()) || (s.author?.displayName || s.author?.username || "").toLowerCase().includes(search.toLowerCase());
+    if (!search) return matchFilter;
+    
+    const normalizedSearch = removeAccents(search.toLowerCase());
+    const matchSearch = 
+      removeAccents(s.title.toLowerCase()).includes(normalizedSearch) || 
+      removeAccents(s.author?.displayName || s.author?.username || "").toLowerCase().includes(normalizedSearch);
+      
     return matchFilter && matchSearch;
   });
 
