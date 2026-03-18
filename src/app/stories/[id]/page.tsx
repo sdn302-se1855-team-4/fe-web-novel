@@ -445,7 +445,7 @@ export default function StoryDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg-brand pt-16 pb-20">
+      <div className="min-h-screen bg-bg-brand pt-0 pb-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row gap-8">
             <div className="w-full md:w-72 aspect-2/3 bg-surface-elevated rounded-2xl animate-pulse" />
@@ -474,7 +474,7 @@ export default function StoryDetailPage() {
   }
 
   return (
-    <div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden">
+    <div className="min-h-screen transition-colors duration-400 bg-bg-brand pb-20 overflow-x-hidden">
       {/* Immersive Background Header */}
       <div className="relative h-[20vh] md:h-[25vh] w-full overflow-hidden">
         {story.coverImage && (
@@ -843,6 +843,8 @@ export default function StoryDetailPage() {
                 </TabsContent>
               </Tabs>
             </motion.div>
+          </div>
+        </div>
 
             {/* Community & Comments Feed */}
             <motion.div
@@ -1158,11 +1160,9 @@ export default function StoryDetailPage() {
                 </div>
               )}
             </motion.div>
-          </div>
-        </div>
       </div>
 
-      <Dialog open={showDonate} onOpenChange={setShowDonate}>
+<Dialog open={showDonate} onOpenChange={setShowDonate}>
         <DialogContent className="bg-surface-brand/95 backdrop-blur-3xl border-border-brand text-text-primary rounded-4xl max-w-md w-[95%] shadow-2xl">
           <DialogHeader className="items-center text-center pb-4">
             <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mb-4 border border-rose-500/20">
