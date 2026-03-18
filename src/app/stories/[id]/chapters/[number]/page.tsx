@@ -13,6 +13,9 @@ import {
   Coins,
   Lock,
   List,
+  Sun,
+  Moon,
+  Coffee,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
@@ -220,6 +223,20 @@ export default function ChapterReaderPage() {
     });
   };
 
+  const changeReaderTheme = (theme: ThemeKey) => {
+    setReaderTheme(theme);
+    localStorage.setItem("readerTheme", theme);
+  };
+
+  const cycleTheme = () => {
+    const next: Record<ThemeKey, ThemeKey> = {
+      light: "sepia",
+      sepia: "dark",
+      dark: "light",
+    };
+    changeReaderTheme(next[readerTheme]);
+  };
+
   const filteredChapters = allChapters.filter(
     (ch) =>
       ch.chapterNumber.toString().includes(searchQuery) ||
@@ -323,7 +340,7 @@ export default function ChapterReaderPage() {
       <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 bg-(--reader-bar-bg) border-b border-(--reader-border) backdrop-blur-md shadow-sm"
+        className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 bg-(--reader-bar-bg) border-b border-(--reader-border) text-(--reader-text) backdrop-blur-md shadow-sm"
       >
         <Link href={`/stories/${storyId}`} className="flex items-center gap-3 text-(--reader-text) no-underline font-bold text-sm hover:-translate-x-1 transition-transform max-w-[40%]">
           <ChevronLeft size={18} />
@@ -338,6 +355,20 @@ export default function ChapterReaderPage() {
           <span className="text-[10px] font-bold opacity-80 text-center min-w-[40px]">{fontSize}PX</span>
           <button className="btn-icon" onClick={() => changeFontSize(2)} aria-label="Tăng chữ">
             <Plus size={16} />
+          </button>
+
+          {/* Unified Theme Toggle */}
+          <button
+            className={cn(
+              "p-1.5 sm:p-2 rounded-xl transition-all active:scale-90 border flex items-center justify-center scale-90 sm:scale-100",
+              currentTheme.btn,
+            )}
+            onClick={cycleTheme}
+            title={`Chế độ: ${readerTheme === "light" ? "Sáng" : readerTheme === "sepia" ? "Sepia" : "Tối"}`}
+          >
+            {readerTheme === "light" && <Sun size={18} className="sm:w-[20px] sm:h-[20px]" />}
+            {readerTheme === "sepia" && <Coffee size={18} className="sm:w-[20px] sm:h-[20px]" />}
+            {readerTheme === "dark" && <Moon size={18} className="sm:w-[20px] sm:h-[20px]" />}
           </button>
 
           <div className={cn("w-px h-5 sm:h-6 mx-0.5 sm:mx-1", currentTheme.border)} />
@@ -367,7 +398,7 @@ export default function ChapterReaderPage() {
             className="max-w-[800px] mx-auto px-6 py-16 md:py-20 w-full"
             style={{ fontSize: `${fontSize}px` }}
           >
-            <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center leading-tight">
+            <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center leading-tight text-(--reader-text)">
               Chương {chapter.chapterNumber}: {chapter.title}
               {chapter.isPremium && (
                 <span className="inline-flex items-center gap-1.5 text-[10px] px-3 py-1 rounded-full bg-linear-to-r from-amber-400 to-amber-600 text-white font-black tracking-wider ml-3 shadow-md">
@@ -461,7 +492,7 @@ export default function ChapterReaderPage() {
       {/* Fixed Bottom Navigation — hide on scroll down, show on scroll up / click */}
       <motion.nav
         data-no-toggle
-        className="fixed bottom-0 left-0 right-0 z-40 bg-(--reader-bar-bg) border-t border-(--reader-border) backdrop-blur-md shadow-lg"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-(--reader-bar-bg) border-t border-(--reader-border) text-(--reader-text) backdrop-blur-md shadow-lg"
         animate={{ y: showControls ? 0 : "100%", opacity: showControls ? 1 : 0 }}
         transition={{ duration: 0.25, ease: "easeInOut" }}
       >
