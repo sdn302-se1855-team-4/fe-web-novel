@@ -16,46 +16,35 @@ interface TagItem {
 export default function AdminTagsPage() {
   const [tags, setTags] = useState<TagItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [tagPage, setTagPage] = useState(1);
+  const [tagTotalPages, setTagTotalPages] = useState(1);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formModal, setFormModal] = useState<{ open: boolean; editId: string | null }>({ open: false, editId: null });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: string; name: string }>({ open: false, id: "", name: "" });
   const { showToast } = useToast();
 
-  const fetchTags = useCallback(async (cursor: string | null = null) => {
+  const fetchTags = useCallback(async (page: number = 1) => {
     try {
-      if (cursor) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
-      const url = `/admin/tags?limit=10${cursor ? `&cursor=${cursor}` : ""}`;
-      const res = await apiFetch<any>(url);
+      setLoading(true);
+      const url = `/admin/tags?limit=10&page=${page}`;
+      const res = await apiFetch<{ data: TagItem[]; pagination: { totalPages: number } }>(url);
       
       const data = Array.isArray(res) ? res : res.data || [];
-      const pagination = res.pagination || {};
+      const pagination = res.pagination || { totalPages: 1 };
       
-      if (cursor) {
-        setTags(prev => [...prev, ...data]);
-      } else {
-        setTags(data);
-      }
-      
-      setNextCursor(pagination.nextCursor || null);
-      setHasMore(!!pagination.nextCursor);
+      setTags(data);
+      setTagPage(page);
+      setTagTotalPages(pagination.totalPages || 1);
     } catch {
       showToast("Lỗi khi tải danh sách tag", "error");
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
   }, [showToast]);
 
-  useEffect(() => { fetchTags(null); }, [fetchTags]);
+  useEffect(() => { fetchTags(1); }, [fetchTags]);
 
   const genSlug = (v: string) => v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
@@ -91,7 +80,7 @@ export default function AdminTagsPage() {
         showToast("Đã tạo tag mới", "success");
       }
       closeFormModal();
-      fetchTags(null);
+      fetchTags(tagPage);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Thao tác thất bại", "error");
     } finally {
@@ -105,7 +94,7 @@ export default function AdminTagsPage() {
     try {
       await apiFetch(`/admin/tags/${id}`, { method: "DELETE" });
       showToast("Đã xóa tag", "success");
-      fetchTags(null);
+      fetchTags(tagPage);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Xóa thất bại", "error");
     }
@@ -182,15 +171,28 @@ export default function AdminTagsPage() {
         )}
       </div>
 
-      {hasMore && (
-        <div className="flex justify-center mt-6">
-          <button
-            onClick={() => fetchTags(nextCursor)}
-            disabled={loadingMore}
-            className="px-6 py-2.5 rounded-xl bg-surface-brand border border-border-brand text-text-secondary font-medium hover:bg-surface-hover transition-colors flex items-center justify-center min-w-[140px]"
-          >
-            {loadingMore ? <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" /> : "Xem thêm"}
-          </button>
+      {/* Pagination Controls */}
+      {!loading && tags.length > 0 && tagTotalPages > 1 && (
+        <div className="flex items-center justify-between px-6 py-4 bg-surface-brand border border-border-brand rounded-2xl shadow-lg mt-6">
+          <p className="text-xs font-bold text-text-muted uppercase tracking-widest">
+            Trang {tagPage} / {tagTotalPages}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchTags(tagPage - 1)}
+              disabled={tagPage <= 1}
+              className="px-6 py-2.5 rounded-xl bg-surface-elevated border border-border-brand text-xs font-black uppercase tracking-widest text-text-secondary hover:text-emerald-500 hover:border-emerald-500/50 hover:bg-surface-hover transition-all disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-brand disabled:hover:bg-surface-elevated cursor-pointer"
+            >
+              Trước
+            </button>
+            <button
+              onClick={() => fetchTags(tagPage + 1)}
+              disabled={tagPage >= tagTotalPages}
+              className="px-6 py-2.5 rounded-xl bg-surface-elevated border border-border-brand text-xs font-black uppercase tracking-widest text-text-secondary hover:text-emerald-500 hover:border-emerald-500/50 hover:bg-surface-hover transition-all disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-brand disabled:hover:bg-surface-elevated cursor-pointer"
+            >
+              Tiếp
+            </button>
+          </div>
         </div>
       )}
 

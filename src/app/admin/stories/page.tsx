@@ -35,11 +35,10 @@ interface AdminChapter {
 export default function AdminStoriesPage() {
   const [stories, setStories] = useState<AdminStory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [storyPage, setStoryPage] = useState(1);
+  const [storyTotalPages, setStoryTotalPages] = useState(1);
   const [filter, setFilter] = useState<"all" | "pending" | "published">("all");
   const [search, setSearch] = useState("");
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { showToast } = useToast();
   const [rejectModal, setRejectModal] = useState<{ open: boolean; storyId: string }>({ open: false, storyId: "" });
@@ -49,43 +48,55 @@ export default function AdminStoriesPage() {
   const [expandedStory, setExpandedStory] = useState<string | null>(null);
   const [chapters, setChapters] = useState<AdminChapter[]>([]);
   const [chaptersLoading, setChaptersLoading] = useState(false);
+  const [chapterPage, setChapterPage] = useState(1);
+  const [chapterTotalPages, setChapterTotalPages] = useState(1);
   const [chapterActionLoading, setChapterActionLoading] = useState<string | null>(null);
   const [deleteChapterModal, setDeleteChapterModal] = useState<{ open: boolean; chapterId: string; title: string; storyId: string }>({ open: false, chapterId: "", title: "", storyId: "" });
   const [rejectChapterModal, setRejectChapterModal] = useState<{ open: boolean; chapterId: string; title: string }>({ open: false, chapterId: "", title: "" });
 
-  const fetchStories = (cursor: string | null = null) => {
-    if (cursor) {
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-    }
-    const url = `/admin/stories?limit=10${cursor ? `&cursor=${cursor}` : ""}`;
-    apiFetch<{ data: AdminStory[]; pagination?: { nextCursor?: string | null } }>(url)
+  const fetchStories = (page: number = 1) => {
+    setLoading(true);
+    const url = `/admin/stories?limit=10&page=${page}`;
+    apiFetch<{ data: AdminStory[]; pagination?: { totalPages: number } }>(url)
       .then((res) => {
         const data = Array.isArray(res) ? res : (res as { data: AdminStory[] }).data || [];
-        const pagination = (res as { pagination?: { nextCursor?: string | null } }).pagination || { nextCursor: null };
+        const pagination = (res as { pagination?: { totalPages: number } }).pagination || { totalPages: 1 };
         
-        if (cursor) {
-          setStories((prev) => [...prev, ...data]);
-        } else {
-          setStories(data);
-        }
-        
-        setNextCursor(pagination.nextCursor || null);
-        setHasMore(!!pagination.nextCursor);
+        setStories(data);
+        setStoryPage(page);
+        setStoryTotalPages(pagination.totalPages || 1);
       })
       .catch(() => {})
       .finally(() => {
         setLoading(false);
-        setLoadingMore(false);
       });
   };
 
   useEffect(() => {
-    fetchStories(null);
+    fetchStories(1);
   }, []);
 
   // Fetch chapters when expanding a story
+  const fetchChapters = async (storyId: string, page: number = 1) => {
+    setChaptersLoading(true);
+    try {
+      const res = await apiFetch<{ data: AdminChapter[]; pagination: { totalPages: number } }>(
+        `/admin/stories/${storyId}/chapters?page=${page}&limit=10`
+      );
+      const data = Array.isArray(res) ? res : (res as { data: AdminChapter[] }).data || [];
+      const pagination = (res as { pagination: { totalPages: number } }).pagination;
+      
+      setChapters(data);
+      setChapterPage(page);
+      setChapterTotalPages(pagination?.totalPages || 1);
+    } catch {
+      showToast("Không thể tải danh sách chương", "error");
+      setChapters([]);
+    } finally {
+      setChaptersLoading(false);
+    }
+  };
+
   const toggleExpand = async (storyId: string) => {
     if (expandedStory === storyId) {
       setExpandedStory(null);
@@ -93,17 +104,7 @@ export default function AdminStoriesPage() {
       return;
     }
     setExpandedStory(storyId);
-    setChaptersLoading(true);
-    try {
-      const res = await apiFetch<{ data: AdminChapter[] }>(`/admin/stories/${storyId}/chapters`);
-      const data = Array.isArray(res) ? res : (res as { data: AdminChapter[] }).data || [];
-      setChapters(data);
-    } catch {
-      showToast("Không thể tải danh sách chương", "error");
-      setChapters([]);
-    } finally {
-      setChaptersLoading(false);
-    }
+    fetchChapters(storyId, 1);
   };
 
   const handleApprove = async (storyId: string) => {
@@ -452,6 +453,31 @@ export default function AdminStoriesPage() {
                                   </table>
                                 )}
                               </div>
+
+                              {/* Chapter Pagination */}
+                              {!chaptersLoading && chapters.length > 0 && chapterTotalPages > 1 && (
+                                <div className="mt-6 flex items-center justify-between px-2">
+                                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">
+                                    Trang {chapterPage} / {chapterTotalPages}
+                                  </p>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => fetchChapters(story.id, chapterPage - 1)}
+                                      disabled={chapterPage <= 1}
+                                      className="px-4 py-2 rounded-xl bg-surface-brand border border-border-brand text-[10px] font-black uppercase tracking-tighter text-text-secondary hover:text-emerald-500 hover:border-emerald-500/50 transition-all disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-brand cursor-pointer"
+                                    >
+                                      Trước
+                                    </button>
+                                    <button
+                                      onClick={() => fetchChapters(story.id, chapterPage + 1)}
+                                      disabled={chapterPage >= chapterTotalPages}
+                                      className="px-4 py-2 rounded-xl bg-surface-brand border border-border-brand text-[10px] font-black uppercase tracking-tighter text-text-secondary hover:text-emerald-500 hover:border-emerald-500/50 transition-all disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-brand cursor-pointer"
+                                    >
+                                      Tiếp
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </motion.div>
                         </td>
@@ -480,15 +506,28 @@ export default function AdminStoriesPage() {
         )}
       </div>
 
-      {hasMore && (
-        <div className="flex justify-center mt-6">
-          <button
-            onClick={() => fetchStories(nextCursor)}
-            disabled={loadingMore}
-            className="px-6 py-2.5 rounded-xl bg-surface-brand border border-border-brand text-text-secondary font-medium hover:bg-surface-hover transition-colors flex items-center justify-center min-w-[140px]"
-          >
-            {loadingMore ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : "Xem thêm"}
-          </button>
+      {/* Story Pagination */}
+      {!loading && stories.length > 0 && storyTotalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-6 bg-surface-brand border border-border-brand rounded-2xl shadow-lg mt-6">
+          <p className="text-xs font-bold text-text-muted uppercase tracking-widest">
+            Trang {storyPage} / {storyTotalPages}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchStories(storyPage - 1)}
+              disabled={storyPage <= 1}
+              className="px-6 py-2.5 rounded-xl bg-surface-elevated border border-border-brand text-xs font-black uppercase tracking-widest text-text-secondary hover:text-emerald-500 hover:border-emerald-500/50 hover:bg-surface-hover transition-all disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-brand disabled:hover:bg-surface-elevated cursor-pointer"
+            >
+              Trước
+            </button>
+            <button
+              onClick={() => fetchStories(storyPage + 1)}
+              disabled={storyPage >= storyTotalPages}
+              className="px-6 py-2.5 rounded-xl bg-surface-elevated border border-border-brand text-xs font-black uppercase tracking-widest text-text-secondary hover:text-emerald-500 hover:border-emerald-500/50 hover:bg-surface-hover transition-all disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-brand disabled:hover:bg-surface-elevated cursor-pointer"
+            >
+              Tiếp
+            </button>
+          </div>
         </div>
       )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import ConfirmModal, { InputModal } from "@/components/ConfirmModal";
@@ -18,47 +18,36 @@ interface Withdrawal {
 export default function AdminWithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [withdrawalPage, setWithdrawalPage] = useState(1);
+  const [withdrawalTotalPages, setWithdrawalTotalPages] = useState(1);
   const [error, setError] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "PENDING" | "COMPLETED" | "FAILED">("all");
   const [search, setSearch] = useState("");
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{ open: boolean; id: string; name: string }>({ open: false, id: "", name: "" });
   const [rejectModal, setRejectModal] = useState<{ open: boolean; id: string; name: string }>({ open: false, id: "", name: "" });
   const { showToast } = useToast();
 
-  const fetchWithdrawals = async (cursor: string | null = null) => {
+  const fetchWithdrawals = useCallback(async (page: number = 1) => {
     try {
-      if (cursor) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
-      const url = `/admin/withdrawals?limit=10${cursor ? `&cursor=${cursor}` : ""}`;
-      const res = await apiFetch<any>(url);
+      setLoading(true);
+      const url = `/admin/withdrawals?limit=10&page=${page}`;
+      const res = await apiFetch<{ data: Withdrawal[]; pagination: { totalPages: number } }>(url);
       
       const data = Array.isArray(res) ? res : res.data || [];
-      const pagination = res.pagination || {};
+      const pagination = res.pagination || { totalPages: 1 };
       
-      if (cursor) {
-        setWithdrawals(prev => [...prev, ...data]);
-      } else {
-        setWithdrawals(data);
-      }
-      
-      setNextCursor(pagination.nextCursor || null);
-      setHasMore(!!pagination.nextCursor);
+      setWithdrawals(data);
+      setWithdrawalPage(page);
+      setWithdrawalTotalPages(pagination.totalPages || 1);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Lỗi khi tải danh sách rút tiền");
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchWithdrawals(null); }, []);
+  useEffect(() => { fetchWithdrawals(1); }, [fetchWithdrawals]);
 
   const handleApprove = async (id: string) => {
     try {
@@ -189,15 +178,28 @@ export default function AdminWithdrawalsPage() {
         )}
       </div>
 
-      {hasMore && (
-        <div className="flex justify-center mt-6">
-          <button
-            onClick={() => fetchWithdrawals(nextCursor)}
-            disabled={loadingMore}
-            className="px-6 py-2.5 rounded-xl bg-surface-brand border border-border-brand text-text-secondary font-medium hover:bg-surface-hover transition-colors flex items-center justify-center min-w-[140px]"
-          >
-            {loadingMore ? <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" /> : "Xem thêm"}
-          </button>
+      {/* Pagination Controls */}
+      {!loading && withdrawals.length > 0 && withdrawalTotalPages > 1 && (
+        <div className="flex items-center justify-between px-6 py-4 bg-surface-brand border border-border-brand rounded-2xl shadow-lg mt-6">
+          <p className="text-xs font-bold text-text-muted uppercase tracking-widest">
+            Trang {withdrawalPage} / {withdrawalTotalPages}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchWithdrawals(withdrawalPage - 1)}
+              disabled={withdrawalPage <= 1}
+              className="px-6 py-2.5 rounded-xl bg-surface-elevated border border-border-brand text-xs font-black uppercase tracking-widest text-text-secondary hover:text-emerald-500 hover:border-emerald-500/50 hover:bg-surface-hover transition-all disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-brand disabled:hover:bg-surface-elevated cursor-pointer"
+            >
+              Trước
+            </button>
+            <button
+              onClick={() => fetchWithdrawals(withdrawalPage + 1)}
+              disabled={withdrawalPage >= withdrawalTotalPages}
+              className="px-6 py-2.5 rounded-xl bg-surface-elevated border border-border-brand text-xs font-black uppercase tracking-widest text-text-secondary hover:text-emerald-500 hover:border-emerald-500/50 hover:bg-surface-hover transition-all disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-brand disabled:hover:bg-surface-elevated cursor-pointer"
+            >
+              Tiếp
+            </button>
+          </div>
         </div>
       )}
 

@@ -16,46 +16,35 @@ interface Genre {
 export default function AdminGenresPage() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [genrePage, setGenrePage] = useState(1);
+  const [genreTotalPages, setGenreTotalPages] = useState(1);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formModal, setFormModal] = useState<{ open: boolean; editId: string | null }>({ open: false, editId: null });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: string; name: string }>({ open: false, id: "", name: "" });
   const { showToast } = useToast();
 
-  const fetchGenres = useCallback(async (cursor: string | null = null) => {
+  const fetchGenres = useCallback(async (page: number = 1) => {
     try {
-      if (cursor) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
-      const url = `/admin/genres?limit=10${cursor ? `&cursor=${cursor}` : ""}`;
-      const res = await apiFetch<any>(url);
+      setLoading(true);
+      const url = `/admin/genres?limit=10&page=${page}`;
+      const res = await apiFetch<{ data: Genre[]; pagination: { totalPages: number } }>(url);
       
       const data = Array.isArray(res) ? res : res.data || [];
-      const pagination = res.pagination || {};
+      const pagination = res.pagination || { totalPages: 1 };
       
-      if (cursor) {
-        setGenres(prev => [...prev, ...data]);
-      } else {
-        setGenres(data);
-      }
-      
-      setNextCursor(pagination.nextCursor || null);
-      setHasMore(!!pagination.nextCursor);
+      setGenres(data);
+      setGenrePage(page);
+      setGenreTotalPages(pagination.totalPages || 1);
     } catch {
       showToast("Lỗi khi tải danh sách thể loại", "error");
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
   }, [showToast]);
 
-  useEffect(() => { fetchGenres(null); }, [fetchGenres]);
+  useEffect(() => { fetchGenres(1); }, [fetchGenres]);
 
   const genSlug = (v: string) => v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
@@ -91,7 +80,7 @@ export default function AdminGenresPage() {
         showToast("Đã tạo thể loại mới", "success");
       }
       closeFormModal();
-      fetchGenres(null);
+      fetchGenres(genrePage);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Thao tác thất bại", "error");
     } finally {
@@ -105,7 +94,7 @@ export default function AdminGenresPage() {
     try {
       await apiFetch(`/admin/genres/${id}`, { method: "DELETE" });
       showToast("Đã xóa thể loại", "success");
-      fetchGenres();
+      fetchGenres(genrePage);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Xóa thất bại", "error");
     }
@@ -182,15 +171,28 @@ export default function AdminGenresPage() {
         )}
       </div>
 
-      {hasMore && (
-        <div className="flex justify-center mt-6">
-          <button
-            onClick={() => fetchGenres(nextCursor)}
-            disabled={loadingMore}
-            className="px-6 py-2.5 rounded-xl bg-surface-brand border border-border-brand text-text-secondary font-medium hover:bg-surface-hover transition-colors flex items-center justify-center min-w-[140px]"
-          >
-            {loadingMore ? <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" /> : "Xem thêm"}
-          </button>
+      {/* Pagination Controls */}
+      {!loading && genres.length > 0 && genreTotalPages > 1 && (
+        <div className="flex items-center justify-between px-6 py-4 bg-surface-brand border border-border-brand rounded-2xl shadow-lg mt-6">
+          <p className="text-xs font-bold text-text-muted uppercase tracking-widest">
+            Trang {genrePage} / {genreTotalPages}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchGenres(genrePage - 1)}
+              disabled={genrePage <= 1}
+              className="px-6 py-2.5 rounded-xl bg-surface-elevated border border-border-brand text-xs font-black uppercase tracking-widest text-text-secondary hover:text-emerald-500 hover:border-emerald-500/50 hover:bg-surface-hover transition-all disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-brand disabled:hover:bg-surface-elevated cursor-pointer"
+            >
+              Trước
+            </button>
+            <button
+              onClick={() => fetchGenres(genrePage + 1)}
+              disabled={genrePage >= genreTotalPages}
+              className="px-6 py-2.5 rounded-xl bg-surface-elevated border border-border-brand text-xs font-black uppercase tracking-widest text-text-secondary hover:text-emerald-500 hover:border-emerald-500/50 hover:bg-surface-hover transition-all disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-brand disabled:hover:bg-surface-elevated cursor-pointer"
+            >
+              Tiếp
+            </button>
+          </div>
         </div>
       )}
 
