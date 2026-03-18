@@ -18,6 +18,8 @@ import {
   Share2,
   ChevronLeft,
   ThumbsUp,
+  UserPlus,
+  UserMinus,
 } from "lucide-react";
 import { apiFetch, ApiRequestError } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
@@ -70,6 +72,8 @@ interface Story {
     name?: string;
     displayName?: string;
     username?: string;
+    avatar?: string;
+    bio?: string;
   };
   genres?: { id: string; name: string }[];
   tags?: { id: string; name: string }[];
@@ -145,6 +149,8 @@ export default function StoryDetailPage() {
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const { showToast } = useToast();
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+  const [authorFollowing, setAuthorFollowing] = useState(false);
+  const [authorFollowingLoading, setAuthorFollowingLoading] = useState(false);
 
   useEffect(() => {
     Promise.allSettled([
@@ -157,7 +163,13 @@ export default function StoryDetailPage() {
       .then(([storyResult, chaptersResult, commentsResult, profileResult, historyResult]) => {
         // Story is critical — if it fails, show not found
         if (storyResult.status === 'fulfilled') {
-          setStory(storyResult.value);
+          const storyData = storyResult.value;
+          setStory(storyData);
+          if (isLoggedIn() && storyData.author?.id) {
+            apiFetch<{ isFollowing: boolean }>(`/follow/check/${storyData.author.id}`)
+              .then(res => setAuthorFollowing(res.isFollowing))
+              .catch(() => { });
+          }
         } else {
           setLoading(false);
           return;
@@ -346,6 +358,33 @@ export default function StoryDetailPage() {
     }
   };
 
+  const handleAuthorFollow = async () => {
+    if (!isLoggedIn()) {
+      router.push("/login");
+      return;
+    }
+    if (!story?.author?.id || authorFollowingLoading) return;
+
+    const prev = authorFollowing;
+    setAuthorFollowing(!prev);
+    setAuthorFollowingLoading(true);
+
+    try {
+      if (prev) {
+        await apiFetch(`/follow/${story.author.id}`, { method: "DELETE" });
+        showToast(`Đã bỏ theo dõi ${authorName}`, "success");
+      } else {
+        await apiFetch(`/follow/${story.author.id}`, { method: "POST" });
+        showToast(`Đang theo dõi ${authorName}`, "success");
+      }
+    } catch (err) {
+      setAuthorFollowing(prev);
+      showToast((err as Error).message || "Thao tác thất bại", "error");
+    } finally {
+      setAuthorFollowingLoading(false);
+    }
+  };
+
   const handleReview = async () => {
     if (!isLoggedIn()) {
       router.push("/login");
@@ -432,16 +471,16 @@ export default function StoryDetailPage() {
   }
 
   return (
-<div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden">
-        {/* Immersive Background Header */}
-        <div className="relative h-[20vh] md:h-[25vh] w-full overflow-hidden">
-          {story.coverImage && (
-            <div
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-3xl opacity-20 transition-opacity duration-1000"
-              style={{ backgroundImage: `url(${story.coverImage})` }}
-            />
-          )}
-          <div className="absolute inset-0 bg-linear-to-b from-bg-brand/0 via-bg-brand/80 to-bg-brand" />
+    <div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden">
+      {/* Immersive Background Header */}
+      <div className="relative h-[20vh] md:h-[25vh] w-full overflow-hidden">
+        {story.coverImage && (
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 blur-3xl opacity-20 transition-opacity duration-1000"
+            style={{ backgroundImage: `url(${story.coverImage})` }}
+          />
+        )}
+        <div className="absolute inset-0 bg-linear-to-b from-bg-brand/0 via-bg-brand/80 to-bg-brand" />
       </div>
 
       <div className="container max-w-7xl mx-auto px-6 -mt-20 md:-mt-28 relative z-10">
@@ -536,8 +575,8 @@ export default function StoryDetailPage() {
                 {story.genres && story.genres.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {story.genres.map((g: { genre?: { id: string; name: string }; id?: string; name?: string }) => (
-                      <Link 
-                        key={g.genre?.id || g.id} 
+                      <Link
+                        key={g.genre?.id || g.id}
                         href={`/stories?genre=${g.genre?.id || g.id}`}
                         className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-medium border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all duration-300"
                       >
@@ -549,12 +588,49 @@ export default function StoryDetailPage() {
 
                 <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted font-bold">
                   {story.author?.id ? (
-                    <Link href={`/users/${story.author.id}`} className="flex items-center gap-2 hover:text-primary-brand transition-colors group text-sm">
-                      <div className="w-7 h-7 rounded-full bg-primary-brand/10 flex items-center justify-center text-primary-brand group-hover:bg-primary-brand group-hover:text-white transition-all shadow-sm">
-                        <User size={12} />
-                      </div>
-                      <span className="text-text-primary">{authorName}</span>
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link href={`/users/${story.author.id}`} className="flex items-center gap-2 hover:text-primary-brand transition-colors group text-sm">
+                        <div className="w-8 h-8 rounded-full bg-primary-brand/10 flex items-center justify-center text-primary-brand group-hover:bg-primary-brand group-hover:text-white transition-all shadow-sm border border-border-brand/40 overflow-hidden ring-1 ring-emerald-500/10">
+                          {story.author.avatar ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={story.author.avatar} alt={authorName} className="w-full h-full object-cover" />
+                          ) : (
+                            <User size={14} />
+                          )}
+                        </div>
+                        <span className="text-text-primary whitespace-nowrap">{authorName}</span>
+                      </Link>
+
+                      {isLoggedIn() && currentUserProfile?.id !== story.author.id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAuthorFollow();
+                          }}
+                          disabled={authorFollowingLoading}
+                          className={cn(
+                            "h-7 px-3 text-[10px] font-black rounded-full transition-all gap-1.5 border uppercase tracking-wider",
+                            authorFollowing
+                              ? "bg-[#10b981]/10 text-[#10b981] border-[#10b981]/30 hover:bg-[#10b981]/20"
+                              : "bg-surface-elevated text-text-muted border-border-brand/60 hover:text-[#10b981] hover:border-[#10b981]/50 hover:bg-[#10b981]/5"
+                          )}
+                        >
+                          {authorFollowing ? (
+                            <>
+                              <UserMinus size={12} />
+                              Đang theo dõi
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus size={12} />
+                              Theo dõi
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <span className="flex items-center gap-2">
                       <User size={14} />
@@ -754,13 +830,13 @@ export default function StoryDetailPage() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 bg-surface-elevated p-1 rounded-xl border border-border-brand/50">
-                  <button 
+                  <button
                     onClick={() => setFeedTab("comments")}
                     className={`px-4 py-2 rounded-lg text-sm font-black transition-all flex items-center gap-1.5 ${feedTab === 'comments' ? 'bg-primary-brand text-slate-950 shadow-md' : 'text-text-muted hover:text-text-primary'}`}
                   >
                     <MessageCircle size={14} /> Bình luận ({rootComments.length})
                   </button>
-                  <button 
+                  <button
                     onClick={() => setFeedTab("reviews")}
                     className={`px-4 py-2 rounded-lg text-sm font-black transition-all flex items-center gap-1.5 ${feedTab === 'reviews' ? 'bg-primary-brand text-slate-950 shadow-md' : 'text-text-muted hover:text-text-primary'}`}
                   >
@@ -786,11 +862,11 @@ export default function StoryDetailPage() {
                       <div className="w-10 h-10 rounded-full bg-linear-to-tr from-primary-brand to-secondary-brand flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white overflow-hidden">
                         {currentUserProfile?.avatar ? (
                           <div className="w-full h-full relative">
-                            <Image 
-                              src={currentUserProfile.avatar} 
-                              alt="Avatar" 
+                            <Image
+                              src={currentUserProfile.avatar}
+                              alt="Avatar"
                               fill
-                              className="object-cover" 
+                              className="object-cover"
                               unoptimized
                             />
                           </div>
@@ -865,7 +941,7 @@ export default function StoryDetailPage() {
                                 {comment.content}
                               </p>
                               <div className="mt-3 flex items-center gap-3">
-                                <button 
+                                <button
                                   className={cn(
                                     "flex items-center gap-1 text-xs font-bold transition-colors",
                                     likedComments.includes(comment.id) ? "text-red-500 scale-110" : "text-text-muted hover:text-red-500"
@@ -873,14 +949,14 @@ export default function StoryDetailPage() {
                                   onClick={() => toggleLike(comment.id)}
                                   disabled={likingIds.includes(comment.id)}
                                 >
-                                  <ThumbsUp size={14} fill={likedComments.includes(comment.id) ? "#ef4444" : "none"} stroke={likedComments.includes(comment.id) ? "#ef4444" : "currentColor"} /> 
+                                  <ThumbsUp size={14} fill={likedComments.includes(comment.id) ? "#ef4444" : "none"} stroke={likedComments.includes(comment.id) ? "#ef4444" : "currentColor"} />
                                   <span className="ml-1">
-                                    {(comment._count?.likes || 0) + 
-                                      (originalLikes.includes(comment.id) && !likedComments.includes(comment.id) ? -1 : 
-                                      !originalLikes.includes(comment.id) && likedComments.includes(comment.id) ? 1 : 0)}
+                                    {(comment._count?.likes || 0) +
+                                      (originalLikes.includes(comment.id) && !likedComments.includes(comment.id) ? -1 :
+                                        !originalLikes.includes(comment.id) && likedComments.includes(comment.id) ? 1 : 0)}
                                   </span>
                                 </button>
-                                <button 
+                                <button
                                   className="flex items-center gap-1 text-xs font-bold text-text-muted hover:text-primary-brand transition-colors"
                                   onClick={() => {
                                     setReplyTo(comment.id);
@@ -894,7 +970,7 @@ export default function StoryDetailPage() {
                                   <button
                                     className="flex items-center gap-1 text-xs font-bold text-[#10b981] hover:underline transition-all ml-auto"
                                     onClick={() => {
-                                      setExpandedComments(prev => 
+                                      setExpandedComments(prev =>
                                         prev.includes(comment.id) ? prev.filter(id => id !== comment.id) : [...prev, comment.id]
                                       )
                                     }}
@@ -928,7 +1004,7 @@ export default function StoryDetailPage() {
                                         </div>
                                         <p className="text-text-secondary text-xs font-medium mb-2">{actualContent}</p>
                                         <div className="flex items-center gap-2">
-                                          <button 
+                                          <button
                                             className={cn(
                                               "flex items-center gap-0.5 text-[10px] font-bold transition-all duration-200",
                                               likedComments.includes(reply.id) ? "text-red-500 scale-110" : "text-text-muted hover:text-red-500"
@@ -936,14 +1012,14 @@ export default function StoryDetailPage() {
                                             onClick={() => toggleLike(reply.id)}
                                             disabled={likingIds.includes(reply.id)}
                                           >
-                                            <ThumbsUp size={12} fill={likedComments.includes(reply.id) ? "#ef4444" : "none"} stroke={likedComments.includes(reply.id) ? "#ef4444" : "currentColor"} /> 
+                                            <ThumbsUp size={12} fill={likedComments.includes(reply.id) ? "#ef4444" : "none"} stroke={likedComments.includes(reply.id) ? "#ef4444" : "currentColor"} />
                                             <span className="ml-0.5">
-                                              {(reply._count?.likes || 0) + 
-                                                (originalLikes.includes(reply.id) && !likedComments.includes(reply.id) ? -1 : 
-                                                !originalLikes.includes(reply.id) && likedComments.includes(reply.id) ? 1 : 0)}
+                                              {(reply._count?.likes || 0) +
+                                                (originalLikes.includes(reply.id) && !likedComments.includes(reply.id) ? -1 :
+                                                  !originalLikes.includes(reply.id) && likedComments.includes(reply.id) ? 1 : 0)}
                                             </span>
                                           </button>
-                                          <button 
+                                          <button
                                             className="flex items-center gap-1 text-[10px] font-bold text-text-muted hover:text-primary-brand transition-colors"
                                             onClick={() => {
                                               setReplyTo(comment.id);
