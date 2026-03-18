@@ -26,6 +26,9 @@ export function setTokens(
   if (role) {
     Cookies.set(USER_ROLE_KEY, role, { expires: 7 });
   }
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("auth:login"));
+  }
 }
 
 export function removeTokens(): void {

@@ -160,7 +160,7 @@ function LoginContent() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between ml-1">
                     <Label htmlFor="password" className="text-text-secondary text-sm font-semibold">Mật khẩu</Label>
-                    <Link href="/forgot-password" className="text-xs font-semibold text-emerald-500 hover:text-emerald-400 transition-colors">
+                    <Link href="/forgot-password" tabIndex={-1} className="text-xs font-semibold text-emerald-500 hover:text-emerald-400 transition-colors">
                       Quên mật khẩu?
                     </Link>
                   </div>
