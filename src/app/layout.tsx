@@ -29,6 +29,16 @@ export default function RootLayout({
     window.scrollTo(0, 0);
   }, [pathname]);
 
+  useEffect(() => {
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "theme-color";
+      document.head.appendChild(meta);
+    }
+    meta.content = "#10b981";
+  }, []);
+
   return (
     <html lang="vi" suppressHydrationWarning>
       <body>
