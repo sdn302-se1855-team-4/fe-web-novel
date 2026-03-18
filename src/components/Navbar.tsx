@@ -26,7 +26,7 @@ import { useTheme } from "./ThemeProvider";
 import { isLoggedIn, removeTokens, getUserRole } from "@/lib/auth";
 import { useState, useEffect, useRef, FormEvent } from "react";
 import { apiFetch } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, removeAccents } from "@/lib/utils";
 
 interface Genre {
   id: string;
@@ -134,10 +134,23 @@ export default function Navbar() {
       setIsSearching(true);
       setShowSuggestions(true);
       try {
+        // Fetch more than needed to allow client-side filtering if backend results are imperfect
         const res = await apiFetch<{ data: SearchSuggestion[] }>(
-          `/stories?search=${encodeURIComponent(searchQuery)}&limit=5`,
+          `/stories?search=${encodeURIComponent(removeAccents(searchQuery))}&limit=20`,
         );
-        setSuggestions(res.data || []);
+        
+        const normalizedQuery = removeAccents(searchQuery.toLowerCase());
+        const filtered = (res.data || []).filter(story => {
+          const normalizedTitle = removeAccents(story.title.toLowerCase());
+          const normalizedUsername = removeAccents((story.author?.username || "").toLowerCase());
+          const normalizedDisplayName = removeAccents((story.author?.displayName || "").toLowerCase());
+          
+          return normalizedTitle.includes(normalizedQuery) || 
+                 normalizedUsername.includes(normalizedQuery) || 
+                 normalizedDisplayName.includes(normalizedQuery);
+        });
+
+        setSuggestions(filtered.slice(0, 5));
       } catch {
         setSuggestions([]);
       } finally {
@@ -183,7 +196,7 @@ export default function Navbar() {
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/stories?search=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/stories?search=${encodeURIComponent(removeAccents(searchQuery.trim()))}`);
       setSearchQuery("");
       setMobileOpen(false);
     }

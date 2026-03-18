@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, removeAccents } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -125,7 +125,7 @@ function StoriesContent() {
   useEffect(() => {
     requestAnimationFrame(() => setLoading(true));
     const params = new URLSearchParams();
-    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (debouncedSearch) params.set("search", removeAccents(debouncedSearch));
     if (selectedGenres.length > 0) params.set("genreId", selectedGenres[0]);
 
     if (selectedType && selectedType !== "Tất cả") {
@@ -169,12 +169,31 @@ function StoriesContent() {
       `/stories?${params.toString()}`,
     )
       .then((res) => {
+        let rawStories: Story[] = [];
+        let totalP: number = 1;
+
         if (Array.isArray(res)) {
-          setStories(res);
+          rawStories = res;
         } else {
-          setStories(res.data || []);
-          if (res.totalPages) setTotalPages(res.totalPages);
+          rawStories = res.data || [];
+          if (res.totalPages) totalP = res.totalPages;
         }
+
+        // Apply client-side filtering as a robust layer over backend results
+        if (debouncedSearch) {
+          const normalizedQuery = removeAccents(debouncedSearch.toLowerCase());
+          const filtered = rawStories.filter(story => {
+            const normalizedTitle = removeAccents(story.title.toLowerCase());
+            const normalizedAuthor = removeAccents((story.author?.name || "").toLowerCase());
+            return normalizedTitle.includes(normalizedQuery) || normalizedAuthor.includes(normalizedQuery);
+          });
+          setStories(filtered);
+          // Note: Pagination might be slightly off if many items are filtered out, 
+          // but for typical unaccented search this is better than zero results.
+        } else {
+          setStories(rawStories);
+        }
+        setTotalPages(totalP);
       })
       .catch(() => setStories([]))
       .finally(() => setLoading(false));
