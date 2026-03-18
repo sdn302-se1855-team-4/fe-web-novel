@@ -3,7 +3,7 @@
 import { useEffect, useState, FormEvent, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Save, Plus, Trash2, Edit, RefreshCw, ChevronLeft, Info, LayoutList, Upload, Image as ImageIcon } from "lucide-react";
+import { Save, Plus, Trash2, Edit, RefreshCw, ChevronLeft, Info, LayoutList, Upload, Image as ImageIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import { useToast } from "@/components/Toast";
@@ -38,6 +38,10 @@ export default function EditStoryPage() {
   const [story, setStory] = useState<Story | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isChaptersExpanded, setIsChaptersExpanded] = useState(false);
+  const chapterListRef = useRef<HTMLDivElement>(null);
+
+  const visibleChapters = isChaptersExpanded ? chapters : chapters.slice(0, 5);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [title, setTitle] = useState("");
@@ -333,7 +337,7 @@ export default function EditStoryPage() {
         </div>
 
         {/* Chapter Management Section */}
-        <div className="space-y-8">
+        <div className="space-y-8 scroll-mt-24" ref={chapterListRef}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <h2 className="text-2xl font-black text-text-primary uppercase tracking-tight italic flex items-center gap-3">
               <div className="w-2 h-8 bg-blue-500 rounded-full" />
@@ -349,13 +353,14 @@ export default function EditStoryPage() {
 
           <div className="flex flex-col gap-4">
             {chapters.length > 0 ? (
-              chapters.map((ch) => (
-                <div key={ch.id} className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-brand border border-border-brand rounded-4xl md:rounded-[2.5rem] transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
-                  <div className="flex-1 min-w-0 flex flex-col gap-2">
-                    <h3 className="text-lg font-bold text-text-primary truncate">
+              <>
+                {visibleChapters.map((ch) => (
+                  <div key={ch.id} className="flex flex-col md:flex-row items-start md:items-center gap-3 py-2 px-4 bg-surface-brand border border-border-brand rounded-xl md:rounded-2xl transition-all duration-300 hover:bg-surface-elevated hover:border-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/5">
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                    <h3 className="text-base font-bold text-text-primary truncate">
                       Chương {ch.chapterNumber}: {ch.title}
                     </h3>
-                    <div className="flex items-center gap-4 flex-wrap text-sm font-medium">
+                    <div className="flex items-center gap-3 flex-wrap text-sm font-medium">
                       {!ch.isPublished && (
                         <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[10px] font-black uppercase tracking-widest border border-amber-500/20">
                           Chờ duyệt
@@ -365,7 +370,7 @@ export default function EditStoryPage() {
                         <span className="badge badge-premium">Premium</span>
                       )}
                       {ch.createdAt && (
-                        <span className="text-xs text-muted">
+                        <span className="text-xs text-text-muted">
                           {new Intl.DateTimeFormat("vi").format(
                             new Date(ch.createdAt),
                           )}
@@ -388,7 +393,27 @@ export default function EditStoryPage() {
                     </button>
                   </div>
                 </div>
-              ))
+                ))}
+
+                {chapters.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isChaptersExpanded) {
+                        setIsChaptersExpanded(false);
+                        const y = chapterListRef.current ? chapterListRef.current.getBoundingClientRect().top + window.scrollY - 100 : 0;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                      } else {
+                        setIsChaptersExpanded(true);
+                      }
+                    }}
+                    className="btn btn-outline border-border-brand w-full py-4 mt-2 gap-2 rounded-2xl md:rounded-3xl hover:bg-surface-elevated transition-colors text-text-muted hover:text-text-primary"
+                  >
+                    <span className="font-bold text-sm tracking-wide">{isChaptersExpanded ? "Thu gọn danh sách" : `Xem thêm ${chapters.length - 5} chương`}</span>
+                    {isChaptersExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                )}
+              </>
             ) : (
               <div className="py-20 text-center border-2 border-dashed border-border-brand rounded-[2.5rem]">
                 <p className="text-text-muted font-bold">Chưa có chương nào.</p>

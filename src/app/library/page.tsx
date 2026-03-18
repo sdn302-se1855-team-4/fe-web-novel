@@ -7,6 +7,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
 import StoryCard from "@/components/StoryCard";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
 interface StoryItem {
   id: string;
   title: string;
@@ -80,6 +90,8 @@ export default function LibraryPage() {
   const router = useRouter();
   const [stories, setStories] = useState<StoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -96,13 +108,65 @@ export default function LibraryPage() {
       router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
-    apiFetch("/bookmarks")
+    setLoading(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    apiFetch<any>(`/bookmarks?limit=12&page=${page}`)
       .then((res) => {
         setStories(normalizeStories(res));
+        setTotalPages(res?.pagination?.totalPages || 1);
       })
       .catch(() => setStories([]))
       .finally(() => setLoading(false));
-  }, [router]);
+  }, [router, page]);
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(i);
+      }
+    } else {
+      if (page <= 3) {
+        items.push(1, 2, 3, 4, 'ellipsis', totalPages);
+      } else if (page >= totalPages - 2) {
+        items.push(1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        items.push(1, 'ellipsis', page - 1, page, page + 1, 'ellipsis', totalPages);
+      }
+    }
+
+    return items.map((item, idx) => {
+      if (item === 'ellipsis') {
+        return (
+          <PaginationItem key={`ellipsis-${idx}`}>
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+      return (
+        <PaginationItem key={item}>
+          <PaginationLink
+            href="#"
+            isActive={page === item}
+            onClick={(e) => {
+              e.preventDefault();
+              setPage(item as number);
+            }}
+            className={cn(
+              "w-9 h-9 rounded-md transition-all text-sm",
+              page === item
+                ? "bg-emerald-500 text-white border-emerald-500"
+                : "text-text-muted hover:text-text-primary border-transparent hover:bg-surface-elevated",
+            )}
+          >
+            {item}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    });
+  };
 
   return (
     <div className="page-wrapper bg-bg-brand pb-20 overflow-x-hidden min-h-screen">
@@ -176,6 +240,43 @@ export default function LibraryPage() {
           </motion.div>
         )}
         </AnimatePresence>
+
+        {/* PAGINATION */}
+        {totalPages > 1 && !loading && stories.length > 0 && (
+          <div className="mt-12 mb-8">
+            <Pagination>
+              <PaginationContent className="bg-surface-brand border border-border-brand p-1 rounded-md gap-1">
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (page > 1) setPage(page - 1);
+                    }}
+                    className={cn(
+                      "text-text-muted hover:text-text-primary border-transparent rounded-md",
+                      page <= 1 && "pointer-events-none opacity-20",
+                    )}
+                  />
+                </PaginationItem>
+                {renderPaginationItems()}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (page < totalPages) setPage(page + 1);
+                    }}
+                    className={cn(
+                      "text-text-muted hover:text-text-primary border-transparent rounded-md",
+                      page >= totalPages && "pointer-events-none opacity-20",
+                    )}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
     </div>
   );

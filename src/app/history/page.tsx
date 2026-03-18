@@ -6,6 +6,16 @@ import { useRouter } from "next/navigation";
 import { Clock, BookOpen, ChevronRight, ChevronLeft } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_COVER =
   "https://images.unsplash.com/photo-1543005127-b6b197e60be2?q=80&w=400&auto=format&fit=crop";
@@ -29,6 +39,8 @@ export default function HistoryPage() {
   const router = useRouter();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -36,11 +48,19 @@ export default function HistoryPage() {
       router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
-    apiFetch<HistoryItem[]>("/reading-history/me?limit=50")
-      .then((res) => setHistory(Array.isArray(res) ? res : []))
+    setLoading(true);
+    apiFetch<any>(`/reading-history/me?limit=12&page=${page}`)
+      .then((res) => {
+        if (res.data) {
+          setHistory(res.data);
+          setTotalPages(res.pagination?.totalPages || 1);
+        } else {
+          setHistory(Array.isArray(res) ? res : []);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [router]);
+  }, [router, page]);
 
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>,
@@ -68,6 +88,55 @@ export default function HistoryPage() {
     const diffDay = Math.floor(diffHour / 24);
     if (diffDay < 7) return `${diffDay} ngày trước`;
     return d.toLocaleDateString("vi");
+  };
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(i);
+      }
+    } else {
+      if (page <= 3) {
+        items.push(1, 2, 3, 4, 'ellipsis', totalPages);
+      } else if (page >= totalPages - 2) {
+        items.push(1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        items.push(1, 'ellipsis', page - 1, page, page + 1, 'ellipsis', totalPages);
+      }
+    }
+
+    return items.map((item, idx) => {
+      if (item === 'ellipsis') {
+        return (
+          <PaginationItem key={`ellipsis-${idx}`}>
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+      return (
+        <PaginationItem key={item}>
+          <PaginationLink
+            href="#"
+            isActive={page === item}
+            onClick={(e) => {
+              e.preventDefault();
+              setPage(item as number);
+            }}
+            className={cn(
+              "w-9 h-9 rounded-md transition-all text-sm",
+              page === item
+                ? "bg-emerald-500 text-white border-emerald-500"
+                : "text-text-muted hover:text-text-primary border-transparent hover:bg-surface-elevated",
+            )}
+          >
+            {item}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    });
   };
 
   return (
@@ -164,6 +233,43 @@ export default function HistoryPage() {
             <Link href="/stories" className="btn btn-primary mt-2">
               Khám phá truyện
             </Link>
+          </div>
+        )}
+
+        {/* PAGINATION */}
+        {totalPages > 1 && !loading && history.length > 0 && (
+          <div className="mt-12">
+            <Pagination>
+              <PaginationContent className="bg-surface-brand border border-border-brand p-1 rounded-md gap-1">
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (page > 1) setPage(page - 1);
+                    }}
+                    className={cn(
+                      "text-text-muted hover:text-text-primary border-transparent rounded-md",
+                      page <= 1 && "pointer-events-none opacity-20",
+                    )}
+                  />
+                </PaginationItem>
+                {renderPaginationItems()}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (page < totalPages) setPage(page + 1);
+                    }}
+                    className={cn(
+                      "text-text-muted hover:text-text-primary border-transparent rounded-md",
+                      page >= totalPages && "pointer-events-none opacity-20",
+                    )}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         )}
       </div>

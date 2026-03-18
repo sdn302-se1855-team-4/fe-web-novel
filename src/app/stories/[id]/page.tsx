@@ -29,6 +29,14 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Tabs,
   TabsContent,
   TabsList,
@@ -138,6 +146,11 @@ export default function StoryDetailPage() {
   const [showAllChapters, setShowAllChapters] = useState(false);
   const CHAPTERS_INITIAL = 5;
 
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [commentsTotalPages, setCommentsTotalPages] = useState(1);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsTotalPages, setReviewsTotalPages] = useState(1);
+
   // Donate modal state
   const [showDonate, setShowDonate] = useState(false);
   const [donateAmount, setDonateAmount] = useState<number>(100);
@@ -155,11 +168,73 @@ export default function StoryDetailPage() {
   const [authorFollowing, setAuthorFollowing] = useState(false);
   const [authorFollowingLoading, setAuthorFollowingLoading] = useState(false);
 
+  const fetchComments = async (page: number) => {
+    if (!storyId) return;
+    setCommentLoading(true);
+    try {
+      const res = await apiFetch<any>(`/stories/${storyId}/comments?page=${page}&limit=10`);
+      const rawComments = Array.isArray(res) ? res : res.data || [];
+      const pagination = res.pagination;
+      
+      if (pagination) {
+        setCommentsTotalPages(pagination.totalPages || 1);
+      } else {
+        setCommentsTotalPages(1);
+      }
+
+      const flatComments: Comment[] = [];
+      const likedIds: string[] = [];
+
+      rawComments.forEach((c: Comment) => {
+        flatComments.push(c);
+        if (c.isLiked) likedIds.push(c.id);
+        if (c.replies && Array.isArray(c.replies)) {
+          c.replies.forEach((r: Comment) => {
+            flatComments.push({ ...r, parentId: c.id });
+            if (r.isLiked) likedIds.push(r.id);
+          });
+        }
+      });
+
+      setComments(flatComments);
+      setLikedComments(likedIds);
+      setOriginalLikes(likedIds);
+    } catch (err) {
+      console.error("Failed to fetch comments", err);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const fetchReviews = async (page: number) => {
+    if (!storyId) return;
+    setReviewLoading(true);
+    try {
+      const res = await apiFetch<any>(`/reviews/story/${storyId}?page=${page}&limit=5`);
+      setReviews(res.data || []);
+      if (res.pagination) {
+        setReviewsTotalPages(res.pagination.totalPages || 1);
+      }
+    } catch (err) {
+      console.error("Failed to fetch reviews", err);
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComments(commentsPage);
+  }, [storyId, commentsPage]);
+
+  useEffect(() => {
+    fetchReviews(reviewsPage);
+  }, [storyId, reviewsPage]);
+
   useEffect(() => {
     Promise.allSettled([
       apiFetch<Story>(`/stories/${storyId}`),
       apiFetch<Chapter[]>(`/stories/${storyId}/chapters`),
-      apiFetch<{ data: Comment[] } | Comment[]>(`/stories/${storyId}/comments`),
+      Promise.resolve(null),
       isLoggedIn() ? apiFetch<UserProfile>("/users/me") : Promise.resolve(null),
       isLoggedIn() ? apiFetch<string[]>(`/reading-history/story/${storyId}`) : Promise.resolve([] as string[])
     ])
@@ -182,29 +257,6 @@ export default function StoryDetailPage() {
           setChapters(Array.isArray(chaptersResult.value) ? chaptersResult.value : []);
         }
 
-        if (commentsResult.status === 'fulfilled') {
-          const commentsData = commentsResult.value;
-          const rawComments = Array.isArray(commentsData)
-            ? commentsData
-            : (commentsData as { data: Comment[] }).data || [];
-          const flatComments: Comment[] = [];
-          const likedIds: string[] = [];
-
-          rawComments.forEach((c: Comment) => {
-            flatComments.push(c);
-            if (c.isLiked) likedIds.push(c.id);
-            if (c.replies && Array.isArray(c.replies)) {
-              c.replies.forEach((r: Comment) => {
-                flatComments.push({ ...r, parentId: c.id });
-                if (r.isLiked) likedIds.push(r.id);
-              });
-            }
-          });
-          setComments(flatComments);
-          setLikedComments(likedIds);
-          setOriginalLikes(likedIds);
-        }
-
         if (profileResult.status === 'fulfilled' && profileResult.value) {
           setCurrentUserProfile(profileResult.value);
         }
@@ -216,11 +268,6 @@ export default function StoryDetailPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-
-    // Fetch reviews
-    apiFetch<{ data: Review[] }>(`/reviews/story/${storyId}`)
-      .then((res) => setReviews(res.data || []))
-      .catch(() => { });
 
     // Check bookmark status
     if (isLoggedIn()) {
@@ -1098,6 +1145,62 @@ export default function StoryDetailPage() {
                       })
                     )}
                   </div>
+
+                  {/* Comments Pagination */}
+                  {!commentLoading && comments.length > 0 && commentsTotalPages > 1 && (
+                    <div className="mt-8">
+                      <Pagination>
+                        <PaginationContent className="bg-surface-brand border border-border-brand p-1 rounded-md gap-1">
+                          <PaginationItem>
+                            <PaginationPrevious
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (commentsPage > 1) setCommentsPage(commentsPage - 1);
+                              }}
+                              className={cn(
+                                "text-text-muted hover:text-text-primary border-transparent rounded-md",
+                                commentsPage <= 1 && "pointer-events-none opacity-20"
+                              )}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: commentsTotalPages }).map((_, i) => (
+                            <PaginationItem key={i}>
+                              <PaginationLink
+                                href="#"
+                                isActive={commentsPage === i + 1}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setCommentsPage(i + 1);
+                                }}
+                                className={cn(
+                                  "w-9 h-9 rounded-md transition-all text-sm",
+                                  commentsPage === i + 1
+                                    ? "bg-emerald-500 text-white border-emerald-500"
+                                    : "text-text-muted hover:text-text-primary border-transparent hover:bg-surface-elevated"
+                                )}
+                              >
+                                {i + 1}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (commentsPage < commentsTotalPages) setCommentsPage(commentsPage + 1);
+                              }}
+                              className={cn(
+                                "text-text-muted hover:text-text-primary border-transparent rounded-md",
+                                commentsPage >= commentsTotalPages && "pointer-events-none opacity-20"
+                              )}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1157,6 +1260,62 @@ export default function StoryDetailPage() {
                       })
                     )}
                   </div>
+
+                  {/* Reviews Pagination */}
+                  {!reviewLoading && reviews.length > 0 && reviewsTotalPages > 1 && (
+                    <div className="mt-8">
+                      <Pagination>
+                        <PaginationContent className="bg-surface-brand border border-border-brand p-1 rounded-md gap-1">
+                          <PaginationItem>
+                            <PaginationPrevious
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (reviewsPage > 1) setReviewsPage(reviewsPage - 1);
+                              }}
+                              className={cn(
+                                "text-text-muted hover:text-text-primary border-transparent rounded-md",
+                                reviewsPage <= 1 && "pointer-events-none opacity-20"
+                              )}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: reviewsTotalPages }).map((_, i) => (
+                            <PaginationItem key={i}>
+                              <PaginationLink
+                                href="#"
+                                isActive={reviewsPage === i + 1}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setReviewsPage(i + 1);
+                                }}
+                                className={cn(
+                                  "w-9 h-9 rounded-md transition-all text-sm",
+                                  reviewsPage === i + 1
+                                    ? "bg-emerald-500 text-white border-emerald-500"
+                                    : "text-text-muted hover:text-text-primary border-transparent hover:bg-surface-elevated"
+                                )}
+                              >
+                                {i + 1}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (reviewsPage < reviewsTotalPages) setReviewsPage(reviewsPage + 1);
+                              }}
+                              className={cn(
+                                "text-text-muted hover:text-text-primary border-transparent rounded-md",
+                                reviewsPage >= reviewsTotalPages && "pointer-events-none opacity-20"
+                              )}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
