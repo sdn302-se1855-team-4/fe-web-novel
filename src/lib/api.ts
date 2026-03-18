@@ -133,7 +133,11 @@ export async function apiFetch<T>(
       // Refresh failed — clear tokens and redirect to login
       removeTokens();
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        if (window.location.pathname !== "/login") {
+          window.location.href = `/login?redirect=${encodeURIComponent(
+            window.location.pathname + window.location.search
+          )}`;
+        }
       }
       throw new ApiRequestError("Phiên đăng nhập đã hết hạn", 401);
     }

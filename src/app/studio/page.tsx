@@ -38,7 +38,8 @@ export default function StudioPage() {
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      router.push("/login");
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
     apiFetch<Story[] | { data: Story[] }>("/stories/my")

@@ -23,7 +23,8 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      router.push("/login");
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
     apiFetch<{ data: Notification[]; unreadCount: number }>(
