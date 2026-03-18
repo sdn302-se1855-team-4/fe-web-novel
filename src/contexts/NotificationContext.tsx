@@ -1,11 +1,10 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { onMessage } from "firebase/messaging";
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
+import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { getAccessToken, isLoggedIn } from "@/lib/auth";
-import { getFirebaseMessaging } from "@/lib/firebase";
 
 export interface Notification {
   id: string;
@@ -29,8 +28,12 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.isRead).length,
+    [notifications]
+  );
 
   const fetchInitialNotifications = useCallback(async () => {
     try {
@@ -50,7 +53,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       }
 
       setNotifications(items);
-      setUnreadCount(items.filter((n: Notification) => !n.isRead).length);
     } catch (err) {
       console.error("Lỗi khi tải thông báo:", err);
     } finally {
@@ -60,76 +62,67 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const connectSSE = useCallback(() => {
     const token = getAccessToken();
-    if (!token) return;
+    if (!token) return null;
 
+    const ctrl = new AbortController();
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-    
-    // Use Microsoft's fetch-event-source to pass the Authorization header
+
     fetchEventSource(`${API_BASE}/notifications/stream`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      signal: ctrl.signal,
+      openWhenHidden: true,
       onmessage(ev) {
-        if (ev.data) {
-          try {
-            const newNotification = JSON.parse(ev.data);
-            setNotifications((prev) => {
-              // Check if notification already exists to prevent duplicates
-              if (prev.find((n) => n.id === newNotification.id)) return prev;
-              
-              // Only keep the most recent 50 notifications in memory
-              const updated = [newNotification, ...prev].slice(0, 50);
-              setUnreadCount(updated.filter((n) => !n.isRead).length);
-              return updated;
-            });
-          } catch (e) {
-            console.error("Failed to parse SSE notification", e);
-          }
+        if (!ev.data) return;
+        try {
+          const raw = JSON.parse(ev.data);
+          // NestJS global TransformInterceptor wraps every SSE emission:
+          //   { data: <notification>, status: 200, message: "success" }
+          // If the notification id is not at root level, unwrap one level.
+          const newNotification: Notification = raw?.id ? raw : (raw?.data as Notification);
+          if (!newNotification?.id) return;
+
+          setNotifications((prev) => {
+            if (prev.find((n) => n.id === newNotification.id)) return prev;
+            return [newNotification, ...prev].slice(0, 50);
+          });
+          toast(newNotification.title, {
+            description: newNotification.message,
+            duration: 5000,
+          });
+        } catch (e) {
+          console.error("Failed to parse SSE notification", e);
         }
       },
       onerror(err) {
         console.error("SSE Error:", err);
-        // Throwing an error stops the internal retry mechanism if it's a fatal error
-        // Keeping it silent will allow it to retry automatically
+        // Returning void (not throwing) lets the library retry automatically
       },
     });
+
+    return ctrl;
   }, []);
 
   useEffect(() => {
-    // Register FCM service worker (needed for background push notifications)
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/firebase-messaging-sw.js", { scope: "/" })
-        .catch((err) => console.error("FCM SW registration failed:", err));
-    }
-
     if (!isLoggedIn()) {
       setLoading(false);
       return;
     }
 
+    let cancelled = false;
+    let ctrl: AbortController | null = null;
+
     fetchInitialNotifications().then(() => {
-      connectSSE();
+      if (!cancelled) {
+        ctrl = connectSSE();
+      }
     });
 
-    // Foreground FCM message handler — show browser notification when app is open
-    let unsubscribeFCM: (() => void) | undefined;
-    (async () => {
-      const messaging = await getFirebaseMessaging();
-      if (!messaging) return;
-      unsubscribeFCM = onMessage(messaging, (payload) => {
-        if (Notification.permission === "granted" && payload.notification?.title) {
-          new Notification(payload.notification.title, {
-            body: payload.notification.body ?? "",
-            data: payload.data,
-          });
-        }
-      });
-    })();
-
     return () => {
-      unsubscribeFCM?.();
+      cancelled = true;
+      ctrl?.abort();
     };
   }, [fetchInitialNotifications, connectSSE]);
 
@@ -144,7 +137,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
     );
-    setUnreadCount((prev) => Math.max(0, prev - 1));
 
     try {
       await apiFetch(`/notifications/${id}/read`, { method: "PUT" });
@@ -153,7 +145,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: false } : n))
       );
-      setUnreadCount((prev) => prev + 1);
     }
   };
 
@@ -162,15 +153,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     // Optimistic Update
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    const previousUnread = unreadCount;
-    setUnreadCount(0);
 
     try {
       await apiFetch("/notifications/read-all", { method: "PUT" });
     } catch {
-      // Revert if failed (simple revert logic)
-      setUnreadCount(previousUnread);
-      fetchInitialNotifications(); // best to re-fetch if read-all fails
+      // Revert by re-fetching the real state
+      fetchInitialNotifications();
     }
   };
 

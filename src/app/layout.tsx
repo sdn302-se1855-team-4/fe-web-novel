@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/Toast";
+import { NotificationToaster } from "@/components/NotificationToaster";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <ToastProvider>
+            <NotificationToaster />
             <NotificationProvider>
               {!hideNavbar && <Navbar />}
               <main className={cn(

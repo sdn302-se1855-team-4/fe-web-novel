@@ -1,71 +1,62 @@
-export const dynamic = 'force-dynamic';
+import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
+/**
+ * Serves the Firebase Cloud Messaging service worker dynamically
+ * so environment variables are injected at runtime (no hardcoded values).
+ *
+ * URL: /firebase-messaging-sw.js
+ * Scope: / (controls all pages — granted by Service-Worker-Allowed header)
+ */
 export async function GET() {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-  const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
-  const messagingSenderId = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID;
-  const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
+  const config = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "",
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "",
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "",
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "",
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? "",
+  };
 
-  // We use compat libraries for Service Worker because it's easier and smaller for SW script
-  const scriptContent = `
-    importScripts("https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js");
-    importScripts("https://www.gstatic.com/firebasejs/10.10.0/firebase-messaging-compat.js");
+  const script = `
+importScripts('https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.10.0/firebase-messaging-compat.js');
 
-    const firebaseConfig = {
-      apiKey: "${apiKey}",
-      authDomain: "${authDomain}",
-      projectId: "${projectId}",
-      storageBucket: "${storageBucket}",
-      messagingSenderId: "${messagingSenderId}",
-      appId: "${appId}"
-    };
+firebase.initializeApp(${JSON.stringify(config)});
 
-    firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
+const messaging = firebase.messaging();
 
-    messaging.onBackgroundMessage((payload) => {
-      console.log("[firebase-messaging-sw.js] Received background message ", payload);
-      
-      const notificationTitle = payload.notification?.title || "Thông báo mới";
-      const notificationOptions = {
-        body: payload.notification?.body || "",
-        icon: "/favicon.ico", // You can replace this with your app's icon
-        badge: "/favicon.ico",
-        data: payload.data, // For handling clicks
-      };
+// Handle push messages received while app is in background / closed
+messaging.onBackgroundMessage((payload) => {
+  const title = payload.notification?.title || 'Thông báo mới';
+  self.registration.showNotification(title, {
+    body: payload.notification?.body || '',
+    icon: '/favicon.ico',
+    data: payload.data || {},
+  });
+});
 
-      self.registration.showNotification(notificationTitle, notificationOptions);
-    });
-    
-    // Handle click on background notification
-    self.addEventListener('notificationclick', function(event) {
-      event.notification.close();
-      const clickAction = event.notification.data?.link || '/';
-      
-      event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
-          for (var i = 0; i < clientList.length; i++) {
-            var client = clientList[i];
-            if (client.url.includes(self.location.origin) && 'focus' in client) {
-              return client.focus();
-            }
-          }
-          if (clients.openWindow) {
-            return clients.openWindow(clickAction);
-          }
-        })
-      );
-    });
-  `;
+// Navigate to link when user clicks the notification
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const link = event.notification.data?.link;
+  if (!link) return;
+  event.waitUntil(
+    clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((list) => {
+        const existing = list.find((c) => c.url === link && 'focus' in c);
+        return existing ? existing.focus() : clients.openWindow(link);
+      })
+  );
+});
+`;
 
-  return new Response(scriptContent, {
+  return new NextResponse(script, {
     headers: {
       "Content-Type": "application/javascript; charset=utf-8",
-      // Required: allows SW served from /firebase-messaging-sw.js to control scope /
       "Service-Worker-Allowed": "/",
-      // No caching — ensure the browser always gets the latest SW
       "Cache-Control": "no-store, max-age=0",
     },
   });

@@ -1,67 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
-import { apiFetch } from "@/lib/api";
 import { isLoggedIn } from "@/lib/auth";
-interface Notification {
-  id: string;
-  message: string;
-  type: string;
-  isRead: boolean;
-  createdAt: string;
-}
+import { useNotifications } from "@/contexts/NotificationContext";
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { notifications, unreadCount, markAsRead, markAllAsRead, loading } = useNotifications();
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      const currentUrl = window.location.pathname + window.location.search;
-      router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`);
-      return;
+      router.push("/login");
     }
-    apiFetch<{ data: Notification[]; unreadCount: number }>(
-      "/notifications?limit=50",
-    )
-      .then((res) => {
-        setNotifications(res.data || []);
-        setUnreadCount(res.unreadCount || 0);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
   }, [router]);
-
-  const markAsRead = async (id: string) => {
-    try {
-      await apiFetch(`/notifications/${id}/read`, { method: "PUT" });
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
-      );
-      setUnreadCount((p) => Math.max(0, p - 1));
-    } catch {
-      //
-    }
-  };
-
-  const markAllRead = async () => {
-    try {
-      await apiFetch("/notifications/read-all", { method: "PUT" });
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      setUnreadCount(0);
-    } catch {
-      //
-    }
-  };
-
-  // Remove the old timeAgo function and use date-fns instead
-
 
   return (
     <div className="container py-12">
@@ -77,7 +32,7 @@ export default function NotificationsPage() {
         {unreadCount > 0 && (
           <button
             className="btn btn-outline btn-sm sm:btn-md border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-500 flex items-center gap-2"
-            onClick={markAllRead}
+            onClick={markAllAsRead}
           >
             <CheckCheck size={18} /> Đánh dấu đã đọc tất cả
           </button>
@@ -107,6 +62,7 @@ export default function NotificationsPage() {
               }`}
             >
               <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-text-primary mb-0.5">{n.title}</p>
                 <p className="text-sm text-text-primary mb-1 leading-relaxed">
                   {n.message}
                 </p>

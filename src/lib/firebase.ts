@@ -4,7 +4,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { getMessaging, getToken, isSupported } from "firebase/messaging";
+import { getMessaging, getToken, deleteToken, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -53,10 +53,24 @@ export async function requestFCMToken(): Promise<string | null> {
         return null;
       }
 
-      // getRegistration takes the scope URL ("/"), not the SW script path
-      const swReg = await navigator.serviceWorker
-        .getRegistration("/")
-        .catch(() => undefined);
+      // Register static SW file explicitly
+      let swReg: ServiceWorkerRegistration | undefined;
+      if ("serviceWorker" in navigator) {
+        swReg = await navigator.serviceWorker
+          .register("/firebase-messaging-sw.js", { scope: "/" })
+          .catch(() => undefined);
+      }
+
+      // Clear any stale push subscription before requesting a new token
+      try {
+        await deleteToken(messaging);
+        if (swReg) {
+          const oldSub = await swReg.pushManager.getSubscription();
+          if (oldSub) await oldSub.unsubscribe();
+        }
+      } catch {
+        // Ignore — no existing token/subscription to clear
+      }
 
       const currentToken = await getToken(messaging, {
         vapidKey,
