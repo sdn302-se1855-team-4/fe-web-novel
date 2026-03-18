@@ -13,6 +13,7 @@ export function NotificationToaster() {
 
   return (
     <Toaster
+      key={resolvedTheme}
       position="bottom-right"
       theme={resolvedTheme === "dark" ? "dark" : "light"}
       richColors={false}

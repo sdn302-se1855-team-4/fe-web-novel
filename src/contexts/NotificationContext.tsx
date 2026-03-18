@@ -29,6 +29,14 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authVersion, setAuthVersion] = useState(0);
+
+  // Re-initialize whenever the user logs in (setTokens dispatches "auth:login")
+  useEffect(() => {
+    const handleLogin = () => setAuthVersion((v) => v + 1);
+    window.addEventListener("auth:login", handleLogin);
+    return () => window.removeEventListener("auth:login", handleLogin);
+  }, []);
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.isRead).length,
@@ -111,6 +119,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       return;
     }
 
+    setLoading(true);
     let cancelled = false;
     let ctrl: AbortController | null = null;
 
@@ -124,7 +133,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       cancelled = true;
       ctrl?.abort();
     };
-  }, [fetchInitialNotifications, connectSSE]);
+  }, [fetchInitialNotifications, connectSSE, authVersion]);
 
   const markAsRead = async (id: string, e?: React.MouseEvent) => {
     if (e) e.preventDefault();
